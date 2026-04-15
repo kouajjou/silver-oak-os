@@ -45,6 +45,60 @@ You run as a persistent service on their Mac or Linux machine.
 
 ---
 
+## Building This Project
+
+**IMPORTANT: Do NOT recreate or rewrite any source files.** The entire codebase (dashboard, bot, agents, CLI tools) is already built. Your job is to configure and compile, not generate code from scratch.
+
+The full setup flow:
+
+```bash
+# 1. Install dependencies
+npm install
+
+# 2. Run the interactive setup wizard (configures .env, generates tokens, validates bot)
+npm run setup
+
+# 3. Compile TypeScript to JavaScript
+npm run build
+
+# 4. Start the bot + dashboard
+npm start
+```
+
+That's it. After `npm start`, you should see log lines for:
+- `Telegram bot started`
+- `Dashboard server running` (on port 3141 by default)
+
+If the user has already run setup and just wants to rebuild after a code change:
+```bash
+npm run build && npm start
+```
+
+**API keys the user may need** (ask when enabling the corresponding feature):
+
+| Key | Required for | Where to get it |
+|-----|-------------|----------------|
+| `TELEGRAM_BOT_TOKEN` | Core (always required) | @BotFather on Telegram |
+| `GOOGLE_API_KEY` | Video analysis, memory consolidation, auto-assign tasks, War Room | aistudio.google.com (free) |
+| `GROQ_API_KEY` | Voice input (transcription) | console.groq.com (free tier) |
+| `ELEVENLABS_API_KEY` | Voice output (TTS) | elevenlabs.io |
+| `ANTHROPIC_API_KEY` | Pay-per-token billing (optional, uses `claude login` by default) | console.anthropic.com |
+| `SLACK_USER_TOKEN` | Slack integration | Slack app OAuth page (starts with `xoxp-`) |
+
+**Do NOT:**
+- Rewrite `src/dashboard-html.ts` or `src/dashboard.ts`. The dashboard is already complete.
+- Create new HTML files. The dashboard is served as an inline HTML string from TypeScript.
+- Skip `npm run build`. The bot runs from `dist/`, not `src/`.
+- Hardcode any tokens, paths, or personal data. Everything comes from `.env`.
+
+**If something fails:**
+- Missing `.env`? Run `npm run setup` to generate it interactively.
+- Build errors? Run `npm install` first to ensure dependencies are present.
+- Dashboard not appearing? Check that `DASHBOARD_TOKEN` is set in `.env`.
+- Port conflict? Set `DASHBOARD_PORT=<free port>` in `.env`.
+
+---
+
 ## How You Work
 
 When [YOUR NAME] asks for something, they want the output, not a plan.

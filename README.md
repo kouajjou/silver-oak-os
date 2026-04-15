@@ -581,6 +581,10 @@ On your phone it's a single scrollable page. On a computer it splits into two co
 
 ### How to turn it on
 
+If you ran `npm run setup`, the dashboard is already configured. The setup wizard generates `DASHBOARD_TOKEN` automatically. Skip straight to Step 3.
+
+If you're enabling it manually (or the setup wizard skipped it), follow all four steps:
+
 #### Step 1: Generate a password for the dashboard
 
 Open your terminal and paste this command:
@@ -628,6 +632,16 @@ Or open your browser and go to:
 http://localhost:3141/?token=YOUR_TOKEN&chatId=YOUR_CHAT_ID
 ```
 Replace `YOUR_TOKEN` with the password from Step 1, and `YOUR_CHAT_ID` with the `ALLOWED_CHAT_ID` from your `.env`.
+
+#### Verify it's working
+
+After starting the bot, run this to confirm the dashboard is alive:
+
+```bash
+curl -s -o /dev/null -w "%{http_code}" "http://localhost:3141/?token=YOUR_TOKEN&chatId=YOUR_CHAT_ID"
+```
+
+You should see `200`. If you see `401`, your token doesn't match. If you get no response, the bot isn't running or the port is wrong.
 
 **You're done.** The dashboard now works on the machine running the bot.
 
@@ -1448,6 +1462,19 @@ Or view it in the dashboard via the API: `GET /api/audit?limit=50`.
 - QR code expires after ~30s. kill and restart the daemon if it timed out
 - To force re-authentication, delete `store/waweb/` and restart the daemon
 
+**Dashboard shows a blank page or missing panels**
+- Make sure you ran `npm run build` before `npm start`. The dashboard is compiled TypeScript, not a separate HTML file.
+- Check that `DASHBOARD_TOKEN` is set in your `.env`. Without it, the dashboard is silently disabled.
+- Open the browser console (F12) and check for network errors. If API calls return 500, the database may not be initialized. Run `npm run migrate` and restart.
+- If you're using Claude Code to set this up: **do NOT let it rewrite `dashboard-html.ts` or `dashboard.ts`.** These files are already complete. Claude just needs to run `npm install && npm run build && npm start`.
+
+**Dashboard returns 401 Unauthorized**
+- The token in the URL doesn't match `DASHBOARD_TOKEN` in `.env`. Copy the exact value, no extra spaces.
+- If you just rotated the token, restart the bot so it picks up the new value.
+
+**Dashboard port already in use**
+- Another process is using port 3141. Either stop it (`lsof -i :3141`) or set a different port: `DASHBOARD_PORT=3142` in `.env`, then rebuild and restart.
+
 **"409 Conflict: terminated by other getUpdates request"**
 - Two instances running. Kill the old one: `kill $(cat store/claudeclaw.pid)`
 
@@ -1460,6 +1487,21 @@ Or view it in the dashboard via the API: `GET /api/audit?limit=50`.
 ---
 
 ## Common confusions
+
+**"I asked Claude to build the dashboard and it only made the TypeScript file"**
+Claude sometimes tries to recreate `dashboard-html.ts` from scratch instead of using the one already in the repo. The dashboard is already fully built with all panels, charts, modals, and features. All Claude needs to do is configure and compile. Give it this prompt:
+
+```
+Read the CLAUDE.md in this repo first. Then follow the "Building and Running This Project"
+section exactly. Do NOT rewrite or recreate any source files. The Mission Control dashboard
+and all backend routes are already complete in src/dashboard-html.ts and src/dashboard.ts.
+
+Run: npm install && npm run setup && npm run build && npm start
+
+The setup wizard will ask me for my Telegram bot token, chat ID, and which features I want.
+Walk me through each prompt. After setup, verify the dashboard is running by curling
+http://localhost:3141 with the generated token.
+```
 
 **"Do I need the mega prompt / Rebuild_Prompt.md?"**
 No. There is no separate prompt to execute and no `Rebuild_Prompt.md` file. `CLAUDE.md` in the repo **is** the prompt, it loads automatically into every Claude Code session. You personalize it once (replace the `[BRACKETED]` placeholders with your info) and forget about it. Just clone the repo, run setup, and go. When you `git pull` updates, your personalized `.env` stays untouched (gitignored) and `CLAUDE.md` changes are merged by git.
