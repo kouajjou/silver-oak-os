@@ -997,9 +997,47 @@ export function startDashboard(botApi?: Api<RawApi>): void {
 
   // ── Agent endpoints ──────────────────────────────────────────────────
 
+  const agentOrderFile = path.join(STORE_DIR, 'agent-order.json');
+  const loadAgentOrder = (): string[] => {
+    try {
+      const raw = fs.readFileSync(agentOrderFile, 'utf-8');
+      const parsed = JSON.parse(raw);
+      return Array.isArray(parsed) ? parsed.filter((x) => typeof x === 'string') : [];
+    } catch { return []; }
+  };
+  const saveAgentOrder = (order: string[]) => {
+    fs.writeFileSync(agentOrderFile, JSON.stringify(order, null, 2));
+  };
+  const applyAgentOrder = (ids: string[]): string[] => {
+    const saved = loadAgentOrder();
+    const present = new Set(ids);
+    const ordered: string[] = [];
+    const seen = new Set<string>();
+    for (const id of saved) {
+      if (present.has(id) && !seen.has(id)) { ordered.push(id); seen.add(id); }
+    }
+    for (const id of ids) {
+      if (!seen.has(id)) { ordered.push(id); seen.add(id); }
+    }
+    return ordered;
+  };
+
+  // Persist the visual order of secondary agents (main is always pinned first)
+  app.post('/api/agents/order', async (c) => {
+    const body = await c.req.json<{ order?: string[] }>();
+    const order = body?.order;
+    if (!Array.isArray(order) || !order.every((x) => typeof x === 'string')) {
+      return c.json({ error: 'order must be an array of agent ids' }, 400);
+    }
+    const valid = new Set(listAgentIds());
+    const filtered = order.filter((id) => id !== 'main' && valid.has(id));
+    saveAgentOrder(filtered);
+    return c.json({ ok: true, order: filtered });
+  });
+
   // List all configured agents with status
   app.get('/api/agents', (c) => {
-    const agentIds = listAgentIds();
+    const agentIds = applyAgentOrder(listAgentIds());
     const agents = agentIds.map((id) => {
       try {
         const config = loadAgentConfig(id);

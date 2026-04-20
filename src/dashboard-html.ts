@@ -1620,7 +1620,10 @@ async function loadAgents() {
       const descBlock = descText
         ? '<div class="text-xs text-gray-400 mt-1" style="display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;line-height:1.3" title="' + escapeHtml(descText) + '">' + escapeHtml(descText) + '</div>'
         : '<div class="text-xs text-gray-600 italic mt-1">no description</div>';
-      return '<div class="card clickable-card" style="min-width:150px;flex:1;max-width:220px;border-left:3px solid ' + color + '" data-agent="' + a.id + '" onclick="toggleAgentDetail(this.dataset.agent)">' +
+      const isMain = a.id === 'main';
+      const dragAttrs = isMain ? '' : ' draggable="true" ondragstart="agentDragStart(event)" ondragend="agentDragEnd(event)" ondragover="agentDragOver(event)" ondrop="agentDrop(event)"';
+      const grabCursor = isMain ? '' : 'cursor:grab;';
+      return '<div class="card clickable-card"' + dragAttrs + ' style="min-width:150px;flex:1;max-width:220px;border-left:3px solid ' + color + ';' + grabCursor + 'transition:opacity 0.15s,transform 0.15s" data-agent="' + a.id + '" onclick="toggleAgentDetail(this.dataset.agent)">' +
         '<div style="display:flex;gap:10px;align-items:flex-start">' +
           avatarImg +
           '<div style="flex:1;min-width:0">' +
@@ -2448,6 +2451,52 @@ async function missionAction(id, action) {
 // ── Drag & Drop ──────────────────────────────────────────────────────
 
 var missionDragId = null;
+
+var agentDragId = null;
+function agentDragStart(e) {
+  e.stopPropagation();
+  agentDragId = e.currentTarget.dataset.agent;
+  e.currentTarget.style.opacity = '0.4';
+  e.dataTransfer.effectAllowed = 'move';
+  try { e.dataTransfer.setData('text/plain', agentDragId); } catch(_) {}
+}
+function agentDragEnd(e) {
+  e.currentTarget.style.opacity = '1';
+  agentDragId = null;
+}
+function agentDragOver(e) {
+  if (!agentDragId) return;
+  var target = e.currentTarget;
+  if (!target || target.dataset.agent === 'main' || target.dataset.agent === agentDragId) return;
+  e.preventDefault();
+  e.dataTransfer.dropEffect = 'move';
+  var container = document.getElementById('agents-container');
+  var dragged = container && container.querySelector('[data-agent="' + agentDragId + '"]');
+  if (!dragged || dragged === target) return;
+  var rect = target.getBoundingClientRect();
+  var before = (e.clientX - rect.left) < rect.width / 2;
+  if (before) {
+    if (target.previousSibling !== dragged) container.insertBefore(dragged, target);
+  } else {
+    if (target.nextSibling !== dragged) container.insertBefore(dragged, target.nextSibling);
+  }
+}
+async function agentDrop(e) {
+  e.preventDefault();
+  e.stopPropagation();
+  if (!agentDragId) return;
+  var container = document.getElementById('agents-container');
+  if (!container) return;
+  var order = Array.prototype.map.call(container.children, function(el) { return el.dataset && el.dataset.agent; })
+    .filter(function(id) { return id && id !== 'main'; });
+  try {
+    await fetch(BASE + '/api/agents/order?token=' + TOKEN, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ order: order }),
+    });
+  } catch(err) { console.error('Agent reorder save failed:', err); }
+}
 
 function missionDragStart(e) {
   missionDragId = e.currentTarget.dataset.mid;
