@@ -1050,7 +1050,7 @@ export function createBot(): Bot {
   bot.command('memory', async (ctx) => {
     if (await replyIfLocked(ctx)) return;
     const chatId = ctx.chat!.id.toString();
-    const recent = getRecentMemories(chatId, 10);
+    const recent = getRecentMemories(chatId, 10, AGENT_ID);
     if (recent.length === 0) {
       await ctx.reply('No memories yet.');
       return;

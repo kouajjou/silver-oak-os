@@ -753,10 +753,11 @@ export function searchMemories(
   query: string,
   limit = 5,
   queryEmbedding?: number[],
+  agentId = 'main',
 ): Memory[] {
   // Strategy 1: Vector similarity search (if embedding provided)
   if (queryEmbedding && queryEmbedding.length > 0) {
-    const candidates = getMemoriesWithEmbeddings(chatId);
+    const candidates = getMemoriesWithEmbeddings(chatId, agentId);
     if (candidates.length > 0) {
       const scored = candidates
         .map((c) => ({ id: c.id, score: cosineSimilarity(queryEmbedding, c.embedding) }))
@@ -767,9 +768,13 @@ export function searchMemories(
       if (scored.length > 0) {
         const ids = scored.map((s) => s.id);
         const placeholders = ids.map(() => '?').join(',');
+        // agent_id is already enforced upstream by getMemoriesWithEmbeddings,
+        // but repeat it here so this query is correct on its own.
         const rows = db
-          .prepare(`SELECT * FROM memories WHERE id IN (${placeholders}) AND superseded_by IS NULL`)
-          .all(...ids) as Memory[];
+          .prepare(
+            `SELECT * FROM memories WHERE id IN (${placeholders}) AND agent_id = ? AND superseded_by IS NULL`,
+          )
+          .all(...ids, agentId) as Memory[];
         // Preserve similarity-score ordering (SQL IN doesn't guarantee order)
         const rowMap = new Map(rows.map((r) => [r.id, r]));
         return ids.map((id) => rowMap.get(id)).filter(Boolean) as Memory[];
@@ -791,11 +796,11 @@ export function searchMemories(
     .prepare(
       `SELECT memories.* FROM memories
        JOIN memories_fts ON memories.id = memories_fts.rowid
-       WHERE memories_fts MATCH ? AND memories.chat_id = ? AND memories.superseded_by IS NULL
+       WHERE memories_fts MATCH ? AND memories.chat_id = ? AND memories.agent_id = ? AND memories.superseded_by IS NULL
        ORDER BY rank
        LIMIT ?`,
     )
-    .all(ftsQuery, chatId, limit) as Memory[];
+    .all(ftsQuery, chatId, agentId, limit) as Memory[];
 
   if (results.length > 0) return results;
 
@@ -812,11 +817,11 @@ export function searchMemories(
   results = db
     .prepare(
       `SELECT * FROM memories
-       WHERE chat_id = ? AND superseded_by IS NULL AND (${likeConditions})
+       WHERE chat_id = ? AND agent_id = ? AND superseded_by IS NULL AND (${likeConditions})
        ORDER BY importance DESC, accessed_at DESC
        LIMIT ?`,
     )
-    .all(chatId, ...likeParams, limit) as Memory[];
+    .all(chatId, agentId, ...likeParams, limit) as Memory[];
 
   return results;
 }
@@ -850,10 +855,15 @@ export function saveStructuredMemoryAtomic(
   return txn();
 }
 
-export function getMemoriesWithEmbeddings(chatId: string): Array<{ id: number; embedding: number[]; summary: string; importance: number }> {
+export function getMemoriesWithEmbeddings(
+  chatId: string,
+  agentId = 'main',
+): Array<{ id: number; embedding: number[]; summary: string; importance: number }> {
   const rows = db
-    .prepare('SELECT id, embedding, summary, importance FROM memories WHERE chat_id = ? AND embedding IS NOT NULL AND superseded_by IS NULL')
-    .all(chatId) as Array<{ id: number; embedding: string; summary: string; importance: number }>;
+    .prepare(
+      'SELECT id, embedding, summary, importance FROM memories WHERE chat_id = ? AND agent_id = ? AND embedding IS NOT NULL AND superseded_by IS NULL',
+    )
+    .all(chatId, agentId) as Array<{ id: number; embedding: string; summary: string; importance: number }>;
   return rows.map((r) => ({
     id: r.id,
     embedding: JSON.parse(r.embedding) as number[],
@@ -862,21 +872,25 @@ export function getMemoriesWithEmbeddings(chatId: string): Array<{ id: number; e
   }));
 }
 
-export function getRecentHighImportanceMemories(chatId: string, limit = 5): Memory[] {
+export function getRecentHighImportanceMemories(
+  chatId: string,
+  limit = 5,
+  agentId = 'main',
+): Memory[] {
   return db
     .prepare(
-      `SELECT * FROM memories WHERE chat_id = ? AND importance >= 0.5
+      `SELECT * FROM memories WHERE chat_id = ? AND agent_id = ? AND importance >= 0.5
        ORDER BY accessed_at DESC LIMIT ?`,
     )
-    .all(chatId, limit) as Memory[];
+    .all(chatId, agentId, limit) as Memory[];
 }
 
-export function getRecentMemories(chatId: string, limit = 5): Memory[] {
+export function getRecentMemories(chatId: string, limit = 5, agentId = 'main'): Memory[] {
   return db
     .prepare(
-      'SELECT * FROM memories WHERE chat_id = ? ORDER BY accessed_at DESC LIMIT ?',
+      'SELECT * FROM memories WHERE chat_id = ? AND agent_id = ? ORDER BY accessed_at DESC LIMIT ?',
     )
-    .all(chatId, limit) as Memory[];
+    .all(chatId, agentId, limit) as Memory[];
 }
 
 export function touchMemory(id: number): void {

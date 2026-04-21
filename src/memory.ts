@@ -61,7 +61,7 @@ export async function buildMemoryContext(
   // NOTE: We do NOT touch memories here. The feedback loop (evaluateMemoryRelevance)
   // is the only thing that should boost salience/accessed_at. Touching at retrieval
   // creates a positive feedback loop where noise stays fresh forever.
-  const searched = searchMemories(chatId, userMessage, 5, queryEmbedding);
+  const searched = searchMemories(chatId, userMessage, 5, queryEmbedding, agentId);
   for (const mem of searched) {
     seen.add(mem.id);
     summaryMap.set(mem.id, mem.summary);
@@ -71,7 +71,7 @@ export async function buildMemoryContext(
   }
 
   // Layer 2: recent high-importance memories (deduplicated)
-  const recent = getRecentHighImportanceMemories(chatId, 5);
+  const recent = getRecentHighImportanceMemories(chatId, 5, agentId);
   for (const mem of recent) {
     if (seen.has(mem.id)) continue;
     seen.add(mem.id);
