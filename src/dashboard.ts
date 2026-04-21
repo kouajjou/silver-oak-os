@@ -77,7 +77,7 @@ import { getDashboardHtml } from './dashboard-html.js';
 import { getWarRoomHtml } from './warroom-html.js';
 import { WARROOM_ENABLED, WARROOM_PORT } from './config.js';
 import { logger } from './logger.js';
-import { getTelegramConnected, getBotInfo, chatEvents, getIsProcessing, abortActiveQuery, ChatEvent } from './state.js';
+import { getTelegramConnected, getBotInfo, chatEvents, getIsProcessing, abortActiveQuery, ChatEvent, readAgentConnState } from './state.js';
 
 async function classifyTaskAgent(prompt: string): Promise<string | null> {
   try {
@@ -1053,6 +1053,11 @@ export function startDashboard(botApi?: Api<RawApi>): void {
           } catch { /* process not running */ }
         }
         const stats = getAgentTokenStats(id);
+        // Per-agent Telegram state: read from the conn file the agent
+        // process writes on setTelegramConnected. Falls back to false
+        // when the agent isn't running or hasn't emitted state yet.
+        const connState = running ? readAgentConnState(id) : null;
+        const telegramConnected = connState?.telegram ?? false;
         return {
           id,
           name: config.name,
@@ -1061,10 +1066,11 @@ export function startDashboard(botApi?: Api<RawApi>): void {
           running,
           todayTurns: stats.todayTurns,
           todayCost: stats.todayCost,
+          telegramConnected,
         };
       } catch {
         const fallbackName = id.charAt(0).toUpperCase() + id.slice(1);
-        return { id, name: fallbackName, description: '', model: 'unknown', running: false, todayTurns: 0, todayCost: 0 };
+        return { id, name: fallbackName, description: '', model: 'unknown', running: false, todayTurns: 0, todayCost: 0, telegramConnected: false };
       }
     });
 
@@ -1084,13 +1090,25 @@ export function startDashboard(botApi?: Api<RawApi>): void {
         } catch { /* not running */ }
       }
       const mainStats = getAgentTokenStats('main');
+      // Main runs the dashboard — in-process getTelegramConnected() is
+      // authoritative; no need to go through the conn file for main itself.
+      const mainTelegramConnected = mainRunning ? getTelegramConnected() : false;
       allAgents = [
-        { id: 'main', name: 'Main', description: getMainDescription(), model: 'claude-opus-4-6', running: mainRunning, todayTurns: mainStats.todayTurns, todayCost: mainStats.todayCost },
+        { id: 'main', name: 'Main', description: getMainDescription(), model: 'claude-opus-4-6', running: mainRunning, todayTurns: mainStats.todayTurns, todayCost: mainStats.todayCost, telegramConnected: mainTelegramConnected },
         ...agents,
       ];
     } else {
+      // Main was in listAgentIds; its entry came from the loop above and
+      // already has a telegramConnected field. Same for sub-agents.
+      // Override main's description and — since main runs the dashboard —
+      // its telegramConnected from the in-process getter rather than the
+      // conn file (which main also writes, but in-process is zero-latency).
+      const mainFromLoop = agents.find((a) => a.id === 'main');
+      const mainTelegramConnected = mainFromLoop?.running ? getTelegramConnected() : false;
       allAgents = [
-        ...agents.filter((a) => a.id === 'main').map((a) => ({ ...a, description: getMainDescription() })),
+        ...agents
+          .filter((a) => a.id === 'main')
+          .map((a) => ({ ...a, description: getMainDescription(), telegramConnected: mainTelegramConnected })),
         ...agents.filter((a) => a.id !== 'main'),
       ];
     }
