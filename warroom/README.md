@@ -76,3 +76,17 @@ Edit `warroom/voices.json` to map each agent to a Cartesia voice ID. Browse avai
 | `DEEPGRAM_API_KEY` | Yes | Deepgram API key |
 | `CARTESIA_API_KEY` | Yes | Cartesia API key |
 | `WARROOM_DAILY_ROOM_URL` | No | Use an existing Daily room instead of creating one |
+
+## Known issues
+
+### Intel Mac install failure
+
+Installing `pipecat-ai[silero]` on Intel Mac (x86_64) currently fails because the `numba` dependency's `llvmlite` has no prebuilt x86_64 wheel for recent Python versions. Apple Silicon (arm64) Macs are unaffected.
+
+**Workarounds:**
+
+- Run War Room from an Apple Silicon Mac, or
+- Skip the `silero` extra and run without voice-activity detection (edit `requirements.txt` to drop `silero`), or
+- Install an older Python (3.11) that still has compatible llvmlite wheels.
+
+Track progress or suggest alternatives in [issue #10](https://github.com/earlyaidopters/claudeclaw-os/issues/10).

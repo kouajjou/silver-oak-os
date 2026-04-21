@@ -16,11 +16,12 @@ function getClient(): GoogleGenAI {
 
 /**
  * Generate text content via Gemini.
- * Defaults to gemini-2.0-flash for speed and cost efficiency.
+ * Defaults to gemini-2.5-flash. Google's free tier on 2.0 models was retired
+ * in 2026; 2.5-flash is the current flash-tier default with the same API shape.
  */
 export async function generateContent(
   prompt: string,
-  model = 'gemini-2.0-flash',
+  model = 'gemini-2.5-flash',
 ): Promise<string> {
   const ai = getClient();
   try {

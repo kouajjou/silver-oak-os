@@ -15,6 +15,17 @@ echo ""
 # Ensure logs directory exists
 mkdir -p "$LOG_DIR"
 
+# Capture the Node binary path at install time. Using `command -v node` resolves
+# via PATH and avoids hardcoding versioned Homebrew Cellar paths that break on
+# `brew upgrade node@22`. Re-run this script after changing your active Node.
+NODE_PATH="$(command -v node)"
+if [ -z "$NODE_PATH" ]; then
+  echo "Error: 'node' not found on PATH. Install Node 20+ and re-run."
+  exit 1
+fi
+echo "Using Node binary: $NODE_PATH"
+echo ""
+
 # Clean up stale/orphaned claudeclaw agents not in the current launchd/ directory
 echo "Cleaning up stale agents..."
 for existing in "$LAUNCH_AGENTS_DIR"/com.claudeclaw.*.plist; do
@@ -57,6 +68,7 @@ for plist in "$LAUNCHD_DIR"/com.claudeclaw.*.plist; do
   # Copy template and substitute placeholders with actual paths
   sed -e "s|__PROJECT_DIR__|$PROJECT_DIR|g" \
       -e "s|__HOME__|$HOME|g" \
+      -e "s|__NODE_PATH__|$NODE_PATH|g" \
       "$plist" > "$dest"
   launchctl load "$dest"
 done

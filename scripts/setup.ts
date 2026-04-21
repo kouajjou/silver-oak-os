@@ -503,9 +503,20 @@ async function main() {
     ok(`Created ${claudeclawConfigDir}`);
   }
 
-  // Ensure CLAUDE.md exists in the config dir (copy from example if needed)
-  const claudeMdDest = path.join(claudeclawConfigDir, 'CLAUDE.md');
-  if (!fs.existsSync(claudeMdDest)) {
+  // Ensure CLAUDE.md exists for the main agent. Preferred location is
+  // ${CLAUDECLAW_CONFIG}/agents/main/CLAUDE.md (same pattern as sub-agents).
+  // The legacy ${CLAUDECLAW_CONFIG}/CLAUDE.md still loads as a fallback — if
+  // an existing install has it there, leave it alone.
+  const legacyClaudeMd = path.join(claudeclawConfigDir, 'CLAUDE.md');
+  const mainAgentDir = path.join(claudeclawConfigDir, 'agents', 'main');
+  const claudeMdDest = path.join(mainAgentDir, 'CLAUDE.md');
+
+  if (fs.existsSync(claudeMdDest)) {
+    ok(`CLAUDE.md exists at ${claudeMdDest}`);
+  } else if (fs.existsSync(legacyClaudeMd)) {
+    ok(`CLAUDE.md exists at ${legacyClaudeMd} (legacy location — still works)`);
+  } else {
+    fs.mkdirSync(mainAgentDir, { recursive: true });
     const exampleSrc = path.join(PROJECT_ROOT, 'CLAUDE.md.example');
     if (fs.existsSync(exampleSrc)) {
       fs.copyFileSync(exampleSrc, claudeMdDest);
@@ -513,9 +524,8 @@ async function main() {
     } else {
       warn(`No CLAUDE.md.example found — create ${claudeMdDest} manually`);
     }
-  } else {
-    ok(`CLAUDE.md exists at ${claudeMdDest}`);
   }
+  const effectiveClaudeMd = fs.existsSync(claudeMdDest) ? claudeMdDest : legacyClaudeMd;
 
   // ── 6b. CLAUDE.md personalization ────────────────────────────────────────
   section('Personalize your assistant (CLAUDE.md)');
@@ -533,7 +543,7 @@ async function main() {
   console.log();
   console.log(`  ${c.bold}Your CLAUDE.md is here:${c.reset}`);
   console.log();
-  console.log(`  ${c.cyan}${claudeMdDest}${c.reset}`);
+  console.log(`  ${c.cyan}${effectiveClaudeMd}${c.reset}`);
   console.log();
   info('You can edit it in any text editor, or just start the bot and ask');
   info('Claude to update your CLAUDE.md for you. It has full access to the file.');
