@@ -1657,11 +1657,24 @@ async function loadAgents() {
       const isMain = a.id === 'main';
       const dragAttrs = isMain ? '' : ' draggable="true" ondragstart="agentDragStart(event)" ondragend="agentDragEnd(event)" ondragover="agentDragOver(event)" ondrop="agentDrop(event)"';
       const grabCursor = isMain ? '' : 'cursor:grab;';
+      // Per-agent Telegram pill — small indicator next to the agent
+      // name showing whether this agent's Telegram bot is connected.
+      // The header pill reflects only main's state; this surfaces
+      // per-agent drops so sub-agents are visibly tracked too.
+      // Green when connected, red when configured-but-disconnected,
+      // hidden entirely if the agent isn't currently running (the
+      // off/live dot below already conveys process state).
+      let tgPill = '';
+      if (a.running) {
+        const cls = a.telegramConnected ? 'pill-connected' : 'pill-disconnected';
+        const title = a.telegramConnected ? 'Telegram connected' : 'Telegram disconnected';
+        tgPill = '<span class="pill ' + cls + '" title="' + title + '" style="font-size:10px;padding:1px 6px;margin-left:4px">TG</span>';
+      }
       return '<div class="card clickable-card"' + dragAttrs + ' style="min-width:150px;flex:1;max-width:220px;border-left:3px solid ' + color + ';' + grabCursor + 'transition:opacity 0.15s,transform 0.15s" data-agent="' + a.id + '" onclick="toggleAgentDetail(this.dataset.agent)">' +
         '<div style="display:flex;gap:10px;align-items:flex-start">' +
           avatarImg +
           '<div style="flex:1;min-width:0">' +
-            '<div class="font-bold text-white text-sm">' + a.name + '</div>' +
+            '<div class="font-bold text-white text-sm">' + a.name + tgPill + '</div>' +
             descBlock +
             '<div class="text-xs mt-1">' + dot + ' ' + statusText + '</div>' +
             modelSelect +
