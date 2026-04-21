@@ -1470,6 +1470,41 @@ export function createBot(): Bot {
     }
   });
 
+  // Audio files — transcription via the same Whisper path as voice notes.
+  // Telegram emits message:audio for music files and uploaded audio that
+  // wasn't recorded as a voice note (podcast clips, recorded meetings,
+  // an .mp3 dragged in from Finder). Without this handler, those files
+  // fall through to message:document and get passed to Claude as opaque
+  // file context rather than a transcript. The only difference from the
+  // voice handler is which Telegram field holds the file_id.
+  bot.on('message:audio', async (ctx) => {
+    const caps = voiceCapabilities();
+    if (!caps.stt) {
+      await ctx.reply('Audio transcription not configured. Add GROQ_API_KEY to .env');
+      return;
+    }
+    const chatId = ctx.chat!.id;
+    if (!isAuthorised(chatId)) return;
+    if (!ALLOWED_CHAT_ID) {
+      await ctx.reply(
+        `Your chat ID is ${chatId}.\n\nAdd this to your .env:\n\nALLOWED_CHAT_ID=${chatId}\n\nThen restart ClaudeClaw OS.`,
+      );
+      return;
+    }
+
+    try {
+      const fileId = ctx.message.audio.file_id;
+      const localPath = await downloadTelegramFile(activeBotToken, fileId, UPLOADS_DIR);
+      const transcribed = await transcribeAudio(localPath);
+      const wantsVoiceBack = /\b(respond (with|via|in) voice|send (me )?(a )?voice( note| back)?|voice reply|reply (with|via) voice)\b/i.test(transcribed);
+      const chatIdStr = ctx.chat!.id.toString();
+      messageQueue.enqueue(chatIdStr, () => handleMessage(ctx, `[Voice transcribed]: ${transcribed}`, wantsVoiceBack));
+    } catch (err) {
+      logger.error({ err }, 'Audio transcription failed');
+      await ctx.reply('Could not transcribe audio file. Try again.');
+    }
+  });
+
   // Photos — download and pass to Claude
   bot.on('message:photo', async (ctx) => {
     const chatId = ctx.chat!.id;
