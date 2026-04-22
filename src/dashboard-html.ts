@@ -1040,11 +1040,31 @@ function escapeHtml(s) {
 function copyCode(btn) {
   var code = btn.parentElement.querySelector('code');
   if (!code) return;
-  navigator.clipboard.writeText(code.textContent).then(function() {
+  var text = code.textContent;
+  var onDone = function() {
     btn.textContent = 'Copied';
     btn.classList.add('copied');
     setTimeout(function() { btn.textContent = 'Copy'; btn.classList.remove('copied'); }, 1500);
-  });
+  };
+  var onFail = function() {
+    btn.textContent = 'Failed';
+    setTimeout(function() { btn.textContent = 'Copy'; }, 1500);
+  };
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).then(onDone, onFail);
+    return;
+  }
+  try {
+    var ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position = 'fixed';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.select();
+    var ok = document.execCommand('copy');
+    document.body.removeChild(ta);
+    if (ok) onDone(); else onFail();
+  } catch (e) { onFail(); }
 }
 
 async function loadInfo() {
