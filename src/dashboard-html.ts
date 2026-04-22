@@ -129,6 +129,10 @@ const WARROOM_ENABLED = warroomEnabled;
   .chat-bubble code { background: rgba(255,255,255,0.1); padding: 1px 4px; border-radius: 3px; font-size: 13px; }
   .chat-bubble pre { background: #111; padding: 8px 10px; border-radius: 6px; overflow-x: auto; margin: 6px 0; font-size: 12px; }
   .chat-bubble pre code { background: none; padding: 0; }
+  .code-block-wrap { position: relative; }
+  .code-block-wrap .copy-btn { position: absolute; top: 4px; right: 4px; background: #2a2a2a; border: 1px solid #3a3a3a; color: #9ca3af; font-size: 11px; padding: 2px 8px; border-radius: 4px; cursor: pointer; opacity: 0; transition: opacity 0.15s; z-index: 1; }
+  .code-block-wrap:hover .copy-btn { opacity: 1; }
+  .copy-btn.copied { color: #6ee7b7; border-color: #064e3b; }
   .chat-bubble table { border-collapse: collapse; width: 100%; font-size: 11px; margin: 6px 0; display: block; overflow-x: auto; }
   .chat-bubble th, .chat-bubble td { padding: 3px 6px; border-bottom: 1px solid #2a2a2a; text-align: left; white-space: nowrap; }
   .chat-bubble th { color: #a5b4fc; font-weight: 600; }
@@ -1031,6 +1035,16 @@ async function loadTokens() {
 
 function escapeHtml(s) {
   return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function copyCode(btn) {
+  var code = btn.parentElement.querySelector('code');
+  if (!code) return;
+  navigator.clipboard.writeText(code.textContent).then(function() {
+    btn.textContent = 'Copied';
+    btn.classList.add('copied');
+    setTimeout(function() { btn.textContent = 'Copy'; btn.classList.remove('copied'); }, 1500);
+  });
 }
 
 async function loadInfo() {
@@ -2410,7 +2424,7 @@ function renderMissionCard(t) {
 
   let resultHtml = '';
   if (t.status === 'completed' && t.result) {
-    resultHtml = '<details class="mt-2"><summary class="text-xs text-gray-500 cursor-pointer">View result' + durationStr + '</summary><pre class="text-xs text-gray-400 mt-1 whitespace-pre-wrap break-words" style="max-height:200px;overflow-y:auto">' + escapeHtml(t.result.slice(0, 2000)) + (t.result.length > 2000 ? '...' : '') + '</pre></details>';
+    resultHtml = '<details class="mt-2"><summary class="text-xs text-gray-500 cursor-pointer">View result' + durationStr + '</summary><div class="code-block-wrap"><button class="copy-btn" onclick="copyCode(this)">Copy</button><pre class="text-xs text-gray-400 mt-1 whitespace-pre-wrap break-words" style="max-height:200px;overflow-y:auto"><code>' + escapeHtml(t.result.slice(0, 2000)) + (t.result.length > 2000 ? '...' : '') + '</code></pre></div></details>';
   } else if (t.status === 'failed' && t.error) {
     resultHtml = '<div class="text-xs text-red-400 mt-1">' + escapeHtml(t.error.slice(0, 200)) + '</div>';
   }
@@ -2665,7 +2679,7 @@ async function loadHistoryPage() {
       }
       var date = new Date(t.completed_at * 1000).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
       var time = new Date(t.completed_at * 1000).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
-      var resultHtml = t.result ? '<details class="mt-2"><summary class="text-xs text-gray-500 cursor-pointer">View result</summary><pre class="text-xs text-gray-400 mt-1 whitespace-pre-wrap break-words" style="max-height:200px;overflow-y:auto">' + escapeHtml(t.result.slice(0, 2000)) + '</pre></details>' : '';
+      var resultHtml = t.result ? '<details class="mt-2"><summary class="text-xs text-gray-500 cursor-pointer">View result</summary><div class="code-block-wrap"><button class="copy-btn" onclick="copyCode(this)">Copy</button><pre class="text-xs text-gray-400 mt-1 whitespace-pre-wrap break-words" style="max-height:200px;overflow-y:auto"><code>' + escapeHtml(t.result.slice(0, 2000)) + '</code></pre></div></details>' : '';
       var errorHtml = t.error ? '<div class="text-xs text-red-400 mt-1">' + escapeHtml(t.error.slice(0, 200)) + '</div>' : '';
       return '<div style="background:#1a1a1a;border:1px solid #2a2a2a;border-radius:8px;padding:12px;margin-bottom:8px">' +
         '<div class="flex items-center justify-between mb-1">' +
@@ -2938,7 +2952,7 @@ function renderMarkdown(text) {
 
   // Code blocks: ` + '```' + `...` + '```' + `
   s = s.replace(/` + '`' + '`' + '`' + `(?:\\w*\\n)?([\\s\\S]*?)` + '`' + '`' + '`' + `/g, function(_, code) {
-    return preserve('<pre><code>' + escapeHtml(code.trim()) + '<\\/code><\\/pre>');
+    return preserve('<div class="code-block-wrap"><button class="copy-btn" onclick="copyCode(this)">Copy<\\/button><pre><code>' + escapeHtml(code.trim()) + '<\\/code><\\/pre><\\/div>');
   });
 
   // Tables: consecutive lines starting and ending with |
