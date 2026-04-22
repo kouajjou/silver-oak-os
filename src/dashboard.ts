@@ -744,8 +744,12 @@ export function startDashboard(botApi?: Api<RawApi>): void {
     if (body?.timeout_ms !== undefined) {
       const task = getMissionTask(id);
       if (!task) return c.json({ error: 'Not found' }, 404);
+      if (['completed', 'failed', 'cancelled'].includes(task.status)) {
+        return c.json({ error: 'Cannot change timeout on a finished task' }, 422);
+      }
       const newTimeout = Math.max(60_000, body.timeout_ms);
-      updateMissionTaskTimeout(id, newTimeout);
+      const changed = updateMissionTaskTimeout(id, newTimeout);
+      if (!changed) return c.json({ error: 'Task is no longer running' }, 422);
       if (!body?.assigned_agent) return c.json({ ok: true, timeout_ms: newTimeout });
     }
 

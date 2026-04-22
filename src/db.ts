@@ -1988,8 +1988,11 @@ export function createMissionTask(
 }
 
 export function updateMissionTaskTimeout(id: string, timeoutMs: number): boolean {
+  // Only mutate non-terminal rows. A PATCH racing against a just-completed
+  // task must not silently rewrite the timeout after the run has ended.
   const result = db.prepare(
-    `UPDATE mission_tasks SET timeout_ms = ? WHERE id = ?`,
+    `UPDATE mission_tasks SET timeout_ms = ?
+       WHERE id = ? AND status IN ('queued', 'running')`,
   ).run(timeoutMs, id);
   return result.changes > 0;
 }

@@ -2732,10 +2732,11 @@ function showTaskPopup(el) {
     '</div>' +
     '<div class="timer-bar"><div class="timer-bar-fill" style="width:' + pct + '%;background:' + barColor + '"></div></div>' +
     '<div class="flex gap-2 mt-2">' +
-      '<button class="timer-adj" onclick="adjustTimeout(\\''+taskId+'\\', 300000)">+5m</button>' +
-      '<button class="timer-adj" onclick="adjustTimeout(\\''+taskId+'\\', 600000)">+10m</button>' +
-      '<button class="timer-adj" onclick="adjustTimeout(\\''+taskId+'\\', 1800000)">+30m</button>' +
-    '</div>';
+      '<button class="timer-adj" onclick="adjustTimeout(\\''+taskId+'\\', ' + timeoutMs + ' + 300000)">+5m</button>' +
+      '<button class="timer-adj" onclick="adjustTimeout(\\''+taskId+'\\', ' + timeoutMs + ' + 600000)">+10m</button>' +
+      '<button class="timer-adj" onclick="adjustTimeout(\\''+taskId+'\\', ' + timeoutMs + ' + 1800000)">+30m</button>' +
+    '</div>' +
+    '<div class="text-[10px] text-gray-500 mt-2 leading-tight">Applies to the next run. The current attempt keeps its original timeout.</div>';
 
   var rect = el.getBoundingClientRect();
   popup.style.top = (rect.bottom + 8) + 'px';
