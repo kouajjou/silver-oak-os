@@ -1442,17 +1442,23 @@ export function createBot(): Bot {
 
   // Voice messages — real transcription via Groq Whisper
   bot.on('message:voice', async (ctx) => {
+    const chatId = ctx.chat!.id;
+    if (!isAuthorised(chatId)) return;
     const caps = voiceCapabilities();
     if (!caps.stt) {
       await ctx.reply('Voice transcription not configured. Add GROQ_API_KEY to .env');
       return;
     }
-    const chatId = ctx.chat!.id;
-    if (!isAuthorised(chatId)) return;
     if (!ALLOWED_CHAT_ID) {
       await ctx.reply(
         `Your chat ID is ${chatId}.\n\nAdd this to your .env:\n\nALLOWED_CHAT_ID=${chatId}\n\nThen restart ClaudeClaw OS.`,
       );
+      return;
+    }
+    // Telegram Bot API caps downloads at 20MB regardless of server-side size.
+    const voiceSize = ctx.message.voice.file_size;
+    if (voiceSize && voiceSize > 20 * 1024 * 1024) {
+      await ctx.reply('Voice message is over 20 MB (Telegram bot download cap). Try a shorter clip.');
       return;
     }
 
@@ -1478,17 +1484,23 @@ export function createBot(): Bot {
   // file context rather than a transcript. The only difference from the
   // voice handler is which Telegram field holds the file_id.
   bot.on('message:audio', async (ctx) => {
+    const chatId = ctx.chat!.id;
+    if (!isAuthorised(chatId)) return;
     const caps = voiceCapabilities();
     if (!caps.stt) {
       await ctx.reply('Audio transcription not configured. Add GROQ_API_KEY to .env');
       return;
     }
-    const chatId = ctx.chat!.id;
-    if (!isAuthorised(chatId)) return;
     if (!ALLOWED_CHAT_ID) {
       await ctx.reply(
         `Your chat ID is ${chatId}.\n\nAdd this to your .env:\n\nALLOWED_CHAT_ID=${chatId}\n\nThen restart ClaudeClaw OS.`,
       );
+      return;
+    }
+    // Audio uploads hit the 20MB bot download cap more often than voice notes.
+    const audioSize = ctx.message.audio.file_size;
+    if (audioSize && audioSize > 20 * 1024 * 1024) {
+      await ctx.reply('Audio file is over 20 MB (Telegram bot download cap). Split or compress first.');
       return;
     }
 
