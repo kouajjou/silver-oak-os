@@ -410,7 +410,7 @@ export function createSignalBot(): SignalBot {
       if (result.aborted) {
         setProcessing(chatId, false);
         const msg = result.text === null
-          ? `Timed out after ${Math.round(AGENT_TIMEOUT_MS / 1000)}s. Try breaking the task into smaller steps.`
+          ? `Timed out after ${Math.round(AGENT_TIMEOUT_MS / 1000)}s. Raise AGENT_TIMEOUT_MS in your .env (default is 1800000 = 30 min) and restart, or break the task into smaller steps.`
           : 'Stopped.';
         emitChatEvent({ type: 'assistant_message', chatId, content: msg, source: 'signal' });
         await sendMessage(chatId, msg);
