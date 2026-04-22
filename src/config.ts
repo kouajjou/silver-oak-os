@@ -7,6 +7,11 @@ import { readEnvFile } from './env.js';
 const envConfig = readEnvFile([
   'TELEGRAM_BOT_TOKEN',
   'ALLOWED_CHAT_ID',
+  'MESSENGER_TYPE',
+  'SIGNAL_PHONE_NUMBER',
+  'SIGNAL_RPC_HOST',
+  'SIGNAL_RPC_PORT',
+  'SIGNAL_AUTHORIZED_RECIPIENTS',
   'GROQ_API_KEY',
   'ELEVENLABS_API_KEY',
   'ELEVENLABS_VOICE_ID',
@@ -76,6 +81,29 @@ export const TELEGRAM_BOT_TOKEN =
 // Only respond to this Telegram chat ID. Set this after getting your ID via /chatid.
 export const ALLOWED_CHAT_ID =
   process.env.ALLOWED_CHAT_ID || envConfig.ALLOWED_CHAT_ID || '';
+
+// ── Messenger adapter selection ──────────────────────────────────────
+// Which messenger front-end runs: 'telegram' (default, grammy via bot.ts)
+// or 'signal' (signal-cli JSON-RPC via signal-bot.ts). Picked once at
+// startup in index.ts; the two code paths never run simultaneously.
+export type MessengerType = 'telegram' | 'signal';
+export const MESSENGER_TYPE: MessengerType =
+  ((process.env.MESSENGER_TYPE || envConfig.MESSENGER_TYPE || 'telegram').toLowerCase() as MessengerType);
+
+// ── Signal (alternative messenger via signal-cli) ────────────────────
+export const SIGNAL_PHONE_NUMBER =
+  process.env.SIGNAL_PHONE_NUMBER || envConfig.SIGNAL_PHONE_NUMBER || '';
+export const SIGNAL_RPC_HOST =
+  process.env.SIGNAL_RPC_HOST || envConfig.SIGNAL_RPC_HOST || '127.0.0.1';
+export const SIGNAL_RPC_PORT = parseInt(
+  process.env.SIGNAL_RPC_PORT || envConfig.SIGNAL_RPC_PORT || '7583',
+  10,
+);
+// Comma-separated list of allowed sender numbers. Messages from anyone
+// else get dropped with a single audit entry. Usually just your own number.
+export const SIGNAL_AUTHORIZED_RECIPIENTS = (
+  process.env.SIGNAL_AUTHORIZED_RECIPIENTS || envConfig.SIGNAL_AUTHORIZED_RECIPIENTS || ''
+).split(',').map((s) => s.trim()).filter(Boolean);
 
 export const WHATSAPP_ENABLED =
   (process.env.WHATSAPP_ENABLED || envConfig.WHATSAPP_ENABLED || '').toLowerCase() === 'true';

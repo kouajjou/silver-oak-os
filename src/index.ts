@@ -3,8 +3,9 @@ import path from 'path';
 
 import { loadAgentConfig, listAgentIds, resolveAgentDir, resolveAgentClaudeMd } from './agent-config.js';
 import { createBot } from './bot.js';
+import { createSignalBot, SignalBot } from './signal-bot.js';
 import { checkPendingMigrations } from './migrations.js';
-import { ALLOWED_CHAT_ID, activeBotToken, STORE_DIR, PROJECT_ROOT, CLAUDECLAW_CONFIG, GOOGLE_API_KEY, setAgentOverrides, SECURITY_PIN_HASH, IDLE_LOCK_MINUTES, EMERGENCY_KILL_PHRASE, WARROOM_ENABLED, WARROOM_PORT } from './config.js';
+import { ALLOWED_CHAT_ID, activeBotToken, STORE_DIR, PROJECT_ROOT, CLAUDECLAW_CONFIG, GOOGLE_API_KEY, setAgentOverrides, SECURITY_PIN_HASH, IDLE_LOCK_MINUTES, EMERGENCY_KILL_PHRASE, WARROOM_ENABLED, WARROOM_PORT, MESSENGER_TYPE, SIGNAL_AUTHORIZED_RECIPIENTS, SIGNAL_PHONE_NUMBER } from './config.js';
 import { startDashboard } from './dashboard.js';
 import { initDatabase, cleanupOldMissionTasks, insertAuditLog } from './db.js';
 import { initSecurity, setAuditCallback } from './security.js';
@@ -114,13 +115,22 @@ async function main(): Promise<void> {
     showBanner();
   }
 
-  if (!activeBotToken) {
-    if (AGENT_ID === 'main') {
-      logger.error('Bot token is not set. Run npm run setup to configure it.');
-    } else {
-      logger.error({ agentId: AGENT_ID }, `Configuration for agent "${AGENT_ID}" is broken: bot token not set. Check .env or re-run npm run agent:create.`);
+  // Messenger-specific startup checks. Signal uses signal-cli (no token),
+  // Telegram needs a bot token from @BotFather.
+  if (MESSENGER_TYPE === 'signal') {
+    if (!SIGNAL_PHONE_NUMBER) {
+      logger.error('SIGNAL_PHONE_NUMBER not set. Link signal-cli first, then set it in .env.');
+      process.exit(1);
     }
-    process.exit(1);
+  } else {
+    if (!activeBotToken) {
+      if (AGENT_ID === 'main') {
+        logger.error('Bot token is not set. Run npm run setup to configure it.');
+      } else {
+        logger.error({ agentId: AGENT_ID }, `Configuration for agent "${AGENT_ID}" is broken: bot token not set. Check .env or re-run npm run agent:create.`);
+      }
+      process.exit(1);
+    }
   }
 
   acquireLock();
@@ -177,11 +187,41 @@ async function main(): Promise<void> {
 
   cleanupOldUploads();
 
-  const bot = createBot();
+  // ── Messenger: create either the Telegram bot (grammy) or the Signal bot
+  // (signal-cli JSON-RPC). Both expose a messenger-agnostic `sendToPrimary`
+  // helper used by scheduler, War Room status messages, and OAuth alerts.
+  const useSignal = MESSENGER_TYPE === 'signal';
+  const bot = useSignal ? null : createBot();
+  const signalBot: SignalBot | null = useSignal ? createSignalBot() : null;
 
-  // Dashboard only runs in the main bot process
+  // Recipient for status messages (scheduler output, War Room errors, etc.).
+  // Telegram: ALLOWED_CHAT_ID. Signal: first entry in SIGNAL_AUTHORIZED_RECIPIENTS,
+  // falling back to the daemon's own number (sync-to-self works for testing).
+  const primaryRecipient = useSignal
+    ? (SIGNAL_AUTHORIZED_RECIPIENTS[0] ?? SIGNAL_PHONE_NUMBER)
+    : ALLOWED_CHAT_ID;
+
+  async function sendToPrimary(text: string): Promise<void> {
+    if (!primaryRecipient) return;
+    if (useSignal && signalBot) {
+      await signalBot.sendTo(primaryRecipient, text).catch((err) =>
+        logger.error({ err }, 'Signal status message failed'),
+      );
+    } else if (bot) {
+      const { splitMessage } = await import('./bot.js');
+      for (const chunk of splitMessage(text)) {
+        await bot.api.sendMessage(primaryRecipient, chunk, { parse_mode: 'HTML' }).catch((err) =>
+          logger.error({ err }, 'Telegram status message failed'),
+        );
+      }
+    }
+  }
+
+  // Dashboard only runs in the main bot process. Signal has no bot.api;
+  // pass undefined so the dashboard just skips the "send from dashboard"
+  // feature instead of crashing.
   if (AGENT_ID === 'main') {
-    startDashboard(bot.api);
+    startDashboard(bot?.api);
 
     // War Room voice server (auto-start if enabled, with auto-respawn)
     if (WARROOM_ENABLED) {
@@ -216,9 +256,7 @@ async function main(): Promise<void> {
             + 'pip install -r warroom/requirements.txt\n\n'
             + 'Then restart the bot.';
           logger.error(msg);
-          if (ALLOWED_CHAT_ID) {
-            bot.api.sendMessage(ALLOWED_CHAT_ID, `War Room could not start.\n\n${msg}`).catch(() => {});
-          }
+          void sendToPrimary(`War Room could not start.\n\n${msg}`);
         } else {
         // Dedicated log file for the warroom subprocess
         const warroomLogPath = '/tmp/warroom-debug.log';
@@ -272,9 +310,7 @@ async function main(): Promise<void> {
               respawnAttempts += 1;
               if (respawnAttempts > MAX_CRASH_RESPAWNS) {
                 logger.error(`War Room crashed ${MAX_CRASH_RESPAWNS} times. Giving up. Check /tmp/warroom-debug.log for errors.`);
-                if (ALLOWED_CHAT_ID) {
-                  bot.api.sendMessage(ALLOWED_CHAT_ID, `War Room crashed ${MAX_CRASH_RESPAWNS} times and has been disabled.\n\nCheck /tmp/warroom-debug.log, fix the issue, and restart the bot.`).catch(() => {});
-                }
+                void sendToPrimary(`War Room crashed ${MAX_CRASH_RESPAWNS} times and has been disabled.\n\nCheck /tmp/warroom-debug.log, fix the issue, and restart the bot.`);
                 return;
               }
               delayMs = Math.min(30000, 500 * 2 ** Math.min(respawnAttempts, 6));
@@ -303,63 +339,63 @@ async function main(): Promise<void> {
           ? 'Python venv not found. Run:\n\npython3 -m venv warroom/.venv\nsource warroom/.venv/bin/activate\npip install -r warroom/requirements.txt'
           : 'warroom/server.py not found. Make sure the warroom/ directory exists.';
         logger.warn('War Room enabled but cannot start: %s', hint);
-        if (ALLOWED_CHAT_ID) {
-          bot.api.sendMessage(ALLOWED_CHAT_ID, `War Room is enabled but could not start.\n\n${hint}`).catch(() => {});
-        }
+        void sendToPrimary(`War Room is enabled but could not start.\n\n${hint}`);
       }
     }
   }
 
-  if (ALLOWED_CHAT_ID) {
+  if (primaryRecipient) {
     initScheduler(
       async (text) => {
-        // Split long messages to respect Telegram's 4096 char limit.
-        // The scheduler's splitMessage handles chunking, but the sender
-        // callback is also called directly for status messages which may exceed the limit.
-        const { splitMessage } = await import('./bot.js');
-        for (const chunk of splitMessage(text)) {
-          await bot.api.sendMessage(ALLOWED_CHAT_ID, chunk, { parse_mode: 'HTML' }).catch((err) =>
-            logger.error({ err }, 'Scheduler failed to send message'),
-          );
-        }
+        await sendToPrimary(text);
       },
       AGENT_ID,
     );
 
-    // Proactive OAuth health monitoring — alerts via Telegram before the
-    // Claude CLI token expires. OPT-IN as of 2026-04-10: users were getting
-    // spammed with "Expiring soon" alerts on fresh installs (reported by
-    // Benjamin Elkrieff in Discord), and people who don't monitor their
-    // phone can't re-auth in time anyway. Enable only if you actually want
-    // the alerts by setting OAUTH_HEALTH_ENABLED=true in .env.
+    // Proactive OAuth health monitoring — alerts before the Claude CLI token
+    // expires. OPT-IN (OAUTH_HEALTH_ENABLED=true in .env).
     const oauthHealthEnv = (await import('./env.js')).readEnvFile(['OAUTH_HEALTH_ENABLED']);
     if ((oauthHealthEnv.OAUTH_HEALTH_ENABLED || '').trim().toLowerCase() === 'true') {
       initOAuthHealthCheck(async (text) => {
-        const { splitMessage } = await import('./bot.js');
-        for (const chunk of splitMessage(text)) {
-          await bot.api.sendMessage(ALLOWED_CHAT_ID, chunk, { parse_mode: 'HTML' }).catch((err) =>
-            logger.error({ err }, 'OAuth health alert failed'),
-          );
-        }
+        await sendToPrimary(text);
       });
     } else {
       logger.info('OAuth health check disabled (set OAUTH_HEALTH_ENABLED=true in .env to enable)');
     }
   } else {
-    logger.warn('ALLOWED_CHAT_ID not set — scheduler disabled (no destination for results)');
+    logger.warn('No primary recipient configured — scheduler disabled');
   }
 
   const shutdown = async () => {
     logger.info('Shutting down...');
     setTelegramConnected(false);
     releaseLock();
-    await bot.stop();
+    if (bot) await bot.stop();
+    if (signalBot) await signalBot.stop();
     process.exit(0);
   };
   process.on('SIGINT', () => void shutdown());
   process.on('SIGTERM', () => void shutdown());
 
-  logger.info({ agentId: AGENT_ID }, 'Starting ClaudeClaw...');
+  logger.info({ agentId: AGENT_ID, messenger: MESSENGER_TYPE }, 'Starting ClaudeClaw...');
+
+  if (useSignal && signalBot) {
+    await signalBot.start();
+    setTelegramConnected(true); // reuse the connected flag for dashboard state
+    setBotInfo('signal', `ClaudeClaw (Signal)`);
+    if (AGENT_ID === 'main') {
+      console.log(`\n  ClaudeClaw online via Signal: ${SIGNAL_PHONE_NUMBER}`);
+      if (SIGNAL_AUTHORIZED_RECIPIENTS.length === 0) {
+        console.log('  No SIGNAL_AUTHORIZED_RECIPIENTS set — only sync-to-self messages will be accepted.');
+      }
+      console.log();
+    } else {
+      console.log(`\n  ClaudeClaw agent [${AGENT_ID}] online via Signal\n`);
+    }
+    return;
+  }
+
+  if (!bot) throw new Error('Telegram bot not created and Signal not active — check MESSENGER_TYPE.');
 
   // Clear any existing webhook so polling works cleanly (e.g., if token was
   // previously used with a webhook-based bot or another ClaudeClaw instance).
