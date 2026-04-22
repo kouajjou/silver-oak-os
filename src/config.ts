@@ -20,6 +20,7 @@ const envConfig = readEnvFile([
   'DB_ENCRYPTION_KEY',
   'GOOGLE_API_KEY',
   'AGENT_TIMEOUT_MS',
+  'MISSION_TIMEOUT_MS',
   'AGENT_MAX_TURNS',
   'SECURITY_PIN_HASH',
   'IDLE_LOCK_MINUTES',
@@ -133,6 +134,13 @@ export const TYPING_REFRESH_MS = 4000;
 export const AGENT_TIMEOUT_MS = parseInt(
   process.env.AGENT_TIMEOUT_MS || envConfig.AGENT_TIMEOUT_MS || '900000',
   10,
+);
+
+// Mission task timeout — per-task overrides take priority, this is the global default.
+// Floor of 60 s to prevent misconfiguration.
+export const MISSION_TIMEOUT_MS = Math.max(
+  60_000,
+  parseInt(process.env.MISSION_TIMEOUT_MS || envConfig.MISSION_TIMEOUT_MS || '900000', 10),
 );
 
 // Maximum number of agentic turns (tool-use rounds) per query.

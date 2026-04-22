@@ -612,6 +612,13 @@ function runMigrations(database: Database.Database): void {
     logger.info('Migration: made mission_tasks.assigned_agent nullable');
   }
 
+  // Mission Control: add timeout_ms column for per-task timeout overrides
+  const missionCols2 = database.prepare(`PRAGMA table_info(mission_tasks)`).all() as Array<{ name: string }>;
+  if (!missionCols2.find((c) => c.name === 'timeout_ms')) {
+    database.exec(`ALTER TABLE mission_tasks ADD COLUMN timeout_ms INTEGER`);
+    logger.info('Migration: added timeout_ms to mission_tasks');
+  }
+
   // Live Meetings: add provider column so we can track which platform
   // each session used (pika avatar vs recall voice-only). Default 'pika'
   // for existing rows so historical data keeps the right label.
@@ -1958,6 +1965,7 @@ export interface MissionTask {
   error: string | null;
   created_by: string;
   priority: number;
+  timeout_ms: number | null;
   created_at: number;
   started_at: number | null;
   completed_at: number | null;
@@ -1970,12 +1978,20 @@ export function createMissionTask(
   assignedAgent: string | null = null,
   createdBy = 'dashboard',
   priority = 0,
+  timeoutMs: number | null = null,
 ): void {
   const now = Math.floor(Date.now() / 1000);
   db.prepare(
-    `INSERT INTO mission_tasks (id, title, prompt, assigned_agent, status, created_by, priority, created_at)
-     VALUES (?, ?, ?, ?, 'queued', ?, ?, ?)`,
-  ).run(id, title, prompt, assignedAgent, createdBy, priority, now);
+    `INSERT INTO mission_tasks (id, title, prompt, assigned_agent, status, created_by, priority, timeout_ms, created_at)
+     VALUES (?, ?, ?, ?, 'queued', ?, ?, ?, ?)`,
+  ).run(id, title, prompt, assignedAgent, createdBy, priority, timeoutMs, now);
+}
+
+export function updateMissionTaskTimeout(id: string, timeoutMs: number): boolean {
+  const result = db.prepare(
+    `UPDATE mission_tasks SET timeout_ms = ? WHERE id = ?`,
+  ).run(timeoutMs, id);
+  return result.changes > 0;
 }
 
 export function getUnassignedMissionTasks(): MissionTask[] {

@@ -35,6 +35,7 @@ import {
   deleteMissionTask,
   reassignMissionTask,
   assignMissionTask,
+  updateMissionTaskTimeout,
   getUnassignedMissionTasks,
   getMissionTaskHistory,
   getAuditLog,
@@ -674,12 +675,14 @@ export function startDashboard(botApi?: Api<RawApi>): void {
       prompt?: string;
       assigned_agent?: string;
       priority?: number;
+      timeout_ms?: number;
     }>();
 
     const title = body?.title?.trim();
     const prompt = body?.prompt?.trim();
     const assignedAgent = body?.assigned_agent?.trim() || null;
     const priority = Math.max(0, Math.min(10, body?.priority ?? 0));
+    const timeoutMs = body?.timeout_ms ? Math.max(60_000, body.timeout_ms) : null;
 
     if (!title || title.length > 200) return c.json({ error: 'title required (max 200 chars)' }, 400);
     if (!prompt || prompt.length > 10000) return c.json({ error: 'prompt required (max 10000 chars)' }, 400);
@@ -693,7 +696,7 @@ export function startDashboard(botApi?: Api<RawApi>): void {
     }
 
     const id = crypto.randomBytes(4).toString('hex');
-    createMissionTask(id, title, prompt, assignedAgent, 'dashboard', priority);
+    createMissionTask(id, title, prompt, assignedAgent, 'dashboard', priority, timeoutMs);
 
     const task = getMissionTask(id);
     return c.json({ task }, 201);
@@ -736,7 +739,16 @@ export function startDashboard(botApi?: Api<RawApi>): void {
 
   app.patch('/api/mission/tasks/:id', async (c) => {
     const id = c.req.param('id');
-    const body = await c.req.json<{ assigned_agent?: string }>();
+    const body = await c.req.json<{ assigned_agent?: string; timeout_ms?: number }>();
+
+    if (body?.timeout_ms !== undefined) {
+      const task = getMissionTask(id);
+      if (!task) return c.json({ error: 'Not found' }, 404);
+      const newTimeout = Math.max(60_000, body.timeout_ms);
+      updateMissionTaskTimeout(id, newTimeout);
+      if (!body?.assigned_agent) return c.json({ ok: true, timeout_ms: newTimeout });
+    }
+
     const newAgent = body?.assigned_agent?.trim();
     if (!newAgent) return c.json({ error: 'assigned_agent required' }, 400);
     const validAgents = ['main', ...listAgentIds()];

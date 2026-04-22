@@ -1,6 +1,6 @@
 import { CronExpressionParser } from 'cron-parser';
 
-import { AGENT_ID, ALLOWED_CHAT_ID, agentMcpAllowlist } from './config.js';
+import { AGENT_ID, ALLOWED_CHAT_ID, MISSION_TIMEOUT_MS, agentMcpAllowlist } from './config.js';
 import {
   getDueTasks,
   getSession,
@@ -19,8 +19,8 @@ import { formatForTelegram, splitMessage } from './bot.js';
 
 type Sender = (text: string) => Promise<void>;
 
-/** Max time (ms) a scheduled task can run before being killed. */
-const TASK_TIMEOUT_MS = 10 * 60 * 1000; // 10 minutes
+/** Max time (ms) a scheduled or mission task can run before being killed. */
+const TASK_TIMEOUT_MS = MISSION_TIMEOUT_MS;
 
 let sender: Sender;
 
@@ -95,9 +95,10 @@ async function runDueTasks(): Promise<void> {
         clearTimeout(timeout);
 
         if (result.aborted) {
-          updateTaskAfterRun(task.id, nextRun, 'Timed out after 10 minutes', 'timeout');
-          await sender(`⏱ Task timed out after 10m: "${task.prompt.slice(0, 60)}..." — killed.`);
-          logger.warn({ taskId: task.id }, 'Task timed out');
+          const mins = Math.round(TASK_TIMEOUT_MS / 60000);
+          updateTaskAfterRun(task.id, nextRun, `Timed out after ${mins} minutes`, 'timeout');
+          await sender(`⏱ Task timed out after ${mins}m: "${task.prompt.slice(0, 60)}..." — killed.`);
+          logger.warn({ taskId: task.id, timeoutMs: TASK_TIMEOUT_MS }, 'Task timed out');
           return;
         }
 
@@ -150,15 +151,17 @@ async function runDueMissionTasks(): Promise<void> {
   const chatId = ALLOWED_CHAT_ID || 'mission';
   messageQueue.enqueue(chatId, async () => {
     const abortController = new AbortController();
-    const timeout = setTimeout(() => abortController.abort(), TASK_TIMEOUT_MS);
+    const effectiveTimeout = mission.timeout_ms ?? TASK_TIMEOUT_MS;
+    const timeoutMins = Math.round(effectiveTimeout / 60000);
+    const timeout = setTimeout(() => abortController.abort(), effectiveTimeout);
 
     try {
       const result = await runAgent(mission.prompt, undefined, () => {}, undefined, undefined, abortController, undefined, agentMcpAllowlist);
       clearTimeout(timeout);
 
       if (result.aborted) {
-        completeMissionTask(mission.id, null, 'failed', 'Timed out after 10 minutes');
-        logger.warn({ missionId: mission.id }, 'Mission task timed out');
+        completeMissionTask(mission.id, null, 'failed', `Timed out after ${timeoutMins} minutes`);
+        logger.warn({ missionId: mission.id, timeoutMs: effectiveTimeout }, 'Mission task timed out');
         try {
           await sender('Mission task timed out: "' + mission.title + '"');
         } catch (sendErr) {

@@ -66,6 +66,13 @@ const WARROOM_ENABLED = warroomEnabled;
   .mem-expand.open .mem-preview { display: none; }
   /* Task prompt text */
   .task-prompt { transition: filter 0.2s; cursor: pointer; }
+  .task-title-wrap { position: relative; cursor: default; }
+  #task-popup-float { position: fixed; z-index: 60; background: #1e1e2e; border: 1px solid #333; border-radius: 10px; padding: 10px 14px; box-shadow: 0 8px 24px rgba(0,0,0,0.6); min-width: 200px; display: none; }
+  .timer-row { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+  .timer-bar { flex: 1; height: 6px; background: #2a2a2a; border-radius: 3px; overflow: hidden; }
+  .timer-bar-fill { height: 100%; border-radius: 3px; transition: width 0.3s; }
+  .timer-adj { background: none; border: 1px solid #444; color: #aaa; border-radius: 4px; padding: 1px 6px; font-size: 11px; cursor: pointer; }
+  .timer-adj:hover { border-color: #888; color: #fff; }
   .device-badge { display: inline-block; padding: 2px 8px; border-radius: 6px; font-size: 10px; font-weight: 600; letter-spacing: 0.5px; }
   .device-mobile { background: #1e3a5f; color: #60a5fa; }
   .device-desktop { background: #3b1f5e; color: #c084fc; }
@@ -372,11 +379,21 @@ ${WARROOM_ENABLED ? `<div class="card" style="border:1px solid #1e3a5f">
         <option value="5" selected>Medium</option>
         <option value="10">High</option>
       </select>
+      <select id="mission-timeout" style="background:#1a1a1a;border:1px solid #2a2a2a;border-radius:8px;padding:6px 10px;color:#e0e0e0;font-size:12px;outline:none">
+        <option value="">Timeout: default</option>
+        <option value="300000">5 min</option>
+        <option value="600000">10 min</option>
+        <option value="900000" selected>15 min</option>
+        <option value="1800000">30 min</option>
+        <option value="3600000">60 min</option>
+      </select>
       <button onclick="createMissionTask()" style="flex:1;background:#4f46e5;color:#fff;border:none;border-radius:8px;padding:8px;font-size:13px;font-weight:600;cursor:pointer">Create</button>
     </div>
     <div id="mission-error" class="text-red-400 text-xs mt-2" style="display:none"></div>
   </div>
 </div>
+
+<div id="task-popup-float"></div>
 
 <!-- Agent Detail Modal -->
 <div id="agent-modal-overlay" style="position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:40;opacity:0;pointer-events:none;transition:opacity 0.2s"></div>
@@ -2471,9 +2488,13 @@ function renderMissionCard(t) {
 
   const draggable = t.status === 'queued' ? ' draggable="true" ondragstart="missionDragStart(event)" ondragend="missionDragEnd(event)"' : '';
   const grabStyle = t.status === 'queued' ? 'cursor:grab;' : '';
+  const titleInner = escapeHtml(t.title);
+  const titleHtml = t.status === 'running'
+    ? '<span class="task-title-wrap text-xs font-semibold text-white" data-task-id="' + t.id + '" data-task-started="' + (t.started_at || '') + '" data-task-timeout="' + (t.timeout_ms || '') + '" onmouseenter="showTaskPopup(this)" onmouseleave="hideTaskPopup()" style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + titleInner + '</span>'
+    : '<span class="text-xs font-semibold text-white" style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + titleInner + '</span>';
   return '<div data-mid="' + t.id + '"' + draggable + ' style="background:#1a1a1a;border:1px solid #2a2a2a;border-radius:8px;padding:10px;margin-bottom:8px;' + grabStyle + 'transition:opacity 0.15s">' +
     '<div class="flex items-center justify-between mb-1">' +
-      '<span class="text-xs font-semibold text-white" style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + escapeHtml(t.title) + '</span>' +
+      titleHtml +
       '<span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:' + priorityDot + ';margin-left:6px;flex-shrink:0" title="Priority: ' + t.priority + '"></span>' +
     '</div>' +
     '<div class="flex items-center justify-between">' +
@@ -2644,24 +2665,32 @@ function closeMissionModal() {
   document.getElementById('mission-title').value = '';
   document.getElementById('mission-prompt').value = '';
   document.getElementById('mission-priority').value = '5';
+  document.getElementById('mission-timeout').value = '900000';
   document.getElementById('mission-error').style.display = 'none';
 }
-document.getElementById('mission-overlay').addEventListener('click', closeMissionModal);
+document.addEventListener('DOMContentLoaded', function() {
+  document.getElementById('mission-overlay').addEventListener('click', closeMissionModal);
+});
 
 async function createMissionTask() {
   const title = document.getElementById('mission-title').value.trim();
   const prompt = document.getElementById('mission-prompt').value.trim();
   const priority = parseInt(document.getElementById('mission-priority').value, 10);
+  const timeoutVal = document.getElementById('mission-timeout').value;
+  const timeout_ms = timeoutVal ? parseInt(timeoutVal, 10) : null;
   const errEl = document.getElementById('mission-error');
 
   if (!title) { errEl.textContent = 'Title is required'; errEl.style.display = ''; return; }
   if (!prompt) { errEl.textContent = 'Prompt is required'; errEl.style.display = ''; return; }
 
+  var payload = { title: title, prompt: prompt, priority: priority };
+  if (timeout_ms) payload.timeout_ms = timeout_ms;
+
   try {
     const res = await fetch(BASE + '/api/mission/tasks?token=' + TOKEN, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ title: title, prompt: prompt, priority: priority }),
+      body: JSON.stringify(payload),
     });
     if (!res.ok) {
       const data = await res.json();
@@ -2675,6 +2704,69 @@ async function createMissionTask() {
     errEl.textContent = 'Network error';
     errEl.style.display = '';
   }
+}
+
+// ── Task Timeout Popup ───────────────────────────────────────────────
+
+function fmtMs(ms) {
+  if (ms >= 3600000) return Math.round(ms / 3600000) + 'h';
+  if (ms >= 60000) return Math.round(ms / 60000) + 'm';
+  return Math.round(ms / 1000) + 's';
+}
+
+var popupHideTimer = null;
+function showTaskPopup(el) {
+  clearTimeout(popupHideTimer);
+  var popup = document.getElementById('task-popup-float');
+  var taskId = el.dataset.taskId;
+  var startedAt = parseInt(el.dataset.taskStarted || '0', 10);
+  var timeoutMs = parseInt(el.dataset.taskTimeout || '0', 10) || 900000;
+  var nowSec = Math.floor(Date.now() / 1000);
+  var elapsedMs = startedAt ? (nowSec - startedAt) * 1000 : 0;
+  var pct = Math.min(100, Math.round((elapsedMs / timeoutMs) * 100));
+  var barColor = pct > 80 ? '#ef4444' : pct > 50 ? '#fbbf24' : '#60a5fa';
+
+  popup.innerHTML =
+    '<div class="timer-row">' +
+      '<span class="text-xs text-gray-400">' + fmtMs(elapsedMs) + ' / ' + fmtMs(timeoutMs) + '</span>' +
+    '</div>' +
+    '<div class="timer-bar"><div class="timer-bar-fill" style="width:' + pct + '%;background:' + barColor + '"></div></div>' +
+    '<div class="flex gap-2 mt-2">' +
+      '<button class="timer-adj" onclick="adjustTimeout(\\''+taskId+'\\', 300000)">+5m</button>' +
+      '<button class="timer-adj" onclick="adjustTimeout(\\''+taskId+'\\', 600000)">+10m</button>' +
+      '<button class="timer-adj" onclick="adjustTimeout(\\''+taskId+'\\', 1800000)">+30m</button>' +
+    '</div>';
+
+  var rect = el.getBoundingClientRect();
+  popup.style.top = (rect.bottom + 8) + 'px';
+  popup.style.left = rect.left + 'px';
+  popup.style.display = 'block';
+}
+
+function hideTaskPopup(delay) {
+  popupHideTimer = setTimeout(function() {
+    document.getElementById('task-popup-float').style.display = 'none';
+  }, delay || 300);
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+  var popup = document.getElementById('task-popup-float');
+  if (popup) {
+    popup.addEventListener('mouseenter', function() { clearTimeout(popupHideTimer); });
+    popup.addEventListener('mouseleave', function() { hideTaskPopup(); });
+  }
+});
+
+async function adjustTimeout(taskId, newMs) {
+  try {
+    await fetch(BASE + '/api/mission/tasks/' + taskId + '?token=' + TOKEN, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ timeout_ms: newMs }),
+    });
+    document.getElementById('task-popup-float').style.display = 'none';
+    await loadMissionControl();
+  } catch(e) { console.error('adjustTimeout failed:', e); }
 }
 
 // ── Task History Drawer ──────────────────────────────────────────────
