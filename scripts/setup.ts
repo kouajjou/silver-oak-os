@@ -1169,6 +1169,8 @@ async function main() {
     info('Logs: journalctl --user -u claudeclaw -f');
   }
   console.log();
+  info(`Prefer Signal instead of Telegram? Set ${c.cyan}MESSENGER_TYPE=signal${c.reset} in .env and follow ${c.cyan}docs/messengers/signal.md${c.reset}.`);
+  console.log();
 }
 
 // ── Platform: macOS ──────────────────────────────────────────────────────────
