@@ -3,6 +3,7 @@ import path from 'node:path';
 import { EventEmitter } from 'node:events';
 
 import { AGENT_ID, STORE_DIR } from './config.js';
+import { logger } from './logger.js';
 
 // ── Bot info (set once from onStart, read by dashboard) ─────────────
 
@@ -41,11 +42,17 @@ function persistAgentConnState(fields: Omit<AgentConnState, 'updatedAt'>): void 
     const p = connStatePath();
     let current: Partial<AgentConnState> = {};
     if (fs.existsSync(p)) {
-      try { current = JSON.parse(fs.readFileSync(p, 'utf-8')) as Partial<AgentConnState>; } catch { /* corrupt file */ }
+      try { current = JSON.parse(fs.readFileSync(p, 'utf-8')) as Partial<AgentConnState>; } catch (err) {
+        logger.warn({ err, path: p }, 'agent conn-state file is corrupt, overwriting');
+      }
     }
     const next: AgentConnState = { ...current, ...fields, updatedAt: Date.now() };
     fs.writeFileSync(p, JSON.stringify(next), 'utf-8');
-  } catch { /* non-fatal */ }
+  } catch (err) {
+    // Non-fatal: disk-full or perms issue shouldn't crash a bot, but don't
+    // hide it entirely either — the pill will just go out-of-date.
+    logger.warn({ err, agentId: AGENT_ID }, 'could not persist agent conn-state');
+  }
 }
 
 /**
