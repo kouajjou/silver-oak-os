@@ -102,6 +102,26 @@ describe('scanForSecrets', () => {
 
   // ── Protected env values ───────────────────────────────────────────
 
+  it('detects plaintext occurrence of a protected value', () => {
+    const secret = 'my-super-secret-api-key-12345';
+    const text = `Here is the key: ${secret} -- please don't share.`;
+    const matches = scanForSecrets(text, [secret]);
+    expect(matches).toHaveLength(1);
+    expect(matches[0].type).toBe('env_value');
+    expect(matches[0].position).toBe(text.indexOf(secret));
+    expect(matches[0].length).toBe(secret.length);
+  });
+
+  it('detects plaintext, base64, and url-encoded forms in one pass without double-counting', () => {
+    const secret = 'needs/encoding+chars=here1234567';
+    const encoded = Buffer.from(secret).toString('base64');
+    const urlEncoded = encodeURIComponent(secret);
+    const text = `raw ${secret} b64 ${encoded} url ${urlEncoded}`;
+    const matches = scanForSecrets(text, [secret]);
+    expect(matches).toHaveLength(3);
+    expect(matches.every((m) => m.type === 'env_value')).toBe(true);
+  });
+
   it('detects base64-encoded version of a protected value', () => {
     const secret = 'my-super-secret-api-key-12345';
     const encoded = Buffer.from(secret).toString('base64');

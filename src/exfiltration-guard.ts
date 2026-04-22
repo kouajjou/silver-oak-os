@@ -46,7 +46,7 @@ const GIT_SHA_PREFIX = /(?:commit |tree |parent |object |[0-9a-f]{40}\.\.)/;
  *
  * @param text         The text to scan
  * @param protectedValues  Optional array of sensitive env values to check
- *                         (both base64-encoded and URL-encoded variants)
+ *                         (raw plaintext, base64-encoded, and URL-encoded variants)
  * @returns Array of matches found, empty if clean
  */
 export function scanForSecrets(text: string, protectedValues?: string[]): SecretMatch[] {
@@ -93,21 +93,21 @@ export function scanForSecrets(text: string, protectedValues?: string[]): Secret
     }
   }
 
-  // Check protected env values (base64 and URL-encoded variants)
+  // Check protected env values: raw plaintext, base64, and URL-encoded variants.
+  // Raw plaintext is the most common leak vector (prompt-injection tricking the
+  // model into echoing a secret). The `seen` set deduplicates variants that
+  // collapse to the same string (e.g. URL-encoding a value with no special chars).
   if (protectedValues) {
     for (const value of protectedValues) {
       if (value.length <= 8) continue;
 
       const variants: Array<{ encoded: string; label: string }> = [
+        { encoded: value, label: 'raw' },
         { encoded: Buffer.from(value).toString('base64'), label: 'base64' },
         { encoded: encodeURIComponent(value), label: 'url_encoded' },
       ];
 
-      for (const { encoded, label } of variants) {
-        // Skip if the encoded form is the same as the original (no special chars)
-        // For URL encoding, this means no special chars were encoded
-        if (encoded === value && label === 'url_encoded') continue;
-
+      for (const { encoded } of variants) {
         let idx = text.indexOf(encoded);
         while (idx !== -1) {
           const key = `${idx}:${encoded.length}`;
