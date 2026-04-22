@@ -140,8 +140,10 @@ Create or edit `.claude/settings.json` at the repo root:
 }
 ```
 
-That file is **user-specific** and should stay out of version control; the
-bot's `loadMcpServers()` (`src/agent.ts`) reads it on every agent call.
+That file is **user-specific** and must stay out of version control. The
+repo's `.gitignore` covers `.claude/settings.json` and
+`.claude/settings.local.json` by default — keep it that way. The bot's
+`loadMcpServers()` (`src/agent.ts`) reads it on every agent call.
 
 **Warning:** passing a huge directory tree (e.g. your entire
 `~/Sync/workspaces` with gigabytes of node_modules) to the filesystem

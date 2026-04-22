@@ -59,3 +59,7 @@ warroom/avatars/photoreal-backup/
 CLAUDE.md
 agents/*/agent.yaml
 agents/*/CLAUDE.md
+
+# Local MCP / Claude settings — machine-specific, contains user paths
+.claude/settings.json
+.claude/settings.local.json
