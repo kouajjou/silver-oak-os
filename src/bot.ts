@@ -607,7 +607,7 @@ async function handleMessage(ctx: Context, message: string, forceVoiceReply = fa
     if (result.aborted) {
       setProcessing(chatIdStr, false);
       const msg = result.text === null
-        ? `Timed out after ${Math.round(AGENT_TIMEOUT_MS / 1000)}s. The task may have been too complex or a command got stuck. Try breaking it into smaller steps.`
+        ? `Timed out after ${Math.round(AGENT_TIMEOUT_MS / 1000)}s. Raise AGENT_TIMEOUT_MS in your .env (default is 1800000 = 30 min) and restart, or break the task into smaller steps.`
         : 'Stopped.';
       emitChatEvent({ type: 'assistant_message', chatId: chatIdStr, content: msg, source: 'telegram' });
       await ctx.reply(msg);
