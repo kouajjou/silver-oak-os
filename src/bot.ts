@@ -5,6 +5,7 @@ import os from 'os';
 import { Api, Bot, Context, InputFile, RawApi } from 'grammy';
 
 import { runAgent, runAgentWithRetry, UsageInfo, AgentProgressEvent } from './agent.js';
+import { isAgentRunning } from './agent-create.js';
 import { AgentError } from './errors.js';
 import {
   AGENT_ID,
@@ -1644,22 +1645,14 @@ export function dispatchDashboardChatToAgent(
   // Dead-agent short-circuit. If the target agent's process isn't running,
   // the chat mission will never be claimed. Fail fast instead of waiting
   // out the 10-minute poller.
-  if (targetAgentId !== AGENT_ID) {
-    try {
-      // eslint-disable-next-line @typescript-eslint/no-require-imports
-      const { isAgentRunning } = require('./agent-create.js') as typeof import('./agent-create.js');
-      if (!isAgentRunning(targetAgentId)) {
-        emitChatEvent({
-          type: 'error',
-          chatId: chatIdStr,
-          agentId: targetAgentId,
-          content: `Agent "${targetAgentId}" isn't running. Start it from Mission Control first.`,
-        });
-        return;
-      }
-    } catch (err) {
-      logger.warn({ err, targetAgentId }, 'Dead-agent pre-check failed; falling through to poll timeout');
-    }
+  if (targetAgentId !== AGENT_ID && !isAgentRunning(targetAgentId)) {
+    emitChatEvent({
+      type: 'error',
+      chatId: chatIdStr,
+      agentId: targetAgentId,
+      content: `Agent "${targetAgentId}" isn't running. Start it from Mission Control first.`,
+    });
+    return;
   }
 
   // Per-agent processing indicator. Doesn't touch the global processing

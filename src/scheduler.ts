@@ -281,7 +281,7 @@ async function runDueMissionTasks(): Promise<boolean> {
       }
 
       emitChatEvent({
-        type: 'mission_update' as 'progress',
+        type: 'mission_update',
         chatId: chatScope,
         agentId: schedulerAgentId,
         content: JSON.stringify({

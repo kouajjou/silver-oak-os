@@ -3078,6 +3078,24 @@ function connectChatSSE() {
     showProgress(ev.description);
   });
 
+  // Mission task completion/timeout — refresh the task list. Not routed
+  // through showProgress because the event carries no description.
+  chatSSE.addEventListener('mission_update', function(e) {
+    try {
+      const ev = JSON.parse(e.data);
+      if (typeof loadMissionControl === 'function') loadMissionControl();
+      // If this is a chat-type mission completion, make sure the typing
+      // indicator is cleared — the per-agent processing event will arrive
+      // via the bot.ts poller, but clearing here first avoids flicker.
+      if (ev.content) {
+        try {
+          const payload = JSON.parse(ev.content);
+          if (payload.type === 'chat') hideTyping();
+        } catch { /* non-JSON content, ignore */ }
+      }
+    } catch { /* malformed event, ignore */ }
+  });
+
   chatSSE.addEventListener('error', function(e) {
     // SSE error event
     try {
