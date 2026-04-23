@@ -18,6 +18,7 @@ import {
   activeBotToken,
   agentDefaultModel,
   agentMcpAllowlist,
+  agentSkillsAllowlist,
   agentSystemPrompt,
   TYPING_REFRESH_MS,
   AGENT_TIMEOUT_MS,
@@ -770,10 +771,18 @@ async function handleMessage(ctx: Context, message: string, forceVoiceReply = fa
 /**
  * Auto-discover user-invocable skills from ~/.claude/skills/.
  * Reads SKILL.md frontmatter for name + description when user_invocable: true.
+ *
+ * If `allowlist` is provided (from agent.yaml's skills_allowlist field), only
+ * skills whose normalised name appears in the list are returned. Lets a
+ * team-scoped bot expose a restricted skill surface while the global skills
+ * directory stays intact.
  */
-function discoverSkillCommands(): Array<{ command: string; description: string }> {
+function discoverSkillCommands(allowlist?: string[]): Array<{ command: string; description: string }> {
   const skillsDir = path.join(os.homedir(), '.claude', 'skills');
   const commands: Array<{ command: string; description: string }> = [];
+  const allow = allowlist && allowlist.length > 0
+    ? new Set(allowlist.map((s) => s.toLowerCase()))
+    : null;
 
   let entries: string[];
   try {
@@ -803,6 +812,9 @@ function discoverSkillCommands(): Array<{ command: string; description: string }
       if (!nameMatch) continue;
       const name = nameMatch[1].trim().toLowerCase().replace(/[^a-z0-9_]/g, '');
       if (!name) continue;
+
+      // Honour per-agent allowlist when set
+      if (allow && !allow.has(name)) continue;
 
       // Extract description (truncate to 256 chars for Telegram limit)
       const descMatch = fm.match(/^description:\s*(.+)$/m);
@@ -867,10 +879,13 @@ export function createBot(): Bot {
     { command: 'lock', description: 'Lock session (requires PIN to unlock)' },
     { command: 'status', description: 'Show security status' },
   ];
-  const skillCommands = discoverSkillCommands();
+  const skillCommands = discoverSkillCommands(agentSkillsAllowlist);
   const allCommands = [...builtInCommands, ...skillCommands].slice(0, 100); // Telegram limit: 100 commands
+  // Cache for deterministic slash-command dispatch in the text handler.
+  // Lowercased, no leading slash.
+  const userInvocableSkills = new Set<string>(skillCommands.map((s) => s.command));
   bot.api.setMyCommands(allCommands)
-    .then(() => logger.info({ count: skillCommands.length }, 'Registered %d skill commands with Telegram', skillCommands.length))
+    .then(() => logger.info({ count: skillCommands.length, allowlisted: !!agentSkillsAllowlist }, 'Registered %d skill commands with Telegram', skillCommands.length))
     .catch((err) => logger.warn({ err }, 'Failed to register bot commands with Telegram'));
 
   // /help — list available commands
@@ -1265,8 +1280,32 @@ export function createBot(): Bot {
     const chatIdStr = ctx.chat!.id.toString();
 
     if (text.startsWith('/')) {
-      const cmd = text.split(/[\s@]/)[0].toLowerCase();
-      if (OWN_COMMANDS.has(cmd)) return; // already handled by bot.command() above
+      const firstToken = text.split(/[\s@]/)[0].toLowerCase();
+      if (OWN_COMMANDS.has(firstToken)) return; // already handled by bot.command() above
+
+      // Deterministic skill dispatch: if the slash command matches a
+      // user-invocable skill (optionally filtered by agent.yaml's
+      // skills_allowlist), rewrite the prompt to an explicit Skill-tool
+      // directive instead of hoping the agent loop infers intent.
+      const skillName = firstToken.slice(1).split('@')[0];
+      if (skillName && userInvocableSkills.has(skillName)) {
+        if (!isAuthorised(ctx.chat!.id)) return;
+        if (isLocked()) {
+          if (unlock(text)) {
+            await ctx.reply('Unlocked. Session active.');
+          } else {
+            await ctx.reply('Session locked. Send your PIN to unlock.');
+          }
+          return;
+        }
+        touchActivity();
+        const rawArgs = text.slice(firstToken.length).trim();
+        const directive = rawArgs
+          ? `Invoke the \`${skillName}\` skill now via the Skill tool. Follow its SKILL.md instructions exactly. Do not ask for confirmation. Arguments: ${rawArgs}`
+          : `Invoke the \`${skillName}\` skill now via the Skill tool. Follow its SKILL.md instructions exactly. Do not ask for confirmation.`;
+        messageQueue.enqueue(chatIdStr, () => handleMessage(ctx, directive));
+        return;
+      }
     }
 
     // ── Security: kill phrase + lock check (before any state machines) ──

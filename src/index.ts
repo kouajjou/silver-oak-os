@@ -43,6 +43,7 @@ if (AGENT_ID !== 'main') {
     obsidian: agentConfig.obsidian,
     systemPrompt,
     mcpServers: agentConfig.mcpServers,
+    skillsAllowlist: agentConfig.skillsAllowlist,
   });
   logger.info({ agentId: AGENT_ID, name: agentConfig.name }, 'Running as agent');
 } else {

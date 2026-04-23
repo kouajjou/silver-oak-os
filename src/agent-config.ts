@@ -29,6 +29,11 @@ export interface AgentConfig {
   /** Display name shown in the meeting ("Your Agent wants to join"). Falls
    *  back to the agent's name or id with first letter capitalized. */
   meetBotName?: string;
+  /** Restrict which user-invocable skills this bot exposes as slash
+   *  commands. When set, only these skill names appear in the Telegram
+   *  menu and are dispatchable via /<name>. When absent, the bot sees
+   *  every user_invocable skill under ~/.claude/skills/. */
+  skillsAllowlist?: string[];
 }
 
 /**
@@ -103,6 +108,10 @@ export function loadAgentConfig(agentId: string): AgentConfig {
   const mcpServers = raw['mcp_servers'] as string[] | undefined;
   const meetVoiceId = typeof raw['meet_voice_id'] === 'string' ? (raw['meet_voice_id'] as string) : undefined;
   const meetBotName = typeof raw['meet_bot_name'] === 'string' ? (raw['meet_bot_name'] as string) : undefined;
+  const rawSkills = raw['skills_allowlist'];
+  const skillsAllowlist = Array.isArray(rawSkills)
+    ? (rawSkills as unknown[]).filter((s): s is string => typeof s === 'string').map((s) => s.toLowerCase())
+    : undefined;
 
   return {
     name,
@@ -114,6 +123,7 @@ export function loadAgentConfig(agentId: string): AgentConfig {
     obsidian,
     meetVoiceId,
     meetBotName,
+    skillsAllowlist,
   };
 }
 

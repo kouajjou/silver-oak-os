@@ -56,6 +56,7 @@ export let agentDefaultModel: string | undefined; // from agent.yaml
 export let agentObsidianConfig: { vault: string; folders: string[]; readOnly?: string[] } | undefined;
 export let agentSystemPrompt: string | undefined; // loaded from agents/{id}/CLAUDE.md
 export let agentMcpAllowlist: string[] | undefined; // from agent.yaml mcp_servers
+export let agentSkillsAllowlist: string[] | undefined; // from agent.yaml skills_allowlist
 
 export function setAgentOverrides(opts: {
   agentId: string;
@@ -65,6 +66,7 @@ export function setAgentOverrides(opts: {
   obsidian?: { vault: string; folders: string[]; readOnly?: string[] };
   systemPrompt?: string;
   mcpServers?: string[];
+  skillsAllowlist?: string[];
 }): void {
   AGENT_ID = opts.agentId;
   activeBotToken = opts.botToken;
@@ -73,6 +75,7 @@ export function setAgentOverrides(opts: {
   agentObsidianConfig = opts.obsidian;
   agentSystemPrompt = opts.systemPrompt;
   agentMcpAllowlist = opts.mcpServers;
+  agentSkillsAllowlist = opts.skillsAllowlist;
 }
 
 export const TELEGRAM_BOT_TOKEN =
