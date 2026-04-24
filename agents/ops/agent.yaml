@@ -1,0 +1,6 @@
+name: Marco
+description: Operations — Google Calendar, finance monitoring, Hetzner infra, padel Marbella scheduling
+
+telegram_bot_token_env: OPS_TELEGRAM_TOKEN
+
+model: claude-sonnet-4-6
