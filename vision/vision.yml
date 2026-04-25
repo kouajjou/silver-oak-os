@@ -224,3 +224,52 @@ theme:
   fonts:
     head: "Georgia"
     body: "Calibri"
+
+karim_context:
+  pre_covid: "Geared everything by phone. Zero reading. Human team at the other end. Was content."
+  current_state: "ADHD, dyslexic, voice > text"
+  preferred_mode: "FaceTime virtual with employees"
+  reading_capacity: "minimal — voice and visuals preferred"
+
+app_vision:
+  type: "iPhone/iPad app (web fallback)"
+  primary_metaphor: "Virtual FaceTime with my staff"
+  channels_per_agent: ["voice_call", "facetime", "message", "email", "photo_share"]
+  agents_addressable: ["alex", "sara", "leo", "marco", "nina", "maestro"]
+  sub_agents_silent: true
+  default_languages: ["fr", "es", "en"]
+
+agents_extended:
+  alex:
+    photo_brief: "Man 35-40, lin shirt open collar, coffee in hand, warm light, editorial b&w"
+    voice_id: "TBD ElevenLabs Daniel"
+    voice_persona: "deep, calm, confident"
+  sara:
+    photo_brief: "Woman 30-35, mid-length natural hair, turtleneck, soft smile"
+    voice_id: "TBD ElevenLabs Charlotte"
+    voice_persona: "warm, clear"
+  leo:
+    photo_brief: "Man 28-32, creative look, headphones around neck, simple t-shirt"
+    voice_id: "TBD ElevenLabs Liam"
+    voice_persona: "dynamic, young"
+  marco:
+    photo_brief: "Man 40-45, design glasses, polo, mediterranean look"
+    voice_id: "TBD ElevenLabs Adam"
+    voice_persona: "calm, methodical"
+  nina:
+    photo_brief: "Woman 32-38, intellectual glasses, white blazer, studious posture"
+    voice_id: "TBD ElevenLabs Aria"
+    voice_persona: "precise, articulate"
+  maestro:
+    photo_brief: "Man 35-40, sober hoodie, dev cool look"
+    voice_id: "TBD ElevenLabs Brian"
+    voice_persona: "technical, calm"
+
+minimum_viable_morning:
+  app_downloadable: true
+  alex_login: true
+  voice_in_transcribed: true
+  voice_out_speaks: true
+  text_chat: true
+  agent_photos_visible: true
+  facetime_optional: true
