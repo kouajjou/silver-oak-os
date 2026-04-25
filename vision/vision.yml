@@ -1,9 +1,9 @@
 meta:
-  version: "1.2.0"
+  version: 1.2.0
   updated: '2026-04-25'
   lang_default: en
-  changelog_v1_2: Added infrastructure, costs, core_principle, karim_principles, roadmap_now
-    sections. Updated agent photo briefs to EUROPEAN focus.
+  changelog_v1_2: Added infrastructure, costs, core_principle, karim_principles, roadmap_now sections. Updated agent photo
+    briefs to EUROPEAN focus.
 company:
   name: Silver Oak
   legal: Silver Oak SL
@@ -185,8 +185,7 @@ trajectory:
     body: Inbound interest. No round raised.
 thesis:
   main: Europe doesn't need another funded AI startup.
-  body: It needs one founder, one laptop, one factory that proves sovereign AI can
-    beat Silicon Valley at its own game.
+  body: It needs one founder, one laptop, one factory that proves sovereign AI can beat Silicon Valley at its own game.
   closing: That's what Silver Oak is.
   signature: — Karim Kouajjou · Marbella · 2026
 roadmap:
@@ -257,11 +256,24 @@ theme:
     head: Georgia
     body: Calibri
 karim_context:
-  pre_covid: Geared everything by phone. Zero reading. Human team at the other end.
-    Was content.
+  pre_covid: Geared everything by phone. Zero reading. Human team at the other end. Was content.
   current_state: ADHD, dyslexic, voice > text
   preferred_mode: FaceTime virtual with employees
   reading_capacity: minimal — voice and visuals preferred
+  post_covid_problem: Forced to read emails, screens, Telegram, Slack. Drowning in text. Lost productivity.
+  principles_8:
+  - One thing at a time, never disperse
+  - Validate before invest
+  - Claudette first, Silver Oak OS serves Claudette
+  - Zero technical debt
+  - Karim's time is the biggest cost
+  - Voice > text, visual > reading
+  - Trust workers but verify with Playwright
+  - Never break Claudette while improving Silver Oak OS
+  communication_preference:
+    primary: voice
+    secondary: visual artifacts (deck, doc, link)
+    avoid: long text walls, file lists, generic chatbot replies
 app_vision:
   type: iPhone/iPad app (web fallback)
   primary_metaphor: Virtual FaceTime with my staff
@@ -285,49 +297,54 @@ app_vision:
   - en
 agents_extended:
   alex:
-    photo_brief: Editorial b&w portrait, EUROPEAN man 35-40 (mediterranean, mix franco-spanish-italian
-      Marbella vibe), light linen shirt open collar, holding coffee, warm Mediterranean
-      morning light, neutral cream background, magazine quality NOT generic AI, square
-      1024x1024
+    photo_brief: Editorial b&w portrait, EUROPEAN man 35-40 (mediterranean, mix franco-spanish-italian Marbella vibe), light
+      linen shirt open collar, holding coffee, warm Mediterranean morning light, neutral cream background, magazine quality
+      NOT generic AI, square 1024x1024
     photo_status: CURRENT VERSION TOO INDIAN-LOOKING — need regen with EUROPEAN focus
     voice_id: onwK4e9ZLuTAKqWW03F9
     voice_persona: deep, calm, confident
+    voice_gemini: Charon
+    tts_api_param: agent_id
   sara:
-    photo_brief: Editorial b&w portrait, EUROPEAN woman 30-35 (mediterranean style,
-      soft natural beauty), mid-length natural hair, cream turtleneck, soft genuine
-      smile, warm Mediterranean light, neutral background, magazine quality, square
-      1024x1024
+    photo_brief: Editorial b&w portrait, EUROPEAN woman 30-35 (mediterranean style, soft natural beauty), mid-length natural
+      hair, cream turtleneck, soft genuine smile, warm Mediterranean light, neutral background, magazine quality, square 1024x1024
     photo_status: needs european regen
     voice_id: EXAVITQu4vr4xnSDxMaL
     voice_persona: warm, clear
+    voice_gemini: Aoede
+    tts_api_param: agent_id
   leo:
-    photo_brief: Editorial b&w portrait, creative EUROPEAN man 28-32 (mediterranean
-      look, magazine-cover quality), headphones around neck, simple t-shirt, natural
-      soft light, neutral background, square 1024x1024
+    photo_brief: Editorial b&w portrait, creative EUROPEAN man 28-32 (mediterranean look, magazine-cover quality), headphones
+      around neck, simple t-shirt, natural soft light, neutral background, square 1024x1024
     photo_status: needs european regen
     voice_id: TX3LPaxmHKxFdv7VOQHJ
     voice_persona: dynamic, young
+    voice_gemini: Puck
+    tts_api_param: agent_id
   marco:
-    photo_brief: Editorial b&w portrait, mediterranean EUROPEAN man 40-45 (italian/spanish
-      vibe, distinguished), design glasses, polo shirt, calm composed expression,
-      natural soft light, neutral background, square 1024x1024
+    photo_brief: Editorial b&w portrait, mediterranean EUROPEAN man 40-45 (italian/spanish vibe, distinguished), design glasses,
+      polo shirt, calm composed expression, natural soft light, neutral background, square 1024x1024
     photo_status: needs european regen
     voice_id: pNInz6obpgDQGcFmaJgB
     voice_persona: calm, methodical
+    voice_gemini: Orus
+    tts_api_param: agent_id
   nina:
-    photo_brief: Editorial b&w portrait, intellectual EUROPEAN woman 32-38 (mediterranean
-      style, sharp elegant), glasses, white blazer, studious confident posture, natural
-      soft light, neutral background, square 1024x1024
+    photo_brief: Editorial b&w portrait, intellectual EUROPEAN woman 32-38 (mediterranean style, sharp elegant), glasses,
+      white blazer, studious confident posture, natural soft light, neutral background, square 1024x1024
     photo_status: needs european regen
     voice_id: hpp4J3VqNfWAUOO0d1Us
     voice_persona: precise, articulate
+    voice_gemini: Kore
+    tts_api_param: agent_id
   maestro:
-    photo_brief: Editorial b&w portrait, EUROPEAN man 35-40 (mediterranean developer
-      cool), sober hoodie, dev cool look, natural soft light, neutral background,
-      square 1024x1024
+    photo_brief: Editorial b&w portrait, EUROPEAN man 35-40 (mediterranean developer cool), sober hoodie, dev cool look, natural
+      soft light, neutral background, square 1024x1024
     photo_status: needs european regen
     voice_id: nPczCjzI2devNBz1zQrb
     voice_persona: technical, calm
+    voice_gemini: Fenrir
+    tts_api_param: agent_id
 minimum_viable_morning:
   app_downloadable: true
   alex_login: true
@@ -339,26 +356,67 @@ minimum_viable_morning:
 infrastructure:
   servers:
     claudette_production:
-      role: "Production server for Claudette PRODUCT (Karim's business)"
-      provider: "Hetzner Cloud"
-      type: "CAX41 ARM64"
-      ip: "178.104.24.23"
-      domain: "claudette.silveroak.one"
-      location: "Nuremberg, Germany"
-      status: "LIVE - DO NOT TOUCH"
+      role: Production server for Claudette PRODUCT (Karim's business)
+      provider: Hetzner Cloud
+      type: CAX41 ARM64
+      ip: 178.104.24.23
+      domain: claudette.silveroak.one
+      location: Nuremberg, Germany
+      status: LIVE - DO NOT TOUCH
       cost_monthly_eur: 16
     silver_oak_os_factory:
-      role: "Internal factory server for Silver Oak OS (Karim's productivity tool)"
-      provider: "Hetzner Cloud"
-      type: "CAX21 ARM64 (rescale to CAX41 when needed)"
-      ip: "178.104.255.59"
-      domain: "TBD (will use http://178.104.255.59 for now)"
-      location: "Nuremberg, Germany"
-      status: "LIVE - dev environment for Silver Oak OS"
+      role: Internal factory server for Silver Oak OS (Karim's productivity tool)
+      provider: Hetzner Cloud
+      type: CAX21 ARM64 (rescale to CAX41 when needed)
+      ip: 178.104.255.59
+      domain: https://os.silveroak.one
+      location: Nuremberg, Germany
+      status: LIVE - dev environment for Silver Oak OS
       cost_monthly_eur: 10
-      created_date: "2026-04-25"
-  isolation_rule: "Silver Oak OS and Claudette MUST run on physically separate servers. ZERO cross-server dependency. Failure on one MUST NOT affect the other."
+      created_date: '2026-04-25'
+      url_https: https://os.silveroak.one
+      url_http_fallback: http://178.104.255.59
+      ports:
+        nextjs: 3010
+        caddy_http: 80
+        caddy_https: 443
+        node_exporter: 9100
+  isolation_rule: Silver Oak OS and Claudette MUST run on physically separate servers. ZERO cross-server dependency. Failure
+    on one MUST NOT affect the other.
   total_monthly_cost_eur: 26
+  dns:
+    registrar: GoDaddy
+    ns: ns73/ns74.domaincontrol.com (NOT Hetzner)
+    subdomain_os_silveroak_one: 178.104.255.59
+  https:
+    provider: Caddy v2.11.2 + Let's Encrypt
+    cert_authority: Let's Encrypt E7
+    cert_expiry: '2026-07-24'
+    auto_renewal: true
+    headers:
+    - HSTS max-age=31536000
+    - X-Content-Type-Options nosniff
+    - X-Frame-Options DENY
+    - Referrer-Policy strict-origin
+  vision_sync:
+    source: Claudette /app/produits-saas/factory/silver-oak-os/vision/vision.yml
+    destination: Factory /app/silver-oak-os/vision/vision.yml
+    cron: '*/5 * * * *'
+    method: rsync over SSH key dediee (command-forced read-only)
+    validation: python3 yaml.safe_load avant ecriture
+    backup_policy: _archive/vision.yml.bak.YYYYMMDD-HHMMSS (max 10 conserves)
+    direction: unidirectional Claudette to Factory
+  monitoring:
+    type: cron Telegram alerts
+    cron: '*/5 * * * *'
+    cooldown_min: 15
+    checks:
+    - PM2 silver-oak-os-frontend online
+    - disk /app >85%
+    - Next.js:3010 HTTP 200
+    - Caddy systemd active
+    - /api/chat non 5xx
+    future: Migrate to Prometheus + Grafana when V14 ready
 costs:
   monthly_recurring_eur:
     silver_oak_os_server: 10
@@ -380,15 +438,13 @@ core_principle:
   - Claudette = the product (Karim’s business)
   - Silver Oak OS = the internal factory (Karim’s productivity tool)
   - Silver Oak OS exists to make Karim 10x faster at building Claudette
-  not_a_product: Silver Oak OS is internal-only for now (Phase 1). Phase 3 may consider
-    commercializing it.
+  not_a_product: Silver Oak OS is internal-only for now (Phase 1). Phase 3 may consider commercializing it.
 karim_principles:
 - One thing at a time, never disperse
 - Validate before invest (use web app for 3–4 days before paying iOS app)
 - Claudette first, Silver Oak OS exists to serve Claudette
 - Zero technical debt, no patches, no hacks — clean from day 1
-- Karim’s time is the biggest cost — every decision must save Karim time, not consume
-  it
+- Karim’s time is the biggest cost — every decision must save Karim time, not consume it
 - Voice over text, visuals over reading
 - Trust workers but verify with Playwright
 - Never break Claudette production while improving Silver Oak OS
@@ -405,3 +461,90 @@ roadmap_now:
   next_month:
   - 'Extend team: Marketing, Finance, Legal, Sales, Browser agents'
   - Silver Oak OS actually building Claudette features end-to-end
+version: '1.3'
+last_updated: '2026-04-25T11:50:49Z'
+facetime_virtual:
+  concept: iPhone/iPad app where Karim sees 6 chefs. Click on one. Talk like FaceTime. They reply in voice. When they produce
+    something (deck, email, plan) they share screen + artifact link.
+  primary_front: iOS app (TestFlight first, App Store later)
+  fallback_front: responsive web app https://os.silveroak.one
+  deprecated_telegram: Telegram is now Karim DEV ONLY, never for clients
+  addressable_chefs:
+  - alex
+  - sara
+  - leo
+  - marco
+  - nina
+  - maestro
+  non_addressable: Sub-agents (workers) silently under Maestro. Karim NEVER talks to them.
+  channels_per_chef:
+  - voice_call
+  - facetime_virtual
+  - message
+  - email
+  artifact_sharing:
+    outbound_to_agent: photo, voice memo, screenshot
+    inbound_from_agent: deck, doc, link, html preview
+stack_tech:
+  frontend:
+    framework: Next.js App Router
+    language: TypeScript strict
+    ui: Tailwind CSS
+  deployment:
+    proxy: Caddy v2
+    process_manager: PM2 + ecosystem.config.cjs
+    ssl: Let's Encrypt auto
+  llm_chat:
+    primary: claude-sonnet-4-5-20250929
+    tts_api_param: agentId
+    chat_api_param: agentId
+  tts:
+    primary: Gemini 2.5 Flash TTS (gemini-2.5-flash-preview-tts)
+    primary_api_param: agent_id
+    fallback: OpenAI TTS-1
+    fallback_api_param: agent_id
+    elevenlabs_status: disabled (quota epuise, re-activable)
+    voice_mapping_correct_param: agent_id (NOT agent)
+  stt_planned:
+    primary: Deepgram Nova-3 sub-300ms
+    status: Phase 3 not wired yet
+  voice_war_room_planned:
+    stack: LiveKit + Pipecat + Gemini Live
+    status: Phase 3
+roadmap_phases_status:
+  phase_1_chat:
+    status: DONE 2026-04-25
+    scope: /api/chat Claude Sonnet 4.5 + SoulPrompts 6 agents
+  phase_1bis_tts:
+    status: DONE 2026-04-25
+    scope: /api/tts Gemini 2.5 Flash + OpenAI fallback
+  phase_1_5_infra:
+    status: DONE 2026-04-25
+    scope: Sync vision.yml cron 5min + monitoring Telegram + Beads tickets
+  phase_1_5_https:
+    status: DONE 2026-04-25
+    scope: DNS GoDaddy + Caddy + Let's Encrypt + tests E2E
+    url: https://os.silveroak.one
+  phase_2_photos:
+    status: TODO
+    scope: Regen 6 photos europeennes Marbella via Replicate Flux 1.1 Pro Ultra
+    blocker: REPLICATE_API_TOKEN manquant
+  phase_3_voice:
+    status: TODO
+    scope: LiveKit + Deepgram STT + Pipecat + Gemini Live
+  phase_4_ios:
+    status: TODO
+    scope: TestFlight app (PWA en attendant)
+    deadline: WWDC juin 2026
+  phase_5_facetime_animation:
+    status: TODO
+    scope: HeyGen/D-ID animation quand agent parle
+    priority: lowest
+sop_rules:
+  R7: Audit avant build
+  R11: YAGNI
+  R12: HITL si diff >500 LOC ou cout >1$
+  R30: Telegram sendDocument rapport obligatoire
+  R36: Poll worker 60s, KILL si bloque >5min, jamais TASK_DONE si BUSY
+  NO_SELF_CODING: Maestro dispatche, ne code jamais lui-meme
+  NO_TOUCHING_CLAUDETTE: Silver Oak OS ne modifie jamais Claudette PROD (178.104.24.23)
