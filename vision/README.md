@@ -68,3 +68,9 @@ git log --oneline vision/vision.yml
 - `build:pdf`, `build:onepager`, `build:social`
 - Mode trilingue FR / ES / EN
 - Pipeline auto via Telegram voice
+
+## RÈGLE VERSIONING (garde-fou)
+
+**Toute modification de vision.yml DOIT bumper meta.version + ajouter changelog_v1_X. Pas de drift toléré.**
+
+Voir docs/adr/ADR-001-factory-decoupling.md pour contexte.
