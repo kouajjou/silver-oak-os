@@ -1,9 +1,13 @@
 meta:
-  version: 1.2.0
+  version: '1.5'
   updated: '2026-04-25'
   lang_default: en
-  changelog_v1_2: Added infrastructure, costs, core_principle, karim_principles, roadmap_now sections. Updated agent photo
-    briefs to EUROPEAN focus.
+  changelog_v1_2: Added infrastructure, costs, core_principle, karim_principles, roadmap_now sections. Updated agent photo briefs to EUROPEAN focus.
+  changelog_v1_5: 'Migration Factory Claudette->Factory server (M1-M7). Point de non-retour franchi 2026-04-25 17:00 UTC. Phases: M1 audit (244 fichiers manquants), M1.5 git cleanup (HEAD c3d4551), M2 backup
+    53MB SHA256 verified double redondance, M3 prep Factory crons OFF snapshot rollback 30s, M4 rsync 244 fichiers + 10 .env + 4 stores SQLite Pass 2 idempotent, M5 validation runtime tsc 0 erreurs 6/6
+    agents OK TTS 154KB, M6 inversion source verite Factory standalone, Phase G monitoring 30 min ALL GREEN, M7 archive _DO_NOT_DELETE_BEFORE_20260525. Source verite vision.yml: Factory directement (sync
+    Claudette->Factory supprime). Backup: /app/_archive/factory-pre-migration-20260425_141322.tar.gz (53MB sha256 882b06ce verified). Architecture: Factory standalone usine, Claudette = produit business
+    uniquement.'
 company:
   name: Silver Oak
   legal: Silver Oak SL
@@ -297,9 +301,8 @@ app_vision:
   - en
 agents_extended:
   alex:
-    photo_brief: Editorial b&w portrait, EUROPEAN man 35-40 (mediterranean, mix franco-spanish-italian Marbella vibe), light
-      linen shirt open collar, holding coffee, warm Mediterranean morning light, neutral cream background, magazine quality
-      NOT generic AI, square 1024x1024
+    photo_brief: Editorial b&w portrait, EUROPEAN man 35-40 (mediterranean, mix franco-spanish-italian Marbella vibe), light linen shirt open collar, holding coffee, warm Mediterranean morning light, neutral
+      cream background, magazine quality NOT generic AI, square 1024x1024
     photo_status: LIVE — mediterranean portrait generated
     voice_id: onwK4e9ZLuTAKqWW03F9
     voice_persona: deep, calm, confident
@@ -313,8 +316,8 @@ agents_extended:
     photo_model: imagen-4.0-ultra-generate-001
     photo_generated_at: '2026-04-25T12:04:00Z'
   sara:
-    photo_brief: Editorial b&w portrait, EUROPEAN woman 30-35 (mediterranean style, soft natural beauty), mid-length natural
-      hair, cream turtleneck, soft genuine smile, warm Mediterranean light, neutral background, magazine quality, square 1024x1024
+    photo_brief: Editorial b&w portrait, EUROPEAN woman 30-35 (mediterranean style, soft natural beauty), mid-length natural hair, cream turtleneck, soft genuine smile, warm Mediterranean light, neutral
+      background, magazine quality, square 1024x1024
     photo_status: LIVE — mediterranean portrait generated
     voice_id: EXAVITQu4vr4xnSDxMaL
     voice_persona: warm, clear
@@ -328,8 +331,8 @@ agents_extended:
     photo_model: imagen-4.0-ultra-generate-001
     photo_generated_at: '2026-04-25T12:04:00Z'
   leo:
-    photo_brief: Editorial b&w portrait, creative EUROPEAN man 28-32 (mediterranean look, magazine-cover quality), headphones
-      around neck, simple t-shirt, natural soft light, neutral background, square 1024x1024
+    photo_brief: Editorial b&w portrait, creative EUROPEAN man 28-32 (mediterranean look, magazine-cover quality), headphones around neck, simple t-shirt, natural soft light, neutral background, square
+      1024x1024
     photo_status: LIVE — mediterranean portrait generated
     voice_id: TX3LPaxmHKxFdv7VOQHJ
     voice_persona: dynamic, young
@@ -343,8 +346,8 @@ agents_extended:
     photo_model: imagen-4.0-ultra-generate-001
     photo_generated_at: '2026-04-25T12:04:00Z'
   marco:
-    photo_brief: Editorial b&w portrait, mediterranean EUROPEAN man 40-45 (italian/spanish vibe, distinguished), design glasses,
-      polo shirt, calm composed expression, natural soft light, neutral background, square 1024x1024
+    photo_brief: Editorial b&w portrait, mediterranean EUROPEAN man 40-45 (italian/spanish vibe, distinguished), design glasses, polo shirt, calm composed expression, natural soft light, neutral background,
+      square 1024x1024
     photo_status: LIVE — mediterranean portrait generated
     voice_id: pNInz6obpgDQGcFmaJgB
     voice_persona: calm, methodical
@@ -358,8 +361,8 @@ agents_extended:
     photo_model: imagen-4.0-ultra-generate-001
     photo_generated_at: '2026-04-25T12:04:00Z'
   nina:
-    photo_brief: Editorial b&w portrait, intellectual EUROPEAN woman 32-38 (mediterranean style, sharp elegant), glasses,
-      white blazer, studious confident posture, natural soft light, neutral background, square 1024x1024
+    photo_brief: Editorial b&w portrait, intellectual EUROPEAN woman 32-38 (mediterranean style, sharp elegant), glasses, white blazer, studious confident posture, natural soft light, neutral background,
+      square 1024x1024
     photo_status: LIVE — mediterranean portrait generated
     voice_id: hpp4J3VqNfWAUOO0d1Us
     voice_persona: precise, articulate
@@ -373,8 +376,7 @@ agents_extended:
     photo_model: imagen-4.0-ultra-generate-001
     photo_generated_at: '2026-04-25T12:04:00Z'
   maestro:
-    photo_brief: Editorial b&w portrait, EUROPEAN man 35-40 (mediterranean developer cool), sober hoodie, dev cool look, natural
-      soft light, neutral background, square 1024x1024
+    photo_brief: Editorial b&w portrait, EUROPEAN man 35-40 (mediterranean developer cool), sober hoodie, dev cool look, natural soft light, neutral background, square 1024x1024
     photo_status: LIVE — mediterranean portrait generated
     voice_id: nPczCjzI2devNBz1zQrb
     voice_persona: technical, calm
@@ -423,8 +425,7 @@ infrastructure:
         caddy_http: 80
         caddy_https: 443
         node_exporter: 9100
-  isolation_rule: Silver Oak OS and Claudette MUST run on physically separate servers. ZERO cross-server dependency. Failure
-    on one MUST NOT affect the other.
+  isolation_rule: Silver Oak OS and Claudette MUST run on physically separate servers. ZERO cross-server dependency. Failure on one MUST NOT affect the other.
   total_monthly_cost_eur: 26
   dns:
     registrar: GoDaddy
@@ -503,11 +504,10 @@ roadmap_now:
   next_month:
   - 'Extend team: Marketing, Finance, Legal, Sales, Browser agents'
   - Silver Oak OS actually building Claudette features end-to-end
-version: '1.4'
+version: '1.5'
 last_updated: '2026-04-25T12:07:36Z'
 facetime_virtual:
-  concept: iPhone/iPad app where Karim sees 6 chefs. Click on one. Talk like FaceTime. They reply in voice. When they produce
-    something (deck, email, plan) they share screen + artifact link.
+  concept: iPhone/iPad app where Karim sees 6 chefs. Click on one. Talk like FaceTime. They reply in voice. When they produce something (deck, email, plan) they share screen + artifact link.
   primary_front: iOS app (TestFlight first, App Store later)
   fallback_front: responsive web app https://os.silveroak.one
   deprecated_telegram: Telegram is now Karim DEV ONLY, never for clients
@@ -606,8 +606,8 @@ api_conventions:
   param_format: camelCase
   agent_param: agentId
   deprecated_aliases:
-    - agent_id (snake_case, /api/tts) — until 2026-05-25
-    - agent (/api/chat) — until 2026-05-25
+  - agent_id (snake_case, /api/tts) — until 2026-05-25
+  - agent (/api/chat) — until 2026-05-25
   deprecation_header: X-Deprecated-Param-Format
   deprecation_warning: logged server-side via console.warn
   migration_deadline: '2026-05-25'
