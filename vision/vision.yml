@@ -300,51 +300,81 @@ agents_extended:
     photo_brief: Editorial b&w portrait, EUROPEAN man 35-40 (mediterranean, mix franco-spanish-italian Marbella vibe), light
       linen shirt open collar, holding coffee, warm Mediterranean morning light, neutral cream background, magazine quality
       NOT generic AI, square 1024x1024
-    photo_status: CURRENT VERSION TOO INDIAN-LOOKING — need regen with EUROPEAN focus
+    photo_status: LIVE — mediterranean portrait generated
     voice_id: onwK4e9ZLuTAKqWW03F9
     voice_persona: deep, calm, confident
     voice_gemini: Charon
     tts_api_param: agent_id
+    photo_url: /agents/alex.jpg
+    photo_url_https: https://os.silveroak.one/agents/alex.jpg
+    photo_bank_v2: /agents/_bank/alex_v2.jpg
+    photo_model: imagen-4.0-ultra-generate-001
+    photo_generated_at: '2026-04-25T12:04:00Z'
   sara:
     photo_brief: Editorial b&w portrait, EUROPEAN woman 30-35 (mediterranean style, soft natural beauty), mid-length natural
       hair, cream turtleneck, soft genuine smile, warm Mediterranean light, neutral background, magazine quality, square 1024x1024
-    photo_status: needs european regen
+    photo_status: LIVE — mediterranean portrait generated
     voice_id: EXAVITQu4vr4xnSDxMaL
     voice_persona: warm, clear
     voice_gemini: Aoede
     tts_api_param: agent_id
+    photo_url: /agents/sara.jpg
+    photo_url_https: https://os.silveroak.one/agents/sara.jpg
+    photo_bank_v2: /agents/_bank/sara_v2.jpg
+    photo_model: imagen-4.0-ultra-generate-001
+    photo_generated_at: '2026-04-25T12:04:00Z'
   leo:
     photo_brief: Editorial b&w portrait, creative EUROPEAN man 28-32 (mediterranean look, magazine-cover quality), headphones
       around neck, simple t-shirt, natural soft light, neutral background, square 1024x1024
-    photo_status: needs european regen
+    photo_status: LIVE — mediterranean portrait generated
     voice_id: TX3LPaxmHKxFdv7VOQHJ
     voice_persona: dynamic, young
     voice_gemini: Puck
     tts_api_param: agent_id
+    photo_url: /agents/leo.jpg
+    photo_url_https: https://os.silveroak.one/agents/leo.jpg
+    photo_bank_v2: /agents/_bank/leo_v2.jpg
+    photo_model: imagen-4.0-ultra-generate-001
+    photo_generated_at: '2026-04-25T12:04:00Z'
   marco:
     photo_brief: Editorial b&w portrait, mediterranean EUROPEAN man 40-45 (italian/spanish vibe, distinguished), design glasses,
       polo shirt, calm composed expression, natural soft light, neutral background, square 1024x1024
-    photo_status: needs european regen
+    photo_status: LIVE — mediterranean portrait generated
     voice_id: pNInz6obpgDQGcFmaJgB
     voice_persona: calm, methodical
     voice_gemini: Orus
     tts_api_param: agent_id
+    photo_url: /agents/marco.jpg
+    photo_url_https: https://os.silveroak.one/agents/marco.jpg
+    photo_bank_v2: /agents/_bank/marco_v2.jpg
+    photo_model: imagen-4.0-ultra-generate-001
+    photo_generated_at: '2026-04-25T12:04:00Z'
   nina:
     photo_brief: Editorial b&w portrait, intellectual EUROPEAN woman 32-38 (mediterranean style, sharp elegant), glasses,
       white blazer, studious confident posture, natural soft light, neutral background, square 1024x1024
-    photo_status: needs european regen
+    photo_status: LIVE — mediterranean portrait generated
     voice_id: hpp4J3VqNfWAUOO0d1Us
     voice_persona: precise, articulate
     voice_gemini: Kore
     tts_api_param: agent_id
+    photo_url: /agents/nina.jpg
+    photo_url_https: https://os.silveroak.one/agents/nina.jpg
+    photo_bank_v2: /agents/_bank/nina_v2.jpg
+    photo_model: imagen-4.0-ultra-generate-001
+    photo_generated_at: '2026-04-25T12:04:00Z'
   maestro:
     photo_brief: Editorial b&w portrait, EUROPEAN man 35-40 (mediterranean developer cool), sober hoodie, dev cool look, natural
       soft light, neutral background, square 1024x1024
-    photo_status: needs european regen
+    photo_status: LIVE — mediterranean portrait generated
     voice_id: nPczCjzI2devNBz1zQrb
     voice_persona: technical, calm
     voice_gemini: Fenrir
     tts_api_param: agent_id
+    photo_url: /agents/maestro.jpg
+    photo_url_https: https://os.silveroak.one/agents/maestro.jpg
+    photo_bank_v2: /agents/_bank/maestro_v2.jpg
+    photo_model: imagen-4.0-ultra-generate-001
+    photo_generated_at: '2026-04-25T12:04:00Z'
 minimum_viable_morning:
   app_downloadable: true
   alex_login: true
@@ -461,8 +491,8 @@ roadmap_now:
   next_month:
   - 'Extend team: Marketing, Finance, Legal, Sales, Browser agents'
   - Silver Oak OS actually building Claudette features end-to-end
-version: '1.3'
-last_updated: '2026-04-25T11:50:49Z'
+version: '1.4'
+last_updated: '2026-04-25T12:07:36Z'
 facetime_virtual:
   concept: iPhone/iPad app where Karim sees 6 chefs. Click on one. Talk like FaceTime. They reply in voice. When they produce
     something (deck, email, plan) they share screen + artifact link.
@@ -548,3 +578,15 @@ sop_rules:
   R36: Poll worker 60s, KILL si bloque >5min, jamais TASK_DONE si BUSY
   NO_SELF_CODING: Maestro dispatche, ne code jamais lui-meme
   NO_TOUCHING_CLAUDETTE: Silver Oak OS ne modifie jamais Claudette PROD (178.104.24.23)
+agents_bank:
+  description: Photos reserve pour AgentFactory — nouveaux agents crees a la volee
+  path: /app/silver-oak-os/public/agents/_bank/
+  count: 6
+  reusable_for: Futurs agents staff, sub-agents Maestro, variantes
+  files:
+  - alex_v2.jpg
+  - sara_v2.jpg
+  - leo_v2.jpg
+  - marco_v2.jpg
+  - nina_v2.jpg
+  - maestro_v2.jpg
