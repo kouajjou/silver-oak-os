@@ -6,7 +6,8 @@ interface HistoryItem {
 }
 
 interface ChatRequest {
-  agentId: string;
+  agentId?: string;
+  agent?: string;    // deprecated alias for agentId (until 2026-05-25)
   message: string;
   history?: HistoryItem[];
 }
@@ -171,21 +172,27 @@ async function callClaude(agentId: string, message: string, history: HistoryItem
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json() as ChatRequest;
-    const { agentId, message, history = [] } = body;
+    const { message, history = [] } = body;
 
-    if (!agentId || !message?.trim()) {
+    // Backward compat: accept agent (deprecated) OR agentId (preferred)
+    const resolvedAgentId = body.agentId ?? body.agent;
+    if (body.agent && !body.agentId) {
+      console.warn('[chat] DEPRECATED param agent used — migrate to agentId before 2026-05-25');
+    }
+
+    if (!resolvedAgentId || !message?.trim()) {
       return NextResponse.json({ error: 'agentId and message are required' }, { status: 400 });
     }
 
     // 1. Try real Claude Sonnet
-    const claudeReply = await callClaude(agentId, message, history);
+    const claudeReply = await callClaude(resolvedAgentId, message, history);
     if (claudeReply) {
       return NextResponse.json({ reply: claudeReply, source: 'claude' });
     }
 
     // 2. Fallback: MVP hardcoded (graceful degradation)
     await new Promise((r) => setTimeout(r, 400 + Math.random() * 400));
-    const reply = getRandomResponse(agentId);
+    const reply = getRandomResponse(resolvedAgentId);
     return NextResponse.json({ reply, source: 'mvp' });
   } catch (e) {
     return NextResponse.json({ error: String(e) }, { status: 500 });

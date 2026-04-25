@@ -10,12 +10,12 @@ const VOICE_MAP: Record<string, { gemini: string; openai: string }> = {
   maestro: { gemini: 'Fenrir', openai: 'alloy' },
 };
 
-const VALID_AGENTS = Object.keys(VOICE_MAP);
 const MAX_TEXT_LEN = 500;
 
 interface TtsRequest {
   text?: string;
-  agent_id?: string;
+  agentId?: string;      // camelCase — preferred
+  agent_id?: string;     // snake_case — deprecated, use agentId (until 2026-05-25)
   voice_id?: string;
 }
 
@@ -133,8 +133,20 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const agentKey = (body.agent_id ?? '').toLowerCase();
+    // Backward compat: accept agent_id (deprecated) OR agentId (preferred)
+    const usedDeprecatedParam = !!(body.agent_id && !body.agentId);
+    const rawAgentId = body.agentId ?? body.agent_id;
+    if (usedDeprecatedParam) {
+      console.warn('[tts] DEPRECATED param agent_id used — migrate to agentId before 2026-05-25');
+    }
+
+    const agentKey = (rawAgentId ?? '').toLowerCase();
     const voices = VOICE_MAP[agentKey] ?? VOICE_MAP.alex;
+
+    // Build deprecation headers if needed
+    const deprecationHeaders: Record<string, string> = usedDeprecatedParam
+      ? { 'X-Deprecated-Param-Format': 'agent_id is deprecated; use agentId (until 2026-05-25)' }
+      : {};
 
     // Try Gemini TTS first
     const geminiAudio = await ttsGemini(rawText, voices.gemini);
@@ -147,6 +159,7 @@ export async function POST(req: NextRequest) {
           'X-TTS-Provider': 'gemini',
           'X-TTS-Voice': voices.gemini,
           'Cache-Control': 'public, max-age=86400',
+          ...deprecationHeaders,
         },
       });
     }
@@ -162,6 +175,7 @@ export async function POST(req: NextRequest) {
           'X-TTS-Provider': 'openai',
           'X-TTS-Voice': voices.openai,
           'Cache-Control': 'public, max-age=86400',
+          ...deprecationHeaders,
         },
       });
     }
@@ -173,7 +187,7 @@ export async function POST(req: NextRequest) {
         error: 'TTS unavailable',
         details: { gemini: !geminiAudio ? 'failed' : 'empty', openai: !openaiAudio ? 'failed' : 'empty' },
       },
-      { status: 503 }
+      { status: 503, headers: deprecationHeaders }
     );
   } catch (e) {
     return NextResponse.json({ error: String(e) }, { status: 500 });
