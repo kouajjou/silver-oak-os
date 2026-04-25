@@ -4,3 +4,6 @@ description: Chief of Staff — primary interface for Karim, triage and delegati
 telegram_bot_token_env: TELEGRAM_BOT_TOKEN
 
 model: claude-sonnet-4-6
+
+meet_voice_id: "EXAVITQu4vr4xnSDxMaL"
+meet_bot_name: "Alex"
