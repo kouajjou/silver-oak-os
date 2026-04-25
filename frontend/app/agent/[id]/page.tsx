@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { useParams, useSearchParams, useRouter } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { getAgent } from '@/lib/agents';
 import VoiceInput from '@/components/VoiceInput';
@@ -12,11 +12,15 @@ interface Message {
   content: string;
   timestamp: Date;
   audioUrl?: string;
+  // Attribution fields (populated from /api/chat response)
+  agentId?: string;
+  agentName?: string;
+  delegationChain?: string[];
+  delegated?: boolean;
 }
 
 export default function AgentPage() {
   const params = useParams();
-  const searchParams = useSearchParams();
   const router = useRouter();
   const agentId = typeof params.id === 'string' ? params.id : '';
   const agent = getAgent(agentId);
@@ -39,6 +43,10 @@ export default function AgentPage() {
         role: 'agent',
         content: agent.greeting,
         timestamp: new Date(),
+        agentId: agent.id,
+        agentName: agent.name,
+        delegationChain: [agent.id],
+        delegated: false,
       },
     ]);
   }, [agent]);
@@ -48,66 +56,7 @@ export default function AgentPage() {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  const sendMessage = useCallback(
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    async (text: string) => {
-      if (!text.trim() || isSending || !agent) return;
-
-      const userMsg: Message = {
-        id: `user-${Date.now()}`,
-        role: 'user',
-        content: text.trim(),
-        timestamp: new Date(),
-      };
-      setMessages((prev) => [...prev, userMsg]);
-      setInput('');
-      setIsSending(true);
-
-      try {
-        const res = await fetch('/api/chat', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            agentId: agent.id,
-            message: text.trim(),
-            history: messages.slice(-10).map((m) => ({
-              role: m.role,
-              content: m.content,
-            })),
-          }),
-        });
-
-        const data = await res.json() as { reply?: string; error?: string };
-        const reply = data.reply || "Je réfléchis à votre demande. Veuillez patienter.";
-
-        const agentMsg: Message = {
-          id: `agent-${Date.now()}`,
-          role: 'agent',
-          content: reply,
-          timestamp: new Date(),
-        };
-        setMessages((prev) => [...prev, agentMsg]);
-
-        // Auto-play TTS if enabled
-        if (ttsEnabled) {
-          await playTTS(agentMsg.id, reply);
-        }
-      } catch {
-        const errMsg: Message = {
-          id: `err-${Date.now()}`,
-          role: 'agent',
-          content: "Désolé, une erreur s'est produite. Veuillez réessayer.",
-          timestamp: new Date(),
-        };
-        setMessages((prev) => [...prev, errMsg]);
-      } finally {
-        setIsSending(false);
-      }
-    },
-    [agent, isSending, messages, ttsEnabled]
-  );
-
-  const playTTS = async (msgId: string, text: string) => {
+  const playTTS = useCallback(async (msgId: string, text: string) => {
     if (!agent) return;
     setIsTTSPlaying(msgId);
     try {
@@ -138,11 +87,80 @@ export default function AgentPage() {
     } catch {
       setIsTTSPlaying(null);
     }
-  };
+  }, [agent]);
+
+  const sendMessage = useCallback(
+    async (text: string) => {
+      if (!text.trim() || isSending || !agent) return;
+
+      const userMsg: Message = {
+        id: `user-${Date.now()}`,
+        role: 'user',
+        content: text.trim(),
+        timestamp: new Date(),
+      };
+      setMessages((prev) => [...prev, userMsg]);
+      setInput('');
+      setIsSending(true);
+
+      try {
+        const res = await fetch('/api/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            agentId: agent.id,
+            message: text.trim(),
+            history: messages.slice(-10).map((m) => ({
+              role: m.role,
+              content: m.content,
+            })),
+          }),
+        });
+
+        const data = await res.json() as {
+          reply?: string;
+          error?: string;
+          agent_id?: string;
+          agent_name?: string;
+          delegation_chain?: string[];
+          delegated?: boolean;
+        };
+        const reply = data.reply ?? "Je réfléchis à votre demande. Veuillez patienter.";
+
+        const agentMsg: Message = {
+          id: `agent-${Date.now()}`,
+          role: 'agent',
+          content: reply,
+          timestamp: new Date(),
+          // Attribution fields from API response
+          agentId: data.agent_id ?? agent.id,
+          agentName: data.agent_name ?? agent.name,
+          delegationChain: data.delegation_chain ?? [agent.id],
+          delegated: data.delegated ?? false,
+        };
+        setMessages((prev) => [...prev, agentMsg]);
+
+        // Auto-play TTS if enabled
+        if (ttsEnabled) {
+          await playTTS(agentMsg.id, reply);
+        }
+      } catch {
+        const errMsg: Message = {
+          id: `err-${Date.now()}`,
+          role: 'agent',
+          content: "Désolé, une erreur s'est produite. Veuillez réessayer.",
+          timestamp: new Date(),
+        };
+        setMessages((prev) => [...prev, errMsg]);
+      } finally {
+        setIsSending(false);
+      }
+    },
+    [agent, isSending, messages, ttsEnabled, playTTS]
+  );
 
   const handleVoiceResult = (transcript: string) => {
     setInput(transcript);
-    // Auto-send voice input
     sendMessage(transcript);
   };
 
@@ -207,9 +225,7 @@ export default function AgentPage() {
           <button
             onClick={() => setTtsEnabled((v) => !v)}
             className={`p-2 rounded-full transition-colors ${
-              ttsEnabled
-                ? 'text-so-gold bg-so-gold/10'
-                : 'text-so-muted'
+              ttsEnabled ? 'text-so-gold bg-so-gold/10' : 'text-so-muted'
             }`}
             title={ttsEnabled ? 'Désactiver la voix' : 'Activer la voix'}
           >
@@ -308,6 +324,15 @@ export default function AgentPage() {
   );
 }
 
+// Renders "Alex → Marco" from a delegation_chain of agent IDs
+function formatDelegationLabel(chain: string[]): string {
+  const NAMES: Record<string, string> = {
+    alex: 'Alex', sara: 'Sara', leo: 'Léo',
+    marco: 'Marco', nina: 'Nina', maestro: 'Maestro',
+  };
+  return chain.map((id) => NAMES[id] ?? id).join(' → ');
+}
+
 function MessageBubble({
   message,
   agentName,
@@ -334,6 +359,12 @@ function MessageBubble({
     );
   }
 
+  // Show delegation label only when a real multi-agent chain occurred
+  const showDelegation =
+    message.delegated === true &&
+    message.delegationChain !== undefined &&
+    message.delegationChain.length > 1;
+
   return (
     <div className="flex gap-3 items-end">
       {/* Agent avatar */}
@@ -342,6 +373,13 @@ function MessageBubble({
       </div>
 
       <div className="max-w-[80%]">
+        {/* Delegation chain label — shown before bubble when delegated */}
+        {showDelegation && message.delegationChain && (
+          <p className="text-[10px] italic text-so-gold/60 mb-1 pl-1">
+            {formatDelegationLabel(message.delegationChain)} :
+          </p>
+        )}
+
         <div className="bg-so-card border border-so-border rounded-2xl rounded-bl-sm px-4 py-3 relative group">
           <p className="text-so-text text-sm leading-relaxed whitespace-pre-wrap">{message.content}</p>
 

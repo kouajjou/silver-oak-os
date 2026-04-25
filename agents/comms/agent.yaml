@@ -4,3 +4,6 @@ description: Communications — Gmail karim@silveroak.one, email drafts, outreac
 telegram_bot_token_env: COMMS_TELEGRAM_TOKEN
 
 model: claude-sonnet-4-6
+
+meet_voice_id: "21m00Tcm4TlvDq8ikWAM"
+meet_bot_name: "Sara"
