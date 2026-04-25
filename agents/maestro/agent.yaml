@@ -1,5 +1,5 @@
 name: Maestro
-description: CTO interne Silver Oak OS — orchestrates 18 workers via MCP Bridge (localhost:3003)
+description: CTO interne Silver Oak OS — orchestrates 18 workers via MCP Bridge (mcp.silveroak.one)
 
 telegram_bot_token_env: MAESTRO_TELEGRAM_TOKEN
 
