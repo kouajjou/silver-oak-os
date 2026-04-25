@@ -4,3 +4,12 @@ description: Communications — Gmail karim@silveroak.one, email drafts, outreac
 telegram_bot_token_env: COMMS_TELEGRAM_TOKEN
 
 model: claude-sonnet-4-6
+
+voice:
+  provider: elevenlabs
+  voice_id: EXAVITQu4vr4xnSDxMaL
+  language_default: fr
+  languages_supported:
+    - fr
+    - es
+    - en

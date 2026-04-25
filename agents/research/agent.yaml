@@ -4,3 +4,12 @@ description: Research — AI multi-agent competition, EU ecosystem, RGPD/AI Act,
 telegram_bot_token_env: RESEARCH_TELEGRAM_TOKEN
 
 model: claude-sonnet-4-6
+
+voice:
+  provider: elevenlabs
+  voice_id: hpp4J3VqNfWAUOO0d1Us
+  language_default: fr
+  languages_supported:
+    - fr
+    - es
+    - en

@@ -7,3 +7,12 @@ model: claude-sonnet-4-6
 
 skills_allowlist:
   - mcp-dispatch
+
+voice:
+  provider: elevenlabs
+  voice_id: nPczCjzI2devNBz1zQrb
+  language_default: fr
+  languages_supported:
+    - fr
+    - es
+    - en

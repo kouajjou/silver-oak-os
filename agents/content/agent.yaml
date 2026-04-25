@@ -4,3 +4,12 @@ description: Content production — YouTube scripts, LinkedIn posts, content cal
 telegram_bot_token_env: CONTENT_TELEGRAM_TOKEN
 
 model: claude-sonnet-4-6
+
+voice:
+  provider: elevenlabs
+  voice_id: TX3LPaxmHKxFdv7VOQHJ
+  language_default: fr
+  languages_supported:
+    - fr
+    - es
+    - en
