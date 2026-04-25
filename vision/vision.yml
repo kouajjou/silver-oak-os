@@ -590,3 +590,12 @@ agents_bank:
   - marco_v2.jpg
   - nina_v2.jpg
   - maestro_v2.jpg
+api_conventions:
+  param_format: camelCase
+  agent_param: agentId
+  deprecated_aliases:
+    - agent_id (snake_case, /api/tts) — until 2026-05-25
+    - agent (/api/chat) — until 2026-05-25
+  deprecation_header: X-Deprecated-Param-Format
+  deprecation_warning: logged server-side via console.warn
+  migration_deadline: '2026-05-25'
