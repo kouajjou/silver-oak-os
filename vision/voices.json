@@ -1,0 +1,8 @@
+{
+  "alex": { "voice_id": "onwK4e9ZLuTAKqWW03F9", "name": "Daniel", "style": "deep, calm, confident" },
+  "sara": { "voice_id": "EXAVITQu4vr4xnSDxMaL", "name": "Sarah", "style": "warm, clear" },
+  "leo": { "voice_id": "TX3LPaxmHKxFdv7VOQHJ", "name": "Liam", "style": "dynamic, young" },
+  "marco": { "voice_id": "pNInz6obpgDQGcFmaJgB", "name": "Adam", "style": "calm, methodical" },
+  "nina": { "voice_id": "hpp4J3VqNfWAUOO0d1Us", "name": "Bella", "style": "precise, articulate" },
+  "maestro": { "voice_id": "nPczCjzI2devNBz1zQrb", "name": "Brian", "style": "technical, calm" }
+}
