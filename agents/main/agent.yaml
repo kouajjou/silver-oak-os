@@ -4,3 +4,12 @@ description: Chief of Staff — primary interface for Karim, triage and delegati
 telegram_bot_token_env: TELEGRAM_BOT_TOKEN
 
 model: claude-sonnet-4-6
+
+voice:
+  provider: elevenlabs
+  voice_id: onwK4e9ZLuTAKqWW03F9
+  language_default: fr
+  languages_supported:
+    - fr
+    - es
+    - en

@@ -4,3 +4,12 @@ description: Operations — Google Calendar, finance monitoring, Hetzner infra, 
 telegram_bot_token_env: OPS_TELEGRAM_TOKEN
 
 model: claude-sonnet-4-6
+
+voice:
+  provider: elevenlabs
+  voice_id: pNInz6obpgDQGcFmaJgB
+  language_default: fr
+  languages_supported:
+    - fr
+    - es
+    - en
