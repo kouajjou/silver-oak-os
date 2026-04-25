@@ -1,270 +1,315 @@
 meta:
-  version: "1.0.0"
-  updated: "2026-04-25"
-  lang_default: "en"
-
+  version: "1.2.0"
+  updated: '2026-04-25'
+  lang_default: en
+  changelog_v1_2: Added infrastructure, costs, core_principle, karim_principles, roadmap_now
+    sections. Updated agent photo briefs to EUROPEAN focus.
 company:
-  name: "Silver Oak"
-  legal: "Silver Oak SL"
-  location: "Marbella, España"
+  name: Silver Oak
+  legal: Silver Oak SL
+  location: Marbella, España
   year: 2026
-  email: "karim@silveroak.one"
-  tagline: "The Magic Factory"
-
+  email: karim@silveroak.one
+  tagline: The Magic Factory
 hero:
-  label: "Silver Oak · Marbella · 2026"
-  title: "The Magic Factory"
-  subtitle_main: "How a solo, non-developer geek builds"
-  subtitle_highlight: "a 100M€+ European AI company"
-  subtitle_end: "with sovereign infrastructure and an autonomous multi-agent team."
-  badge_value: "12"
-  badge_label: "Months"
-  badge_caption: "from first line of code to 100M€+ acquisition"
-
+  label: Silver Oak · Marbella · 2026
+  title: The Magic Factory
+  subtitle_main: How a solo, non-developer geek builds
+  subtitle_highlight: a 100M€+ European AI company
+  subtitle_end: with sovereign infrastructure and an autonomous multi-agent team.
+  badge_value: '12'
+  badge_label: Months
+  badge_caption: from first line of code to 100M€+ acquisition
 founder:
-  name: "Karim Kouajjou"
-  role: "Founder & CEO"
-  company: "Silver Oak SL"
-
+  name: Karim Kouajjou
+  role: Founder & CEO
+  company: Silver Oak SL
 vision:
   exit_value_m_euros: 120
   exit_months: 12
   funding_raised: false
-
 pillars:
-  - id: "product"
-    label: "The Product"
-    title: "Claudette"
-    bullets:
-      - "Voice-first multi-agent SaaS"
-      - "Sovereign European infrastructure"
-      - "Sold to B2C and B2B clients"
-    tag: "Live. In production. Today."
-  - id: "factory"
-    label: "The Factory"
-    title: "Silver Oak OS"
-    bullets:
-      - "Karim's personal executive team"
-      - "Multi-agent factory that builds, ships, markets, and scales"
-      - "Dogfooded, internal, strategic"
-    tag: "The edge no competitor has."
-
+- id: product
+  label: The Product
+  title: Claudette
+  bullets:
+  - Voice-first multi-agent SaaS
+  - Sovereign European infrastructure
+  - Sold to B2C and B2B clients
+  tag: Live. In production. Today.
+- id: factory
+  label: The Factory
+  title: Silver Oak OS
+  bullets:
+  - Karim's personal executive team
+  - Multi-agent factory that builds, ships, markets, and scales
+  - Dogfooded, internal, strategic
+  tag: The edge no competitor has.
 agents:
-  - id: "alex"
-    name: "Alex"
-    role: "Chief of Staff"
-    role_short: "CHIEF OF STAFF"
-    detail: "Triage · Delegation · Executive command"
-    description: "The first voice Karim hears every morning."
-  - id: "sara"
-    name: "Sara"
-    role: "Communications"
-    role_short: "COMMUNICATIONS"
-    detail: "Gmail · Inbox triage · Drafts"
-    description: "Gmail is a solved problem."
-  - id: "leo"
-    name: "Léo"
-    role: "Content"
-    role_short: "CONTENT"
-    detail: "YouTube · LinkedIn · Editorial"
-    description: "Your voice, amplified and scheduled."
-  - id: "marco"
-    name: "Marco"
-    role: "Operations"
-    role_short: "OPERATIONS"
-    detail: "Calendar · Finance · Infrastructure"
-    description: "Calendar, finance, infrastructure, padel."
-  - id: "nina"
-    name: "Nina"
-    role: "Research"
-    role_short: "RESEARCH"
-    detail: "Market intelligence · Competitor deep dives"
-    description: "Market intelligence, on demand."
-  - id: "maestro"
-    name: "Maestro"
-    role: "CTO"
-    role_short: "CTO"
-    detail: "Orchestrates 18 code workers via MCP Bridge"
-    description: "The CTO who never sleeps."
-
+- id: alex
+  name: Alex
+  role: Chief of Staff
+  role_short: CHIEF OF STAFF
+  detail: Triage · Delegation · Executive command
+  description: The first voice Karim hears every morning.
+- id: sara
+  name: Sara
+  role: Communications
+  role_short: COMMUNICATIONS
+  detail: Gmail · Inbox triage · Drafts
+  description: Gmail is a solved problem.
+- id: leo
+  name: Léo
+  role: Content
+  role_short: CONTENT
+  detail: YouTube · LinkedIn · Editorial
+  description: Your voice, amplified and scheduled.
+- id: marco
+  name: Marco
+  role: Operations
+  role_short: OPERATIONS
+  detail: Calendar · Finance · Infrastructure
+  description: Calendar, finance, infrastructure, padel.
+- id: nina
+  name: Nina
+  role: Research
+  role_short: RESEARCH
+  detail: Market intelligence · Competitor deep dives
+  description: Market intelligence, on demand.
+- id: maestro
+  name: Maestro
+  role: CTO
+  role_short: CTO
+  detail: Orchestrates 18 code workers via MCP Bridge
+  description: The CTO who never sleeps.
 workers:
   count: 18
-  providers: ["Sonnet", "Opus", "GPT-4o", "DeepSeek", "Grok", "Gemini"]
-
+  providers:
+  - Sonnet
+  - Opus
+  - GPT-4o
+  - DeepSeek
+  - Grok
+  - Gemini
 stack_pillars:
-  - icon: "europe"
-    title: "Hetzner ARM64"
-    body: "Nuremberg, Germany\nRGPD-native hosting"
-  - icon: "brain"
-    title: "Claude Opus 4.7"
-    body: "Anthropic\nReasoning · Architecture"
-  - icon: "shield"
-    title: "SQLite + Vault"
-    body: "Local memory\nEncrypted secrets"
-  - icon: "mic"
-    title: "War Room Voice"
-    body: "Pipecat · Gemini Live\nSpeak to your team"
+- icon: europe
+  title: Hetzner ARM64
+  body: 'Nuremberg, Germany
 
+    RGPD-native hosting'
+- icon: brain
+  title: Claude Opus 4.7
+  body: 'Anthropic
+
+    Reasoning · Architecture'
+- icon: shield
+  title: SQLite + Vault
+  body: 'Local memory
+
+    Encrypted secrets'
+- icon: mic
+  title: War Room Voice
+  body: 'Pipecat · Gemini Live
+
+    Speak to your team'
 capabilities:
-  - icon: "envelope"
-    title: "Inbox"
-    desc: "Triage · Draft · Reply 24/7"
-  - icon: "calendar"
-    title: "Calendar"
-    desc: "Schedule · Padel · Priorities"
-  - icon: "search"
-    title: "Research"
-    desc: "Markets · Competition · Papers"
-  - icon: "video"
-    title: "Content"
-    desc: "YouTube scripts · LinkedIn posts"
-  - icon: "money"
-    title: "Finance"
-    desc: "P&L · Billing · Runway tracking"
-  - icon: "code"
-    title: "Code"
-    desc: "Fix · Ship · Deploy via 18 workers"
-  - icon: "lightbulb"
-    title: "Strategy"
-    desc: "Weekly briefs · Decision support"
-  - icon: "compass"
-    title: "Browser"
-    desc: "Book flights · Fill forms (coming)"
-
+- icon: envelope
+  title: Inbox
+  desc: Triage · Draft · Reply 24/7
+- icon: calendar
+  title: Calendar
+  desc: Schedule · Padel · Priorities
+- icon: search
+  title: Research
+  desc: Markets · Competition · Papers
+- icon: video
+  title: Content
+  desc: YouTube scripts · LinkedIn posts
+- icon: money
+  title: Finance
+  desc: P&L · Billing · Runway tracking
+- icon: code
+  title: Code
+  desc: Fix · Ship · Deploy via 18 workers
+- icon: lightbulb
+  title: Strategy
+  desc: Weekly briefs · Decision support
+- icon: compass
+  title: Browser
+  desc: Book flights · Fill forms (coming)
 trajectory:
-  title: "Twelve months. One exit."
-  subtitle: "The path from solo-builder to acquisition."
+  title: Twelve months. One exit.
+  subtitle: The path from solo-builder to acquisition.
   points:
-    - month: "M0"
-      value: 0.5
-    - month: "M2"
-      value: 3
-    - month: "M4"
-      value: 12
-    - month: "M6"
-      value: 28
-    - month: "M8"
-      value: 52
-    - month: "M10"
-      value: 80
-    - month: "M12"
-      value: 120
+  - month: M0
+    value: 0.5
+  - month: M2
+    value: 3
+  - month: M4
+    value: 12
+  - month: M6
+    value: 28
+  - month: M8
+    value: 52
+  - month: M10
+    value: 80
+  - month: M12
+    value: 120
   milestones:
-    - range: "M0 — M4"
-      label: "Build phase"
-      body: "Claudette MVP live. Silver Oak OS internal."
-    - range: "M4 — M8"
-      label: "Traction"
-      body: "First paying customers. Expansion revenue."
-    - range: "M8 — M12"
-      label: "Acquisition talks"
-      body: "Inbound interest. No round raised."
-
+  - range: M0 — M4
+    label: Build phase
+    body: Claudette MVP live. Silver Oak OS internal.
+  - range: M4 — M8
+    label: Traction
+    body: First paying customers. Expansion revenue.
+  - range: M8 — M12
+    label: Acquisition talks
+    body: Inbound interest. No round raised.
 thesis:
-  main: "Europe doesn't need another funded AI startup."
-  body: "It needs one founder, one laptop, one factory that proves sovereign AI can beat Silicon Valley at its own game."
-  closing: "That's what Silver Oak is."
-  signature: "— Karim Kouajjou · Marbella · 2026"
-
+  main: Europe doesn't need another funded AI startup.
+  body: It needs one founder, one laptop, one factory that proves sovereign AI can
+    beat Silicon Valley at its own game.
+  closing: That's what Silver Oak is.
+  signature: — Karim Kouajjou · Marbella · 2026
 roadmap:
   current:
-    label: "LIVE TODAY"
-    title: "The core six"
+    label: LIVE TODAY
+    title: The core six
     items:
-      - { name: "Alex", role: "Chief of Staff" }
-      - { name: "Sara", role: "Communications" }
-      - { name: "Léo", role: "Content" }
-      - { name: "Marco", role: "Operations" }
-      - { name: "Nina", role: "Research" }
-      - { name: "Maestro", role: "CTO + 18 workers" }
+    - name: Alex
+      role: Chief of Staff
+    - name: Sara
+      role: Communications
+    - name: Léo
+      role: Content
+    - name: Marco
+      role: Operations
+    - name: Nina
+      role: Research
+    - name: Maestro
+      role: CTO + 18 workers
   next:
-    label: "PHASE 2 · COMING"
-    title: "Expanding the floor"
+    label: PHASE 2 · COMING
+    title: Expanding the floor
     items:
-      - { name: "Marketing agent", role: "Campaign ROI" }
-      - { name: "Finance agent", role: "P&L, pricing, runway" }
-      - { name: "Legal agent", role: "Contracts, RGPD, EU AI Act" }
-      - { name: "Sales agent", role: "Prospection, CRM, pipeline" }
-      - { name: "Browser agent", role: "Human-like web actions" }
-      - { name: "+ more", role: "Created on demand" }
-
+    - name: Marketing agent
+      role: Campaign ROI
+    - name: Finance agent
+      role: P&L, pricing, runway
+    - name: Legal agent
+      role: Contracts, RGPD, EU AI Act
+    - name: Sales agent
+      role: Prospection, CRM, pipeline
+    - name: Browser agent
+      role: Human-like web actions
+    - name: + more
+      role: Created on demand
 phases:
-  - number: 1
-    label: "PHASE 1"
-    title: "Internal"
-    body: "Karim uses Silver Oak OS to build Claudette. Dogfooding validates everything."
-  - number: 2
-    label: "PHASE 2"
-    title: "Private beta"
-    body: "Selected European founders get access. Feedback loop tightens the product."
-  - number: 3
-    label: "PHASE 3"
-    title: "Public"
-    body: "Silver Oak OS becomes a second revenue stream. Same exit thesis applies."
-
+- number: 1
+  label: PHASE 1
+  title: Internal
+  body: Karim uses Silver Oak OS to build Claudette. Dogfooding validates everything.
+- number: 2
+  label: PHASE 2
+  title: Private beta
+  body: Selected European founders get access. Feedback loop tightens the product.
+- number: 3
+  label: PHASE 3
+  title: Public
+  body: Silver Oak OS becomes a second revenue stream. Same exit thesis applies.
 closing:
-  main: "Silver Oak."
-  sub: "The magic factory."
-  line1: "One founder. One laptop. One team of agents."
-  line2: "Zero funding. Full sovereignty. 100M€+ in 12 months."
-  contact: "karim@silveroak.one  ·  Silver Oak SL  ·  Marbella, España"
-
+  main: Silver Oak.
+  sub: The magic factory.
+  line1: One founder. One laptop. One team of agents.
+  line2: Zero funding. Full sovereignty. 100M€+ in 12 months.
+  contact: karim@silveroak.one  ·  Silver Oak SL  ·  Marbella, España
 theme:
   palette:
-    navy: "0B1F3A"
-    navy_dark: "071529"
-    navy_light: "152D52"
-    stone: "2A3A5A"
-    gold: "C9A961"
-    gold_bright: "E6C77C"
-    ice: "CFE0F5"
-    mist: "8FA4C5"
-    cream: "F6F1E8"
-    white: "FFFFFF"
+    navy: '#0B1F3A'
+    navy_dark: '#071529'
+    navy_light: '#152D52'
+    stone: '#2A3A5A'
+    gold: '#C9A961'
+    gold_bright: '#E6C77C'
+    ice: '#CFE0F5'
+    mist: '#8FA4C5'
+    cream: '#F6F1E8'
+    white: '#FFFFFF'
   fonts:
-    head: "Georgia"
-    body: "Calibri"
-
+    head: Georgia
+    body: Calibri
 karim_context:
-  pre_covid: "Geared everything by phone. Zero reading. Human team at the other end. Was content."
-  current_state: "ADHD, dyslexic, voice > text"
-  preferred_mode: "FaceTime virtual with employees"
-  reading_capacity: "minimal — voice and visuals preferred"
-
+  pre_covid: Geared everything by phone. Zero reading. Human team at the other end.
+    Was content.
+  current_state: ADHD, dyslexic, voice > text
+  preferred_mode: FaceTime virtual with employees
+  reading_capacity: minimal — voice and visuals preferred
 app_vision:
-  type: "iPhone/iPad app (web fallback)"
-  primary_metaphor: "Virtual FaceTime with my staff"
-  channels_per_agent: ["voice_call", "facetime", "message", "email", "photo_share"]
-  agents_addressable: ["alex", "sara", "leo", "marco", "nina", "maestro"]
+  type: iPhone/iPad app (web fallback)
+  primary_metaphor: Virtual FaceTime with my staff
+  channels_per_agent:
+  - voice_call
+  - facetime
+  - message
+  - email
+  - photo_share
+  agents_addressable:
+  - alex
+  - sara
+  - leo
+  - marco
+  - nina
+  - maestro
   sub_agents_silent: true
-  default_languages: ["fr", "es", "en"]
-
+  default_languages:
+  - fr
+  - es
+  - en
 agents_extended:
   alex:
-    photo_brief: "Man 35-40, lin shirt open collar, coffee in hand, warm light, editorial b&w"
-    voice_id: "TBD ElevenLabs Daniel"
-    voice_persona: "deep, calm, confident"
+    photo_brief: Editorial b&w portrait, EUROPEAN man 35-40 (mediterranean, mix franco-spanish-italian
+      Marbella vibe), light linen shirt open collar, holding coffee, warm Mediterranean
+      morning light, neutral cream background, magazine quality NOT generic AI, square
+      1024x1024
+    photo_status: CURRENT VERSION TOO INDIAN-LOOKING — need regen with EUROPEAN focus
+    voice_id: onwK4e9ZLuTAKqWW03F9
+    voice_persona: deep, calm, confident
   sara:
-    photo_brief: "Woman 30-35, mid-length natural hair, turtleneck, soft smile"
-    voice_id: "TBD ElevenLabs Charlotte"
-    voice_persona: "warm, clear"
+    photo_brief: Editorial b&w portrait, EUROPEAN woman 30-35 (mediterranean style,
+      soft natural beauty), mid-length natural hair, cream turtleneck, soft genuine
+      smile, warm Mediterranean light, neutral background, magazine quality, square
+      1024x1024
+    photo_status: needs european regen
+    voice_id: EXAVITQu4vr4xnSDxMaL
+    voice_persona: warm, clear
   leo:
-    photo_brief: "Man 28-32, creative look, headphones around neck, simple t-shirt"
-    voice_id: "TBD ElevenLabs Liam"
-    voice_persona: "dynamic, young"
+    photo_brief: Editorial b&w portrait, creative EUROPEAN man 28-32 (mediterranean
+      look, magazine-cover quality), headphones around neck, simple t-shirt, natural
+      soft light, neutral background, square 1024x1024
+    photo_status: needs european regen
+    voice_id: TX3LPaxmHKxFdv7VOQHJ
+    voice_persona: dynamic, young
   marco:
-    photo_brief: "Man 40-45, design glasses, polo, mediterranean look"
-    voice_id: "TBD ElevenLabs Adam"
-    voice_persona: "calm, methodical"
+    photo_brief: Editorial b&w portrait, mediterranean EUROPEAN man 40-45 (italian/spanish
+      vibe, distinguished), design glasses, polo shirt, calm composed expression,
+      natural soft light, neutral background, square 1024x1024
+    photo_status: needs european regen
+    voice_id: pNInz6obpgDQGcFmaJgB
+    voice_persona: calm, methodical
   nina:
-    photo_brief: "Woman 32-38, intellectual glasses, white blazer, studious posture"
-    voice_id: "TBD ElevenLabs Aria"
-    voice_persona: "precise, articulate"
+    photo_brief: Editorial b&w portrait, intellectual EUROPEAN woman 32-38 (mediterranean
+      style, sharp elegant), glasses, white blazer, studious confident posture, natural
+      soft light, neutral background, square 1024x1024
+    photo_status: needs european regen
+    voice_id: hpp4J3VqNfWAUOO0d1Us
+    voice_persona: precise, articulate
   maestro:
-    photo_brief: "Man 35-40, sober hoodie, dev cool look"
-    voice_id: "TBD ElevenLabs Brian"
-    voice_persona: "technical, calm"
-
+    photo_brief: Editorial b&w portrait, EUROPEAN man 35-40 (mediterranean developer
+      cool), sober hoodie, dev cool look, natural soft light, neutral background,
+      square 1024x1024
+    photo_status: needs european regen
+    voice_id: nPczCjzI2devNBz1zQrb
+    voice_persona: technical, calm
 minimum_viable_morning:
   app_downloadable: true
   alex_login: true
@@ -273,3 +318,62 @@ minimum_viable_morning:
   text_chat: true
   agent_photos_visible: true
   facetime_optional: true
+infrastructure:
+  silver_oak_os_server:
+    provider: Hetzner Cloud
+    location: Nuremberg, Germany
+    type: CAX21 (puis rescale CAX41 si besoin)
+    ip_v4: 178.104.255.59
+    cost_monthly_eur: 10.09
+    isolation: 100% separe du serveur Claudette production
+    purpose: Dev environment Silver Oak OS, NEVER hosts Claudette
+  claudette_server:
+    note: Server Claudette product separate at 178.104.24.23 — NEVER touch
+  isolation_principle: Silver Oak OS and Claudette run on physically separate servers
+    to ensure zero blast radius
+costs:
+  monthly_recurring_eur:
+    silver_oak_os_server: 10
+    elevenlabs_voices: 22
+    livekit_voice_calls: 50
+    deepgram_transcription: 30
+    apple_developer_yearly: 8
+    estimated_total: 120
+  one_time:
+    photos_generation_dalle: 1
+    initial_setup: 0
+  budget_caps:
+    per_wave: 5
+    per_day: 20
+    hitl_threshold: 1
+core_principle:
+  vision: Silver Oak OS is the magic factory that builds Claudette
+  hierarchy:
+  - Claudette = the product (Karim’s business)
+  - Silver Oak OS = the internal factory (Karim’s productivity tool)
+  - Silver Oak OS exists to make Karim 10x faster at building Claudette
+  not_a_product: Silver Oak OS is internal-only for now (Phase 1). Phase 3 may consider
+    commercializing it.
+karim_principles:
+- One thing at a time, never disperse
+- Validate before invest (use web app for 3–4 days before paying iOS app)
+- Claudette first, Silver Oak OS exists to serve Claudette
+- Zero technical debt, no patches, no hacks — clean from day 1
+- Karim’s time is the biggest cost — every decision must save Karim time, not consume
+  it
+- Voice over text, visuals over reading
+- Trust workers but verify with Playwright
+- Never break Claudette production while improving Silver Oak OS
+roadmap_now:
+  this_week:
+  - Silver Oak OS app live on Mac Chrome via http://178.104.255.59
+  - Voice in (mic) + voice out (ElevenLabs) working
+  - Regenerate 6 photos with EUROPEAN focus (not indian)
+  - 'Test pilot vocal: Karim talks to Alex, Alex delegates to Maestro'
+  next_2_weeks:
+  - iOS native app (TestFlight) — true downloadable app
+  - FaceTime virtual mode (animated agent photo while speaking)
+  - 4 channels per agent (call, FaceTime, message, email)
+  next_month:
+  - 'Extend team: Marketing, Finance, Legal, Sales, Browser agents'
+  - Silver Oak OS actually building Claudette features end-to-end
