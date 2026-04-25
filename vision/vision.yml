@@ -52,36 +52,54 @@ agents:
   role_short: CHIEF OF STAFF
   detail: Triage · Delegation · Executive command
   description: The first voice Karim hears every morning.
+  tts_provider: gemini
+  voice_gemini: Charon
+  voice_openai_fallback: onyx
 - id: sara
   name: Sara
   role: Communications
   role_short: COMMUNICATIONS
   detail: Gmail · Inbox triage · Drafts
   description: Gmail is a solved problem.
+  tts_provider: gemini
+  voice_gemini: Aoede
+  voice_openai_fallback: nova
 - id: leo
   name: Léo
   role: Content
   role_short: CONTENT
   detail: YouTube · LinkedIn · Editorial
   description: Your voice, amplified and scheduled.
+  tts_provider: gemini
+  voice_gemini: Puck
+  voice_openai_fallback: fable
 - id: marco
   name: Marco
   role: Operations
   role_short: OPERATIONS
   detail: Calendar · Finance · Infrastructure
   description: Calendar, finance, infrastructure, padel.
+  tts_provider: gemini
+  voice_gemini: Orus
+  voice_openai_fallback: echo
 - id: nina
   name: Nina
   role: Research
   role_short: RESEARCH
   detail: Market intelligence · Competitor deep dives
   description: Market intelligence, on demand.
+  tts_provider: gemini
+  voice_gemini: Kore
+  voice_openai_fallback: shimmer
 - id: maestro
   name: Maestro
   role: CTO
   role_short: CTO
   detail: Orchestrates 18 code workers via MCP Bridge
   description: The CTO who never sleeps.
+  tts_provider: gemini
+  voice_gemini: Fenrir
+  voice_openai_fallback: alloy
 workers:
   count: 18
   providers:
@@ -319,18 +337,28 @@ minimum_viable_morning:
   agent_photos_visible: true
   facetime_optional: true
 infrastructure:
-  silver_oak_os_server:
-    provider: Hetzner Cloud
-    location: Nuremberg, Germany
-    type: CAX21 (puis rescale CAX41 si besoin)
-    ip_v4: 178.104.255.59
-    cost_monthly_eur: 10.09
-    isolation: 100% separe du serveur Claudette production
-    purpose: Dev environment Silver Oak OS, NEVER hosts Claudette
-  claudette_server:
-    note: Server Claudette product separate at 178.104.24.23 — NEVER touch
-  isolation_principle: Silver Oak OS and Claudette run on physically separate servers
-    to ensure zero blast radius
+  servers:
+    claudette_production:
+      role: "Production server for Claudette PRODUCT (Karim's business)"
+      provider: "Hetzner Cloud"
+      type: "CAX41 ARM64"
+      ip: "178.104.24.23"
+      domain: "claudette.silveroak.one"
+      location: "Nuremberg, Germany"
+      status: "LIVE - DO NOT TOUCH"
+      cost_monthly_eur: 16
+    silver_oak_os_factory:
+      role: "Internal factory server for Silver Oak OS (Karim's productivity tool)"
+      provider: "Hetzner Cloud"
+      type: "CAX21 ARM64 (rescale to CAX41 when needed)"
+      ip: "178.104.255.59"
+      domain: "TBD (will use http://178.104.255.59 for now)"
+      location: "Nuremberg, Germany"
+      status: "LIVE - dev environment for Silver Oak OS"
+      cost_monthly_eur: 10
+      created_date: "2026-04-25"
+  isolation_rule: "Silver Oak OS and Claudette MUST run on physically separate servers. ZERO cross-server dependency. Failure on one MUST NOT affect the other."
+  total_monthly_cost_eur: 26
 costs:
   monthly_recurring_eur:
     silver_oak_os_server: 10
