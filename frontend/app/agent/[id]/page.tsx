@@ -5,6 +5,8 @@ import { useParams, useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { getAgent } from '@/lib/agents';
 import VoiceInput from '@/components/VoiceInput';
+import DelegationTrace from '@/components/DelegationTrace';
+import ActivityFeed from '@/components/ActivityFeed';
 
 interface Message {
   id: string;
@@ -250,6 +252,11 @@ export default function AgentPage() {
         </div>
       </header>
 
+      {/* Active delegations trace — hidden when no delegations */}
+      <div className="flex-shrink-0 px-4 pt-2 max-w-2xl mx-auto w-full">
+        <DelegationTrace />
+      </div>
+
       {/* Messages */}
       <div className="flex-1 overflow-y-auto px-4 py-4 space-y-4">
         <div className="max-w-2xl mx-auto space-y-4">
@@ -278,6 +285,9 @@ export default function AgentPage() {
               </div>
             </div>
           )}
+
+          {/* Activity feed at bottom of messages */}
+          <ActivityFeed />
 
           <div ref={messagesEndRef} />
         </div>
