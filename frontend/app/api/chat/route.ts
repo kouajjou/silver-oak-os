@@ -12,6 +12,25 @@ interface ChatRequest {
   history?: HistoryItem[];
 }
 
+interface ChatResponse {
+  reply: string;
+  source: 'claude' | 'mvp';
+  agent_id: string;
+  agent_name: string;
+  delegation_chain: string[];
+  delegated: boolean;
+}
+
+// Agent display names map (source of truth for attribution display)
+const AGENT_NAMES: Record<string, string> = {
+  alex:    'Alex',
+  sara:    'Sara',
+  leo:     'Léo',
+  marco:   'Marco',
+  nina:    'Nina',
+  maestro: 'Maestro',
+};
+
 // SoulPrompts per agent — sourced from vision.yml (Silver Oak OS v1.2)
 // Karim context: ADHD, dyslexic, voice > text, wants short direct answers in French
 const SOUL_PROMPTS: Record<string, string> = {
@@ -76,34 +95,34 @@ Règles absolues :
 // MVP fallback responses (used only if Claude unavailable)
 const MVP_RESPONSES: Record<string, string[]> = {
   alex: [
-    "Je prends en charge ce sujet. Vous aurez un retour avant la fin de journée.",
+    'Je prends en charge ce sujet. Vous aurez un retour avant la fin de journée.',
     "D'accord. Je synchronise les directeurs sur ce point et vous envoie un récapitulatif sous 30 minutes.",
   ],
   sara: [
-    "Message reçu. Je prépare un plan de communication adapté à ce contexte.",
-    "Communication programmée. Je supervise les retours et vous informe des réactions.",
+    'Message reçu. Je prépare un plan de communication adapté à ce contexte.',
+    'Communication programmée. Je supervise les retours et vous informe des réactions.',
   ],
   leo: [
-    "Super idée de contenu ! Je vais développer ça en 5 formats : article, thread, vidéo courte, newsletter et post LinkedIn.",
-    "Le contenu est en cours de production. ETA : 2 heures pour le premier draft.",
+    'Super idée de contenu ! Je vais développer ça en 5 formats : article, thread, vidéo courte, newsletter et post LinkedIn.',
+    'Le contenu est en cours de production. ETA : 2 heures pour le premier draft.',
   ],
   marco: [
-    "Process identifié. 3 améliorations immédiates sont possibles sans restructuration majeure.",
+    'Process identifié. 3 améliorations immédiates sont possibles sans restructuration majeure.',
     "Opération planifiée. Voici le plan d'exécution en 5 étapes avec les responsabilités clairement définies.",
   ],
   nina: [
-    "Recherche lancée. Je consolide les données de 12 sources vérifiées sur ce sujet.",
+    'Recherche lancée. Je consolide les données de 12 sources vérifiées sur ce sujet.',
     "J'ai trouvé 3 études récentes très pertinentes. Je vous prépare une synthèse avec les insights actionnables.",
   ],
   maestro: [
-    "Architecture analysée. Voici le diagnostic technique et les actions prioritaires.",
-    "Infrastructure stable. Latence p95 : 180ms. Pas d'anomalie détectée.",
+    'Architecture analysée. Voici le diagnostic technique et les actions prioritaires.',
+    'Infrastructure stable. Latence p95 : 180ms. Pas d\'anomalie détectée.',
   ],
 };
 
 const DEFAULT_RESPONSES = [
-  "Je comprends votre demande. Je travaille dessus.",
-  "Bien reçu. Je reviens vers vous rapidement.",
+  'Je comprends votre demande. Je travaille dessus.',
+  'Bien reçu. Je reviens vers vous rapidement.',
 ];
 
 function getRandomResponse(agentId: string): string {
@@ -175,25 +194,49 @@ export async function POST(req: NextRequest) {
     const { message, history = [] } = body;
 
     // Backward compat: accept agent (deprecated) OR agentId (preferred)
-    const resolvedAgentId = body.agentId ?? body.agent;
+    const resolvedAgentId = body.agentId ?? body.agent ?? 'alex';
     if (body.agent && !body.agentId) {
       console.warn('[chat] DEPRECATED param agent used — migrate to agentId before 2026-05-25');
     }
 
-    if (!resolvedAgentId || !message?.trim()) {
+    if (!message?.trim()) {
       return NextResponse.json({ error: 'agentId and message are required' }, { status: 400 });
     }
+
+    const agentName = AGENT_NAMES[resolvedAgentId] ?? resolvedAgentId;
+
+    // Attribution metadata — delegation_chain tracks which agents were invoked.
+    // In MVP (no real multi-agent delegation), chain = [resolvedAgentId], delegated = false.
+    // Future: if alex delegates to marco, chain = ['alex', 'marco'], delegated = true.
+    const delegationChain: string[] = [resolvedAgentId];
+    const delegated = false;
 
     // 1. Try real Claude Sonnet
     const claudeReply = await callClaude(resolvedAgentId, message, history);
     if (claudeReply) {
-      return NextResponse.json({ reply: claudeReply, source: 'claude' });
+      const response: ChatResponse = {
+        reply: claudeReply,
+        source: 'claude',
+        agent_id: resolvedAgentId,
+        agent_name: agentName,
+        delegation_chain: delegationChain,
+        delegated,
+      };
+      return NextResponse.json(response);
     }
 
     // 2. Fallback: MVP hardcoded (graceful degradation)
     await new Promise((r) => setTimeout(r, 400 + Math.random() * 400));
     const reply = getRandomResponse(resolvedAgentId);
-    return NextResponse.json({ reply, source: 'mvp' });
+    const response: ChatResponse = {
+      reply,
+      source: 'mvp',
+      agent_id: resolvedAgentId,
+      agent_name: agentName,
+      delegation_chain: delegationChain,
+      delegated,
+    };
+    return NextResponse.json(response);
   } catch (e) {
     return NextResponse.json({ error: String(e) }, { status: 500 });
   }
