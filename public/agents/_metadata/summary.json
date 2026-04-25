@@ -1,0 +1,92 @@
+{
+  "model": "imagen-4.0-ultra-generate-001",
+  "ok": 12,
+  "failed": 0,
+  "total_cost_usd": 0.96,
+  "results": [
+    {
+      "agent": "alex",
+      "variant": 1,
+      "status": "OK",
+      "size_kb": 1501.1,
+      "time_sec": 12.37
+    },
+    {
+      "agent": "alex",
+      "variant": 2,
+      "status": "OK",
+      "size_kb": 1480.0,
+      "time_sec": 12.0
+    },
+    {
+      "agent": "sara",
+      "variant": 1,
+      "status": "OK",
+      "size_kb": 1388.5,
+      "time_sec": 10.12
+    },
+    {
+      "agent": "sara",
+      "variant": 2,
+      "status": "OK",
+      "size_kb": 1398.0,
+      "time_sec": 13.05
+    },
+    {
+      "agent": "leo",
+      "variant": 1,
+      "status": "OK",
+      "size_kb": 1303.1,
+      "time_sec": 11.18
+    },
+    {
+      "agent": "leo",
+      "variant": 2,
+      "status": "OK",
+      "size_kb": 1452.4,
+      "time_sec": 12.83
+    },
+    {
+      "agent": "marco",
+      "variant": 1,
+      "status": "OK",
+      "size_kb": 1375.2,
+      "time_sec": 10.47
+    },
+    {
+      "agent": "marco",
+      "variant": 2,
+      "status": "OK",
+      "size_kb": 1408.9,
+      "time_sec": 12.69
+    },
+    {
+      "agent": "nina",
+      "variant": 1,
+      "status": "OK",
+      "size_kb": 1442.6,
+      "time_sec": 12.4
+    },
+    {
+      "agent": "nina",
+      "variant": 2,
+      "status": "OK",
+      "size_kb": 1433.7,
+      "time_sec": 12.52
+    },
+    {
+      "agent": "maestro",
+      "variant": 1,
+      "status": "OK",
+      "size_kb": 1207.5,
+      "time_sec": 10.54
+    },
+    {
+      "agent": "maestro",
+      "variant": 2,
+      "status": "OK",
+      "size_kb": 1311.8,
+      "time_sec": 11.1
+    }
+  ]
+}

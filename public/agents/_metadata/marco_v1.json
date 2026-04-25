@@ -1,0 +1,11 @@
+{
+  "agent": "marco",
+  "role": "Operations",
+  "variant": 1,
+  "model": "imagen-4.0-ultra-generate-001",
+  "cost_usd": 0.08,
+  "size_kb": 1375.2,
+  "generation_time_sec": 10.47,
+  "generated_at": "2026-04-25T12:06:00Z",
+  "path": "/app/silver-oak-os/public/agents/marco.jpg"
+}
