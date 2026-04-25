@@ -306,6 +306,8 @@ agents_extended:
     voice_gemini: Charon
     tts_api_param: agent_id
     photo_url: /agents/alex.jpg
+    photo_url_webp: /agents/alex.webp
+    photo_url_2x: /agents/alex@2x.webp
     photo_url_https: https://os.silveroak.one/agents/alex.jpg
     photo_bank_v2: /agents/_bank/alex_v2.jpg
     photo_model: imagen-4.0-ultra-generate-001
@@ -319,6 +321,8 @@ agents_extended:
     voice_gemini: Aoede
     tts_api_param: agent_id
     photo_url: /agents/sara.jpg
+    photo_url_webp: /agents/sara.webp
+    photo_url_2x: /agents/sara@2x.webp
     photo_url_https: https://os.silveroak.one/agents/sara.jpg
     photo_bank_v2: /agents/_bank/sara_v2.jpg
     photo_model: imagen-4.0-ultra-generate-001
@@ -332,6 +336,8 @@ agents_extended:
     voice_gemini: Puck
     tts_api_param: agent_id
     photo_url: /agents/leo.jpg
+    photo_url_webp: /agents/leo.webp
+    photo_url_2x: /agents/leo@2x.webp
     photo_url_https: https://os.silveroak.one/agents/leo.jpg
     photo_bank_v2: /agents/_bank/leo_v2.jpg
     photo_model: imagen-4.0-ultra-generate-001
@@ -345,6 +351,8 @@ agents_extended:
     voice_gemini: Orus
     tts_api_param: agent_id
     photo_url: /agents/marco.jpg
+    photo_url_webp: /agents/marco.webp
+    photo_url_2x: /agents/marco@2x.webp
     photo_url_https: https://os.silveroak.one/agents/marco.jpg
     photo_bank_v2: /agents/_bank/marco_v2.jpg
     photo_model: imagen-4.0-ultra-generate-001
@@ -358,6 +366,8 @@ agents_extended:
     voice_gemini: Kore
     tts_api_param: agent_id
     photo_url: /agents/nina.jpg
+    photo_url_webp: /agents/nina.webp
+    photo_url_2x: /agents/nina@2x.webp
     photo_url_https: https://os.silveroak.one/agents/nina.jpg
     photo_bank_v2: /agents/_bank/nina_v2.jpg
     photo_model: imagen-4.0-ultra-generate-001
@@ -371,6 +381,8 @@ agents_extended:
     voice_gemini: Fenrir
     tts_api_param: agent_id
     photo_url: /agents/maestro.jpg
+    photo_url_webp: /agents/maestro.webp
+    photo_url_2x: /agents/maestro@2x.webp
     photo_url_https: https://os.silveroak.one/agents/maestro.jpg
     photo_bank_v2: /agents/_bank/maestro_v2.jpg
     photo_model: imagen-4.0-ultra-generate-001
