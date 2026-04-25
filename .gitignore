@@ -63,5 +63,8 @@ agents/*/CLAUDE.md
 # Local MCP / Claude settings — machine-specific, contains user paths
 .claude/settings.json
 .claude/settings.local.json
+.env.*
+_archive/
+*.bak
 _originals_*
 vision/_archive/*.bak
