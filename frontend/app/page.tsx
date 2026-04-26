@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { AGENTS } from '@/lib/agents';
+import HeyMarco from '@/components/HeyMarco';
 
 const CHANNEL_BUTTONS = [
   { icon: '📞', label: 'Voix', channel: 'voice' },
@@ -40,6 +41,7 @@ export default function HomePage() {
           ))}
         </div>
       </section>
+      <HeyMarco />
     </main>
   );
 }
