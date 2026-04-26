@@ -8,5 +8,5 @@ model: claude-sonnet-4-6
 skills_allowlist:
   - mcp-dispatch
 
-meet_voice_id: "TxGEqnHWrfWFTfGW9XjX"
+meet_voice_id: "nPczCjzI2devNBz1zQrb"
 meet_bot_name: "Maestro"
