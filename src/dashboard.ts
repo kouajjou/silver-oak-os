@@ -112,6 +112,34 @@ Reply with JSON: {"agent": "agent_id"}`;
   }
 }
 
+
+/** Backward-compat: accept agentId (new) OR agent (deprecated until 2026-05-25). */
+function resolveAgentParam(
+  body: Record<string, string | undefined>,
+  fallback: string = "main",
+): string {
+  const newParam = body["agentId"];
+  const oldParam = body["agent"];
+  if (newParam !== undefined) return newParam;
+  if (oldParam !== undefined) {
+    console.warn("[DEPRECATED] body.agent -> use body.agentId (deadline 2026-05-25)");
+    return oldParam;
+  }
+  return fallback;
+}
+
+/** Backward-compat: accept agentId OR agent in query params (deprecated until 2026-05-25). */
+function resolveAgentQuery(c: { req: { query(k: string): string | undefined } }): string | undefined {
+  const newParam = c.req.query("agentId");
+  const oldParam = c.req.query("agent");
+  if (newParam !== undefined) return newParam;
+  if (oldParam !== undefined) {
+    console.warn("[DEPRECATED] query ?agent= -> use ?agentId= (deadline 2026-05-25)");
+    return oldParam;
+  }
+  return undefined;
+}
+
 export function startDashboard(botApi?: Api<RawApi>): void {
   if (!DASHBOARD_TOKEN) {
     logger.info('DASHBOARD_TOKEN not set, dashboard disabled');
@@ -299,7 +327,7 @@ export function startDashboard(botApi?: Api<RawApi>): void {
   app.post('/api/warroom/meeting/start', async (c) => {
     const body: { id?: string; mode?: string; agent?: string } = await c.req.json().catch(() => ({}));
     const id = body.id || crypto.randomUUID();
-    createWarRoomMeeting(id, body.mode || 'direct', body.agent || 'main');
+    createWarRoomMeeting(id, body.mode || 'direct', resolveAgentParam(body as Record<string, string | undefined>));
     return c.json({ ok: true, meetingId: id });
   });
 
@@ -391,7 +419,7 @@ export function startDashboard(botApi?: Api<RawApi>): void {
     // the current pin file value. An empty body is a noop but still
     // respawns so the caller can force a reload.
     const current = readPinState();
-    const nextAgent = body.agent !== undefined ? body.agent : (current.agent ?? 'main');
+    const nextAgent = resolveAgentParam(body as Record<string, string | undefined>, current.agent ?? 'main');
     const nextMode = body.mode !== undefined ? body.mode : current.mode;
 
     if (!VALID_PIN_AGENTS.has(nextAgent)) {
@@ -656,7 +684,7 @@ export function startDashboard(botApi?: Api<RawApi>): void {
   // ── Mission Control endpoints ────────────────────────────────────────
 
   app.get('/api/mission/tasks', (c) => {
-    const agentId = c.req.query('agent') || undefined;
+    const agentId = resolveAgentQuery(c) || undefined;
     const status = c.req.query('status') || undefined;
     const tasks = getMissionTasks(agentId, status);
     return c.json({ tasks });
@@ -833,15 +861,15 @@ export function startDashboard(botApi?: Api<RawApi>): void {
   });
 
   app.post('/api/meet/join', async (c) => {
-    let body: { agent?: string; meet_url?: string; auto_brief?: boolean; context?: string } = {};
+    let body: { agentId?: string; agent?: string; meet_url?: string; auto_brief?: boolean; context?: string } = {};
     try { body = await c.req.json(); } catch { /* empty body */ }
 
-    const agent = body.agent?.trim();
+    const agent = resolveAgentParam(body as Record<string, string | undefined>, '').trim() || undefined;
     const meetUrl = body.meet_url?.trim();
     const autoBrief = body.auto_brief !== false; // default true
     const context = body.context?.trim();
 
-    if (!agent) return c.json({ ok: false, error: 'agent required' }, 400);
+    if (!agent) return c.json({ ok: false, error: 'agent required (use agentId or deprecated agent param)' }, 400);
     if (!meetUrl || !MEET_URL_RE.test(meetUrl)) {
       return c.json({ ok: false, error: 'invalid meet_url (must match https://meet.google.com/...)' }, 400);
     }
@@ -860,15 +888,15 @@ export function startDashboard(botApi?: Api<RawApi>): void {
   });
 
   app.post('/api/meet/join-voice', async (c) => {
-    let body: { agent?: string; meet_url?: string; auto_brief?: boolean; context?: string } = {};
+    let body: { agentId?: string; agent?: string; meet_url?: string; auto_brief?: boolean; context?: string } = {};
     try { body = await c.req.json(); } catch { /* empty body */ }
 
-    const agent = body.agent?.trim();
+    const agent = resolveAgentParam(body as Record<string, string | undefined>, '').trim() || undefined;
     const meetUrl = body.meet_url?.trim();
     const autoBrief = body.auto_brief !== false; // default true
     const context = body.context?.trim();
 
-    if (!agent) return c.json({ ok: false, error: 'agent required' }, 400);
+    if (!agent) return c.json({ ok: false, error: 'agent required (use agentId or deprecated agent param)' }, 400);
     if (!meetUrl || !MEET_URL_RE.test(meetUrl)) {
       return c.json({ ok: false, error: 'invalid meet_url (must match https://meet.google.com/...)' }, 400);
     }
@@ -891,13 +919,13 @@ export function startDashboard(botApi?: Api<RawApi>): void {
     let body: { agent?: string; mode?: string; auto_brief?: boolean; context?: string; ttl_sec?: number } = {};
     try { body = await c.req.json(); } catch { /* empty body */ }
 
-    const agent = body.agent?.trim();
+    const agent = resolveAgentParam(body as Record<string, string | undefined>, '').trim() || undefined;
     const mode = body.mode?.trim() || 'direct';
     const autoBrief = body.auto_brief !== false; // default true
     const context = body.context?.trim();
     const ttlSec = body.ttl_sec;
 
-    if (!agent) return c.json({ ok: false, error: 'agent required' }, 400);
+    if (!agent) return c.json({ ok: false, error: 'agent required (use agentId or deprecated agent param)' }, 400);
     if (mode !== 'direct' && mode !== 'auto') {
       return c.json({ ok: false, error: 'mode must be direct or auto' }, 400);
     }
@@ -1337,7 +1365,7 @@ export function startDashboard(botApi?: Api<RawApi>): void {
   app.get('/api/audit', (c) => {
     const limit = parseInt(c.req.query('limit') || '50', 10);
     const offset = parseInt(c.req.query('offset') || '0', 10);
-    const agentId = c.req.query('agent') || undefined;
+    const agentId = resolveAgentQuery(c) || undefined;
     const entries = getAuditLog(limit, offset, agentId);
     const total = getAuditLogCount(agentId);
     return c.json({ entries, total });
@@ -1350,7 +1378,7 @@ export function startDashboard(botApi?: Api<RawApi>): void {
 
   // Hive mind feed
   app.get('/api/hive-mind', (c) => {
-    const agentId = c.req.query('agent');
+    const agentId = resolveAgentQuery(c);
     const limit = parseInt(c.req.query('limit') || '20', 10);
     const entries = getHiveMindEntries(limit, agentId || undefined);
     return c.json({ entries });
