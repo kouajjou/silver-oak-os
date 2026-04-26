@@ -1435,6 +1435,124 @@ export function startDashboard(botApi?: Api<RawApi>): void {
     return c.json({ ok: true, agent_id: targetAgent });
   });
 
+  // Synchronous chat endpoint — returns full response directly (no SSE).
+  // Used by Next.js /api/chat/route.ts to get delegation_chain from backend.
+  // agentId uses vision.yml short names (alex, sara, marco, leo, nina, maestro).
+  app.post('/api/chat/sync', async (c) => {
+    const agentFolderMap: Record<string, string> = {
+      alex: 'main', sara: 'comms', leo: 'content',
+      marco: 'ops', nina: 'research', maestro: 'maestro',
+    };
+    const agentDisplayMap: Record<string, string> = {
+      alex: 'Alex', sara: 'Sara', leo: 'Léo',
+      marco: 'Marco', nina: 'Nina', maestro: 'Maestro',
+    };
+
+    const body = await c.req.json<{
+      agentId?: string;
+      message?: string;
+      history?: Array<{ role: string; content: string }>;
+    }>();
+    const rawAgentId = body?.agentId?.trim() || 'alex';
+    const message = body?.message?.trim();
+    const history = body?.history ?? [];
+
+    if (!message) return c.json({ error: 'message required' }, 400);
+
+    // Read key from .env file (env.ts does not inject into process.env)
+    let anthropicKey: string | undefined = process.env['ANTHROPIC_API_KEY'];
+    if (!anthropicKey) {
+      try {
+        const envRaw = fs.readFileSync(path.join(PROJECT_ROOT, '.env'), 'utf-8');
+        for (const line of envRaw.split('\n')) {
+          if (line.startsWith('ANTHROPIC_API_KEY=')) {
+            anthropicKey = line.slice('ANTHROPIC_API_KEY='.length).trim();
+            break;
+          }
+        }
+      } catch { /* .env not readable */ }
+    }
+    if (!anthropicKey) return c.json({ error: 'ANTHROPIC_API_KEY not set' }, 503);
+
+    const agentFolderId = agentFolderMap[rawAgentId] ?? rawAgentId;
+    const claudeMdPath = path.join(PROJECT_ROOT, 'agents', agentFolderId, 'CLAUDE.md');
+    let systemPrompt = '';
+    try { systemPrompt = fs.readFileSync(claudeMdPath, 'utf-8'); } catch { /* no CLAUDE.md */ }
+
+    async function callAnthropicSync(sysPrompt: string, userMsg: string, msgHistory: Array<{ role: string; content: string }>): Promise<string | null> {
+      const messages = [
+        ...msgHistory.slice(-10).map((m) => ({
+          role: m.role === 'agent' ? 'assistant' : 'user' as 'user' | 'assistant',
+          content: m.content,
+        })),
+        { role: 'user' as const, content: userMsg },
+      ];
+      try {
+        const res = await fetch('https://api.anthropic.com/v1/messages', {
+          method: 'POST',
+          headers: {
+            'x-api-key': anthropicKey as string,
+            'anthropic-version': '2023-06-01',
+            'content-type': 'application/json',
+          },
+          body: JSON.stringify({
+            model: agentDefaultModel || 'claude-sonnet-4-6',
+            max_tokens: 256,
+            system: sysPrompt || 'You are a helpful assistant.',
+            messages,
+          }),
+          signal: AbortSignal.timeout(15000),
+        });
+        if (!res.ok) return null;
+        const data = await res.json() as { content?: Array<{ text: string }> };
+        return data.content?.[0]?.text ?? null;
+      } catch {
+        return null;
+      }
+    }
+
+    // Inline parseDelegation (mirrors orchestrator.ts)
+    function parseDelegationInline(text: string): { agentId: string; prompt: string } | null {
+      const cmdMatch = text.match(/^\/delegate\s+(\S+)\s+([\s\S]+)/i);
+      if (cmdMatch) return { agentId: cmdMatch[1], prompt: cmdMatch[2].trim() };
+      const atMatch = text.match(/^@(\S+?):\s*([\s\S]+)/);
+      if (atMatch) return { agentId: atMatch[1], prompt: atMatch[2].trim() };
+      return null;
+    }
+
+    const firstReply = await callAnthropicSync(systemPrompt, message, history);
+    if (!firstReply) return c.json({ error: 'LLM call failed' }, 503);
+
+    const delegation = parseDelegationInline(firstReply);
+    if (delegation) {
+      const delegateFolderId = agentFolderMap[delegation.agentId] ?? delegation.agentId;
+      const delegateMdPath = path.join(PROJECT_ROOT, 'agents', delegateFolderId, 'CLAUDE.md');
+      let delegateSys = '';
+      try { delegateSys = fs.readFileSync(delegateMdPath, 'utf-8'); } catch { /* ok */ }
+      const delegatedReply = await callAnthropicSync(delegateSys, delegation.prompt, []);
+      if (delegatedReply) {
+        logger.info({ from: rawAgentId, to: delegation.agentId }, 'Dashboard sync delegation');
+        return c.json({
+          reply: delegatedReply,
+          source: 'claude',
+          agent_id: delegation.agentId,
+          agent_name: agentDisplayMap[delegation.agentId] ?? delegation.agentId,
+          delegation_chain: [rawAgentId, delegation.agentId],
+          delegated: true,
+        });
+      }
+    }
+
+    return c.json({
+      reply: firstReply,
+      source: 'claude',
+      agent_id: rawAgentId,
+      agent_name: agentDisplayMap[rawAgentId] ?? rawAgentId,
+      delegation_chain: [rawAgentId],
+      delegated: false,
+    });
+  });
+
   // Abort current processing
   app.post('/api/chat/abort', (c) => {
     const { chatId } = getIsProcessing();
