@@ -8,7 +8,7 @@ const CHANNEL_BUTTONS = [
   { icon: '📞', label: 'Voix', channel: 'voice' },
   { icon: '💬', label: 'Message', channel: 'chat' },
   { icon: '📧', label: 'Email', channel: 'email' },
-  { icon: '📹', label: 'FaceTime', channel: 'facetime' },
+  { icon: '🎥', label: 'FaceTime', channel: 'facetime' },
 ];
 
 export default function HomePage() {
@@ -16,7 +16,7 @@ export default function HomePage() {
     <main className="min-h-screen bg-so-bg safe-top safe-bottom">
       {/* Header */}
       <header className="sticky top-0 z-10 bg-so-bg/95 backdrop-blur-sm border-b border-so-border px-4 py-4">
-        <div className="max-w-2xl mx-auto flex items-center justify-between">
+        <div className="max-w-6xl mx-auto flex items-center justify-between">
           <div>
             <h1 className="text-xl font-semibold tracking-wide text-so-text">
               Silver Oak <span className="text-so-gold">OS</span>
@@ -30,11 +30,12 @@ export default function HomePage() {
       </header>
 
       {/* Agent grid */}
-      <section className="max-w-2xl mx-auto px-4 py-6">
-        <p className="text-so-muted text-xs uppercase tracking-widest mb-4 font-medium">
+      <section className="w-full px-4 py-6">
+        <p className="text-so-muted text-xs uppercase tracking-widest mb-4 font-medium max-w-6xl mx-auto">
           Votre équipe
         </p>
-        <div className="grid grid-cols-2 gap-4">
+        {/* 2 cols mobile → 3 cols tablet → 6 cols desktop */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4 max-w-6xl mx-auto">
           {AGENTS.map((agent) => (
             <AgentCard key={agent.id} agent={agent} />
           ))}
@@ -46,20 +47,24 @@ export default function HomePage() {
 
 function AgentCard({ agent }: { agent: (typeof AGENTS)[number] }) {
   return (
-    <div className="bg-so-card border border-so-border rounded-2xl overflow-hidden flex flex-col">
+    <div className="bg-so-card border border-so-border rounded-2xl overflow-hidden flex flex-col
+      hover:border-so-gold/50 hover:shadow-lg hover:shadow-so-gold/10
+      hover:-translate-y-0.5 transition-all duration-200 group/card">
       {/* Photo + name area — clickable */}
-      <Link href={`/agent/${agent.id}`} className="block group">
+      <Link href={`/agent/${agent.id}`} className="block">
         <div className="relative aspect-square w-full overflow-hidden">
           <Image
             src={agent.photo}
             alt={agent.name}
             fill
-            className="object-cover group-hover:scale-105 transition-transform duration-300"
-            sizes="(max-width: 640px) 50vw, 300px"
+            className="object-cover group-hover/card:scale-105 transition-transform duration-300"
+            sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 16vw"
             unoptimized
           />
           {/* Gradient overlay */}
           <div className="absolute inset-0 bg-gradient-to-t from-so-card via-transparent to-transparent" />
+          {/* Gold glow on hover */}
+          <div className="absolute inset-0 bg-so-gold/0 group-hover/card:bg-so-gold/5 transition-colors duration-200" />
           {/* Name + role */}
           <div className="absolute bottom-0 left-0 right-0 p-3">
             <p className="text-so-text font-semibold text-sm">{agent.name}</p>
@@ -91,15 +96,13 @@ function ChannelButton({
   label: string;
   channel: string;
 }) {
-  // Voice and chat → go to agent page; others → MVP placeholder
   const href =
-    channel === 'voice' || channel === 'chat'
+    channel === 'voice' || channel === 'chat' || channel === 'facetime'
       ? `/agent/${agentId}?channel=${channel}`
       : undefined;
 
   const handleClick = () => {
     if (!href) {
-      // MVP: show toast or just focus agent chat
       window.location.href = `/agent/${agentId}`;
     }
   };
