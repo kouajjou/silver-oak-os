@@ -5,3 +5,4 @@ ios/App/build/
 ios/App/App/App.xcworkspace/xcuserdata/
 *.xcuserstate
 *.xcworkspace/xcuserdata/
+node_modules/
