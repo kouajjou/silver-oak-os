@@ -5,5 +5,5 @@ telegram_bot_token_env: TELEGRAM_BOT_TOKEN
 
 model: claude-sonnet-4-6
 
-meet_voice_id: "EXAVITQu4vr4xnSDxMaL"
+meet_voice_id: "onwK4e9ZLuTAKqWW03F9"
 meet_bot_name: "Alex"
