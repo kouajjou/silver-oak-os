@@ -205,13 +205,30 @@ export async function POST(req: NextRequest) {
 
     const agentName = AGENT_NAMES[resolvedAgentId] ?? resolvedAgentId;
 
-    // Attribution metadata — delegation_chain tracks which agents were invoked.
-    // In MVP (no real multi-agent delegation), chain = [resolvedAgentId], delegated = false.
-    // Future: if alex delegates to marco, chain = ['alex', 'marco'], delegated = true.
-    const delegationChain: string[] = [resolvedAgentId];
-    const delegated = false;
+    // 1. Try backend /api/chat/sync — real delegation + real agent system prompts
+    const backendUrl = process.env.BACKEND_CHAT_URL;
+    const backendToken = process.env.BACKEND_CHAT_TOKEN;
+    if (backendUrl && backendToken) {
+      try {
+        const backendRes = await fetch(
+          `${backendUrl}/api/chat/sync?token=${backendToken}`,
+          {
+            method: 'POST',
+            headers: { 'content-type': 'application/json' },
+            body: JSON.stringify({ agentId: resolvedAgentId, message, history }),
+            signal: AbortSignal.timeout(20000),
+          },
+        );
+        if (backendRes.ok) {
+          const data = await backendRes.json() as ChatResponse;
+          return NextResponse.json(data);
+        }
+      } catch (backendErr) {
+        console.warn('[chat] Backend unreachable, falling back to direct Anthropic');
+      }
+    }
 
-    // 1. Try real Claude Sonnet
+    // 2. Fallback: direct Claude Sonnet (delegation_chain = [resolvedAgentId])
     const claudeReply = await callClaude(resolvedAgentId, message, history);
     if (claudeReply) {
       const response: ChatResponse = {
@@ -219,13 +236,13 @@ export async function POST(req: NextRequest) {
         source: 'claude',
         agent_id: resolvedAgentId,
         agent_name: agentName,
-        delegation_chain: delegationChain,
-        delegated,
+        delegation_chain: [resolvedAgentId],
+        delegated: false,
       };
       return NextResponse.json(response);
     }
 
-    // 2. Fallback: MVP hardcoded (graceful degradation)
+    // 3. MVP fallback: hardcoded responses (graceful degradation)
     await new Promise((r) => setTimeout(r, 400 + Math.random() * 400));
     const reply = getRandomResponse(resolvedAgentId);
     const response: ChatResponse = {
@@ -233,8 +250,8 @@ export async function POST(req: NextRequest) {
       source: 'mvp',
       agent_id: resolvedAgentId,
       agent_name: agentName,
-      delegation_chain: delegationChain,
-      delegated,
+      delegation_chain: [resolvedAgentId],
+      delegated: false,
     };
     return NextResponse.json(response);
   } catch (e) {
