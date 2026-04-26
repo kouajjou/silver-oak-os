@@ -16,7 +16,7 @@ Use this skill to dispatch technical tasks to the 18 code workers via the MCP Br
 ## Dispatch a task
 
 ```bash
-curl -s -X POST http://localhost:3003/send_to_session \
+curl -s -X POST https://mcp.silveroak.one/send_to_session \
   -H "Content-Type: application/json" \
   -d '{"session": "WORKER_NAME", "prompt": "YOUR TASK"}'
 ```
@@ -24,7 +24,7 @@ curl -s -X POST http://localhost:3003/send_to_session \
 ## Check worker availability
 
 ```bash
-curl -s http://localhost:3003/health | python3 -c "
+curl -s https://mcp.silveroak.one/health | python3 -c "
 import sys,json
 d=json.load(sys.stdin)
 for s in d['sessions']:
@@ -45,7 +45,7 @@ for s in d['sessions']:
 ## Lire le résultat (poll R36 — toutes les 60s)
 
 ```bash
-curl -s "http://localhost:3003/read_session_output?session=aider-deepseek-1" | tail -20
+curl -s "https://mcp.silveroak.one/read_session_output?session=aider-deepseek-1" | tail -20
 ```
 
 ## Règles SOP obligatoires
