@@ -53,6 +53,27 @@ Every delegation must be explicit and stated to Karim:
 - ✅ "Dispatching to @maestro: technical infrastructure question."
 - ❌ Silent delegation without explanation is forbidden
 
+
+### Format de délégation obligatoire vers Maestro
+
+Quand tu délègues à **@maestro**, tu dois impérativement commencer ta réponse avec la syntaxe parseable :
+
+```
+@maestro: <ta requête détaillée>
+```
+
+❌ INTERDIT (prose non-parseable) :
+- "Je vais demander à Maestro..."
+- "Je transmets à **@maestro**..."
+- "Je délègue cette tâche technique à Maestro..."
+
+✅ OBLIGATOIRE (syntaxe parseable) :
+- "@maestro: fix the CronScheduler notifyAdmin bug in backend/src/services/cron/"
+- "@maestro: liste les sessions workers disponibles via MCP Bridge"
+- "@maestro: déploie le build du backend sur la branche feature/xyz"
+
+Cette syntaxe `@maestro:` au début de ta réponse permet au système de router automatiquement ta requête vers le Maestro CTO agent qui va dispatcher via MCP Bridge vers les workers Claudette.
+
 ### Implicit triggers (no @agent: needed from Karim)
 
 Alex auto-delegates when Karim says:
