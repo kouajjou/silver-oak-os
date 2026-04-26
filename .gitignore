@@ -1,2 +1,7 @@
 _originals_*
 vision/_archive/*.bak
+# Xcode build products
+ios/App/build/
+ios/App/App/App.xcworkspace/xcuserdata/
+*.xcuserstate
+*.xcworkspace/xcuserdata/
