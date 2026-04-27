@@ -4,11 +4,17 @@
  * Standalone Hono server on port VOICE_API_PORT (default 3000).
  * Provides HTTP endpoints for chat, TTS, STT, and agent listing.
  *
+ * Security: all routes except /api/voice/health require ?token= query param
+ * matching VOICE_API_TOKEN (or DASHBOARD_TOKEN as fallback).
+ *
+ * Personas: loaded from agents/<folder>/CLAUDE.md (single source of truth).
+ *
  * Endpoints:
  *   GET  /api/voice/agents            — list available agent personas
  *   POST /api/voice/chat/:agentId     — chat with an agent (Anthropic API)
  *   POST /api/voice/tts/:agentId      — text-to-speech
  *   POST /api/voice/stt               — speech-to-text (multipart form, audio file)
+ *   GET  /api/voice/health            — public health check (no auth required)
  */
 
 import { Hono } from 'hono';
@@ -18,62 +24,63 @@ import path from 'path';
 import os from 'os';
 
 import { readEnvFile } from '../env.js';
+import { DASHBOARD_TOKEN, PROJECT_ROOT } from '../config.js';
 import { synthesizeSpeech, transcribeAudio, UPLOADS_DIR } from '../voice.js';
 import { logger } from '../logger.js';
 
-// ── Agent personas ────────────────────────────────────────────────────────────
+// ── Agent personas — CLAUDE.md as single source of truth ─────────────────────
 
-interface AgentPersona {
+// Agent folder mapping (same convention as dashboard.ts and route.ts)
+const agentFolderMap: Record<string, string> = {
+  alex:    'main',
+  sara:    'comms',
+  leo:     'content',
+  marco:   'ops',
+  nina:    'research',
+  maestro: 'maestro',
+};
+
+// Static agent metadata (id/name/role)
+interface AgentInfo {
   id: string;
   name: string;
   role: string;
-  systemPrompt: string;
 }
 
-const AGENTS: Record<string, AgentPersona> = {
-  alex: {
-    id: 'alex',
-    name: 'Alex',
-    role: 'Operations Manager',
-    systemPrompt:
-      'You are Alex, operations manager at Silver Oak. You are concise, pragmatic, and results-oriented. You help coordinate tasks, track progress, and remove blockers. Always respond in the same language as the user.',
-  },
-  sara: {
-    id: 'sara',
-    name: 'Sara',
-    role: 'Customer Success',
-    systemPrompt:
-      'You are Sara, customer success specialist at Silver Oak. You are warm, empathetic, and solution-focused. You help users get maximum value from the platform. Always respond in the same language as the user.',
-  },
-  leo: {
-    id: 'leo',
-    name: 'Leo',
-    role: 'Lead Engineer',
-    systemPrompt:
-      'You are Leo, lead engineer at Silver Oak. You are technical, precise, and thorough. You help with architecture decisions, code reviews, and debugging. Always respond in the same language as the user.',
-  },
-  marco: {
-    id: 'marco',
-    name: 'Marco',
-    role: 'Growth & Marketing',
-    systemPrompt:
-      'You are Marco, growth and marketing lead at Silver Oak. You are creative, data-driven, and user-centric. You help with go-to-market strategy, content, and growth experiments. Always respond in the same language as the user.',
-  },
-  nina: {
-    id: 'nina',
-    name: 'Nina',
-    role: 'CFO',
-    systemPrompt:
-      'You are Nina, CFO at Silver Oak. You are analytical, detail-oriented, and financially rigorous. You help with financial modeling, budgeting, and cost optimization. Always respond in the same language as the user.',
-  },
-  maestro: {
-    id: 'maestro',
-    name: 'Maestro',
-    role: 'Orchestrator',
-    systemPrompt:
-      'You are Maestro, the central orchestrator of Silver Oak OS. You coordinate all agents, manage workflows, and ensure tasks are completed efficiently. You have full context of all ongoing operations. Always respond in the same language as the user.',
-  },
+const AGENT_INFO: Record<string, AgentInfo> = {
+  alex:    { id: 'alex',    name: 'Alex',    role: 'Chief of Staff' },
+  sara:    { id: 'sara',    name: 'Sara',    role: 'Communications' },
+  leo:     { id: 'leo',     name: 'Leo',     role: 'Content Strategy' },
+  marco:   { id: 'marco',   name: 'Marco',   role: 'Operations' },
+  nina:    { id: 'nina',    name: 'Nina',    role: 'Research' },
+  maestro: { id: 'maestro', name: 'Maestro', role: 'CTO' },
 };
+
+/**
+ * Load the system prompt for an agent from its CLAUDE.md file.
+ * Falls back to a minimal English prompt if the file cannot be read.
+ */
+function loadSystemPrompt(agentId: string): string {
+  const folder = agentFolderMap[agentId] ?? agentId;
+  const claudeMdPath = path.join(PROJECT_ROOT, 'agents', folder, 'CLAUDE.md');
+  try {
+    const content = fs.readFileSync(claudeMdPath, 'utf-8');
+    logger.debug({ agentId, claudeMdPath }, 'Loaded system prompt from CLAUDE.md');
+    return content;
+  } catch (err) {
+    logger.warn({ agentId, claudeMdPath }, 'CLAUDE.md not found — using fallback prompt');
+    const info = AGENT_INFO[agentId];
+    const name = info?.name ?? agentId;
+    const role = info?.role ?? 'assistant';
+    return `You are ${name}, ${role} at Silver Oak. Always respond in the same language as the user.`;
+  }
+}
+
+// Pre-load all system prompts at startup for fast access
+const SYSTEM_PROMPTS: Record<string, string> = {};
+for (const agentId of Object.keys(AGENT_INFO)) {
+  SYSTEM_PROMPTS[agentId] = loadSystemPrompt(agentId);
+}
 
 // ── Anthropic chat helper ─────────────────────────────────────────────────────
 
@@ -121,21 +128,38 @@ async function callAnthropic(
 const VOICE_API_PORT = parseInt(process.env.VOICE_API_PORT ?? '3000', 10);
 
 export function startVoiceApiServer(): void {
-  const env = readEnvFile(['ANTHROPIC_API_KEY', 'VOICE_API_PORT']);
+  const env = readEnvFile(['ANTHROPIC_API_KEY', 'VOICE_API_PORT', 'VOICE_API_TOKEN']);
   const anthropicKey = env.ANTHROPIC_API_KEY ?? process.env.ANTHROPIC_API_KEY ?? '';
 
   if (!anthropicKey) {
     logger.warn('ANTHROPIC_API_KEY not set — voice chat endpoint will return 503');
   }
 
+  // Auth token: VOICE_API_TOKEN env var, fallback to DASHBOARD_TOKEN
+  const VOICE_TOKEN = env.VOICE_API_TOKEN ?? process.env.VOICE_API_TOKEN ?? DASHBOARD_TOKEN;
+  if (!VOICE_TOKEN) {
+    logger.warn('VOICE_API_TOKEN not set and no DASHBOARD_TOKEN fallback — voice API will be OPEN (no auth)');
+  }
+
   const app = new Hono();
 
-  // CORS
+  // CORS — strict allowlist (no wildcard)
+  const ALLOWED_ORIGINS = [
+    'https://os.silveroak.one',
+    'http://localhost:3002',
+    'capacitor://localhost', // iOS app future support
+  ];
+
   app.use('*', async (c, next) => {
-    c.header('Access-Control-Allow-Origin', '*');
+    const origin = c.req.header('origin') ?? '';
+    const isAllowed = ALLOWED_ORIGINS.includes(origin);
+    if (isAllowed) {
+      c.header('Access-Control-Allow-Origin', origin);
+      c.header('Vary', 'Origin');
+    }
     c.header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-    c.header('Access-Control-Allow-Headers', 'Content-Type, x-test-mode');
-    if (c.req.method === 'OPTIONS') return c.body(null, 204);
+    c.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, x-test-mode');
+    if (c.req.method === 'OPTIONS') return c.body(null, isAllowed ? 204 : 403);
     await next();
   });
 
@@ -144,17 +168,44 @@ export function startVoiceApiServer(): void {
     return c.json({ error: 'Internal server error' }, 500);
   });
 
-  // GET /api/voice/agents — list available personas
+  // Auth middleware — all routes except /api/voice/health require token
+  // Accept: ?token=xxx (query param) OR Authorization: Bearer xxx (header)
+  app.use('/api/voice/*', async (c, next) => {
+    // Health check is public — no auth required
+    if (c.req.path === '/api/voice/health') {
+      await next();
+      return;
+    }
+
+    if (!VOICE_TOKEN) {
+      // No token configured → open (warn already logged at startup)
+      await next();
+      return;
+    }
+
+    const queryToken = c.req.query('token');
+    const authHeader = c.req.header('authorization');
+    const bearerToken = authHeader?.replace(/^Bearer\s+/i, '');
+    const token = queryToken ?? bearerToken;
+
+    if (!token || token !== VOICE_TOKEN) {
+      logger.warn({ path: c.req.path, method: c.req.method }, 'Voice API unauthorized request');
+      return c.json({ error: 'Unauthorized' }, 401);
+    }
+
+    await next();
+  });
+
+  // GET /api/voice/agents — list available personas (requires auth)
   app.get('/api/voice/agents', (c) => {
-    const list = Object.values(AGENTS).map(({ id, name, role }) => ({ id, name, role }));
+    const list = Object.values(AGENT_INFO).map(({ id, name, role }) => ({ id, name, role }));
     return c.json({ agents: list });
   });
 
   // POST /api/voice/chat/:agentId — chat with an agent
   app.post('/api/voice/chat/:agentId', async (c) => {
     const agentId = c.req.param('agentId');
-    const agent = AGENTS[agentId];
-    if (!agent) {
+    if (!AGENT_INFO[agentId]) {
       return c.json({ error: `Unknown agent: ${agentId}` }, 404);
     }
     if (!anthropicKey) {
@@ -176,10 +227,13 @@ export function startVoiceApiServer(): void {
       return c.json({ error: 'message or messages required' }, 400);
     }
 
+    const systemPrompt = SYSTEM_PROMPTS[agentId] ?? loadSystemPrompt(agentId);
+    const agentInfo = AGENT_INFO[agentId];
+
     try {
-      const reply = await callAnthropic(agent.systemPrompt, messages, anthropicKey);
+      const reply = await callAnthropic(systemPrompt, messages, anthropicKey);
       return c.json({
-        agent: { id: agent.id, name: agent.name },
+        agent: { id: agentInfo.id, name: agentInfo.name },
         reply,
         messages: [...messages, { role: 'assistant', content: reply }],
       });
@@ -193,7 +247,7 @@ export function startVoiceApiServer(): void {
   // POST /api/voice/tts/:agentId — text-to-speech
   app.post('/api/voice/tts/:agentId', async (c) => {
     const agentId = c.req.param('agentId');
-    if (!AGENTS[agentId]) {
+    if (!AGENT_INFO[agentId]) {
       return c.json({ error: `Unknown agent: ${agentId}` }, 404);
     }
 
@@ -258,7 +312,7 @@ export function startVoiceApiServer(): void {
     }
   });
 
-  // Health check
+  // Health check — public, no auth
   app.get('/api/voice/health', (c) => c.json({ status: 'ok', port: VOICE_API_PORT }));
 
   const port = parseInt(env.VOICE_API_PORT ?? String(VOICE_API_PORT), 10);
