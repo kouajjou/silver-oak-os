@@ -4,3 +4,6 @@ description: Operations — Google Calendar, finance monitoring, Hetzner infra, 
 telegram_bot_token_env: OPS_TELEGRAM_TOKEN
 
 model: claude-sonnet-4-6
+
+meet_voice_id: "pNInz6obpgDQGcFmaJgB"
+meet_bot_name: "Marco"

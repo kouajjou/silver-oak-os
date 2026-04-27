@@ -1,0 +1,11 @@
+{
+  "agent": "leo",
+  "role": "Content",
+  "variant": 2,
+  "model": "imagen-4.0-ultra-generate-001",
+  "cost_usd": 0.08,
+  "size_kb": 1452.4,
+  "generation_time_sec": 12.83,
+  "generated_at": "2026-04-25T12:05:50Z",
+  "path": "/app/silver-oak-os/public/agents/_bank/leo_v2.jpg"
+}
