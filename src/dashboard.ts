@@ -983,7 +983,7 @@ export function startDashboard(botApi?: Api<RawApi>): void {
       turns,
       compactions,
       sessionAge,
-      model: agentDefaultModel || 'sonnet-4-6',
+      model: agentDefaultModel || 'claude-sonnet-4-6',
       messengerType: MESSENGER_TYPE,
       messengerConnected: getTelegramConnected(),
       // Back-compat alias — pre-Signal clients still read telegramConnected.

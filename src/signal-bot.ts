@@ -585,7 +585,7 @@ export function createSignalBot(): SignalBot {
       case 'model': {
         const key = arg.toLowerCase();
         if (!key) {
-          const current = chatModelOverride.get(chatId) ?? agentDefaultModel ?? 'claude-opus-4-6';
+          const current = chatModelOverride.get(chatId) ?? agentDefaultModel ?? 'claude-sonnet-4-6';
           await sendMessage(chatId, `Current model: ${current}\n\nUsage: /model <opus|sonnet|haiku>`);
           return true;
         }
