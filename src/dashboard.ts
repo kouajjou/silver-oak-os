@@ -1497,7 +1497,7 @@ export function startDashboard(botApi?: Api<RawApi>): void {
           },
           body: JSON.stringify({
             model: agentDefaultModel || 'claude-sonnet-4-6',
-            max_tokens: 256,
+            max_tokens: 1024,
             system: sysPrompt || 'You are a helpful assistant.',
             messages,
           }),
