@@ -1,2 +1,8 @@
 _originals_*
 vision/_archive/*.bak
+
+# SQLite budget tracker data
+data/
+*.db
+*.db-shm
+*.db-wal
