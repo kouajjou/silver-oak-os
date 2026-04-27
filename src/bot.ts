@@ -131,7 +131,7 @@ const AVAILABLE_MODELS: Record<string, string> = {
   sonnet: 'claude-sonnet-4-5',
   haiku: 'claude-haiku-4-5',
 };
-const DEFAULT_MODEL_LABEL = 'opus';
+const DEFAULT_MODEL_LABEL = 'sonnet';
 
 export function setMainModelOverride(model: string): void {
   if (ALLOWED_CHAT_ID) chatModelOverride.set(ALLOWED_CHAT_ID, model);
@@ -501,7 +501,15 @@ async function handleMessage(ctx: Context, message: string, forceVoiceReply = fa
   const userModel = chatModelOverride.get(chatIdStr) ?? agentDefaultModel;
   const effectiveModel = (SMART_ROUTING_ENABLED && !userModel && classifyMessageComplexity(message) === 'simple')
     ? SMART_ROUTING_CHEAP_MODEL
-    : (userModel ?? 'claude-opus-4-6');
+    : (userModel ?? 'claude-sonnet-4-6');
+
+  // gap-004: R1 SOP — Opus banni sauf override explicite USINE_OPUS_ALLOWED=true
+  if (typeof effectiveModel === 'string' && effectiveModel.toLowerCase().includes('opus')
+      && process.env['USINE_OPUS_ALLOWED'] !== 'true') {
+    logger.warn({ model: effectiveModel }, '[gap-004] Opus bloqué par R1 SOP');
+    await ctx.reply('⛔ Opus est désactivé (R1 SOP). Utilise /model sonnet ou demande à Karim d\'activer USINE_OPUS_ALLOWED=true.');
+    return;
+  }
 
   // Start typing immediately, then refresh on interval
   await sendTyping(ctx.api, chatId);
