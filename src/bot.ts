@@ -778,7 +778,7 @@ async function handleMessage(ctx: Context, message: string, forceVoiceReply = fa
  * directory stays intact.
  */
 function discoverSkillCommands(allowlist?: string[]): Array<{ command: string; description: string }> {
-  const skillsDir = path.join(os.homedir(), '.claude', 'skills');
+  const skillsDir = path.join("/app/silver-oak-os", "skills");
   const commands: Array<{ command: string; description: string }> = [];
   const allow = allowlist && allowlist.length > 0
     ? new Set(allowlist.map((s) => s.toLowerCase()))

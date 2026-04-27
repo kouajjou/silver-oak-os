@@ -1,0 +1,13 @@
+{
+  "name": "silveroak-vision",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "build:pptx": "node generators/build_pptx.js",
+    "build:all": "npm run build:pptx"
+  },
+  "dependencies": {
+    "js-yaml": "^4.1.0",
+    "pptxgenjs": "^3.12.0"
+  }
+}

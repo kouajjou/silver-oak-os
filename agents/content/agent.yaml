@@ -4,3 +4,6 @@ description: Content production — YouTube scripts, LinkedIn posts, content cal
 telegram_bot_token_env: CONTENT_TELEGRAM_TOKEN
 
 model: claude-sonnet-4-6
+
+meet_voice_id: "TX3LPaxmHKxFdv7VOQHJ"
+meet_bot_name: "Léo"

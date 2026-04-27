@@ -1,0 +1,11 @@
+{
+  "agent": "sara",
+  "role": "Communications",
+  "variant": 2,
+  "model": "imagen-4.0-ultra-generate-001",
+  "cost_usd": 0.08,
+  "size_kb": 1398.0,
+  "generation_time_sec": 13.05,
+  "generated_at": "2026-04-25T12:05:25Z",
+  "path": "/app/silver-oak-os/public/agents/_bank/sara_v2.jpg"
+}

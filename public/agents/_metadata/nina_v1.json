@@ -1,0 +1,11 @@
+{
+  "agent": "nina",
+  "role": "Research",
+  "variant": 1,
+  "model": "imagen-4.0-ultra-generate-001",
+  "cost_usd": 0.08,
+  "size_kb": 1442.6,
+  "generation_time_sec": 12.4,
+  "generated_at": "2026-04-25T12:06:25Z",
+  "path": "/app/silver-oak-os/public/agents/nina.jpg"
+}
