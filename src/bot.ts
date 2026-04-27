@@ -839,6 +839,65 @@ function discoverSkillCommands(allowlist?: string[]): Array<{ command: string; d
   return commands.sort((a, b) => a.command.localeCompare(b.command));
 }
 
+
+// ── gap-005 strategy A: HITL Telegram callbacks ────────────────────────────
+
+const HITL_TTL_MS = 60 * 60 * 1000; // 1 hour
+
+interface PendingHITL {
+  ticketId: string;
+  question: string;
+  options: string[];
+  createdAt: number;
+  resolve?: (action: string) => void;
+}
+
+const pendingHITL = new Map<string, PendingHITL>();
+
+// Cleanup expired HITL entries every 5 min
+setInterval(() => {
+  const now = Date.now();
+  for (const [id, h] of pendingHITL.entries()) {
+    if (now - h.createdAt > HITL_TTL_MS) {
+      pendingHITL.delete(id);
+      logger.info({ ticketId: id }, "[gap-005] HITL ticket expired (>1h)");
+    }
+  }
+}, 5 * 60 * 1000).unref();
+
+/**
+ * Send a HITL request with inline keyboard to Karim.
+ * callback_data format: "hitl:<tid>:<action>" (max 64 bytes total)
+ * Returns ticketId used to look up pending resolve later.
+ */
+export async function sendHITLRequest(
+  api: Bot["api"],
+  ticketId: string,
+  question: string,
+  options: string[],
+): Promise<{ ticketId: string }> {
+  if (!ALLOWED_CHAT_ID) {
+    logger.warn("[gap-005] ALLOWED_CHAT_ID not set — cannot send HITL request");
+    throw new Error("ALLOWED_CHAT_ID not configured");
+  }
+  // Truncate ticketId to keep callback_data <= 64 bytes
+  const tid = ticketId.replace(/[^a-zA-Z0-9-]/g, "").substring(0, 14);
+  const inline_keyboard = [
+    options.map((opt) => ({
+      text: opt,
+      callback_data: `hitl:${tid}:${opt.toLowerCase().replace(/[^a-z0-9]/g, "").substring(0, 18)}`,
+    })),
+  ];
+  await api.sendMessage(parseInt(ALLOWED_CHAT_ID, 10), question, {
+    reply_markup: { inline_keyboard },
+  });
+  pendingHITL.set(tid, { ticketId: tid, question, options, createdAt: Date.now() });
+  logger.info({ ticketId: tid }, "[gap-005] HITL request sent");
+  return { ticketId: tid };
+}
+
+// ────────────────────────────────────────────────────────────────────────────
+
 export function createBot(): Bot {
   const token = activeBotToken;
   if (!token) {
@@ -1658,6 +1717,78 @@ export function createBot(): Bot {
   });
 
   // Graceful error handling — log but don't crash
+
+  // gap-005: /test_hitl command — Karim phone E2E validation
+  bot.command("test_hitl", async (ctx) => {
+    if (!isAuthorised(ctx.chat!.id)) return;
+    const ticketId = `test-${Date.now()}`;
+    try {
+      await sendHITLRequest(
+        bot.api,
+        ticketId,
+        "🧪 Test HITL gap-005 — Boutons inline Telegram (MVPstratégie A). Clique un bouton :",
+        ["Approve", "Reject"],
+      );
+      await ctx.reply("✅ Message HITL envoyé — clique un bouton dans le message ci-dessus.");
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      await ctx.reply(`❌ sendHITLRequest échoué : ${msg}`);
+    }
+  });
+
+  // gap-005: callback_query handler — receives Karim button taps
+  bot.on("callback_query:data", async (ctx) => {
+    // Security: only authorised chat can trigger callbacks
+    const chatId = ctx.callbackQuery.from.id;
+    if (!isAuthorised(chatId)) {
+      await ctx.answerCallbackQuery({ text: "Unauthorized" });
+      return;
+    }
+
+    const data = ctx.callbackQuery.data;
+
+    if (!data.startsWith("hitl:")) {
+      // Not a HITL callback — ignore silently
+      await ctx.answerCallbackQuery();
+      return;
+    }
+
+    const parts = data.split(":");
+    if (parts.length !== 3) {
+      await ctx.answerCallbackQuery({ text: "Format invalide" });
+      return;
+    }
+
+    const [, tid, action] = parts;
+    const pending = pendingHITL.get(tid);
+
+    if (!pending) {
+      await ctx.answerCallbackQuery({ text: "Ticket expiré ou inconnu" });
+      return;
+    }
+
+    // Ack the button (removes Telegram spinner)
+    await ctx.answerCallbackQuery({ text: `✅ ${action} reçu` });
+
+    // Edit original message to show the chosen action
+    try {
+      await ctx.editMessageText(
+        `${pending.question}\n\n✅ Choix : **${action}**`,
+        { parse_mode: "Markdown" },
+      );
+    } catch {
+      // editMessageText can fail if message is too old — non-blocking
+    }
+
+    // Resolve pending promise if caller awaits decision
+    if (pending.resolve) {
+      pending.resolve(action);
+    }
+
+    pendingHITL.delete(tid);
+    logger.info({ ticketId: tid, action }, "[gap-005] HITL resolved");
+  });
+
   bot.catch((err) => {
     logger.error({ err: err.message }, 'Telegram bot error');
   });
