@@ -78,6 +78,7 @@ import { getDashboardHtml } from './dashboard-html.js';
 import { getWarRoomHtml } from './warroom-html.js';
 import { WARROOM_ENABLED, WARROOM_PORT } from './config.js';
 import { logger } from './logger.js';
+import { getBudgetStatusData } from './dashboard/budget-status.js';
 import { getTelegramConnected, getBotInfo, chatEvents, getIsProcessing, abortActiveQuery, ChatEvent, readAgentConnState } from './state.js';
 
 async function classifyTaskAgent(prompt: string): Promise<string | null> {
@@ -1000,6 +1001,12 @@ export function startDashboard(botApi?: Api<RawApi>): void {
     const costTimeline = getDashboardCostTimeline(chatId, 30);
     const recentUsage = getDashboardRecentTokenUsage(chatId, 20);
     return c.json({ stats, costTimeline, recentUsage });
+  });
+  // gap-020 / SOP V26.2: Live budget status for all Maestro workers
+  app.get('/api/budget/status', (c) => {
+    const agent_id = c.req.query('agent_id');
+    const data = getBudgetStatusData(agent_id ?? 'all');
+    return c.json({ agents: data, timestamp: new Date().toISOString() });
   });
 
   // Bot info (name, PID, chatId) — reads dynamically from state
