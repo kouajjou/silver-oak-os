@@ -78,6 +78,7 @@ import { getDashboardHtml } from './dashboard-html.js';
 import { getWarRoomHtml } from './warroom-html.js';
 import { WARROOM_ENABLED, WARROOM_PORT } from './config.js';
 import { logger } from './logger.js';
+import { alexHandle } from './agents/alex_orchestrator.js';
 import { getBudgetStatusData } from './dashboard/budget-status.js';
 import { getTelegramConnected, getBotInfo, chatEvents, getIsProcessing, abortActiveQuery, ChatEvent, readAgentConnState } from './state.js';
 
@@ -1465,6 +1466,22 @@ export function startDashboard(botApi?: Api<RawApi>): void {
     const history = body?.history ?? [];
 
     if (!message) return c.json({ error: 'message required' }, 400);
+
+    // Alex Pipeline V1 — intent classify + Maestro dispatch (Sprint 2)
+    if (rawAgentId === 'alex') {
+      const alexResult = await alexHandle({ message, user_id: 'karim' });
+      return c.json({
+        reply: alexResult.response,
+        response: alexResult.response,
+        source: 'alex-pipeline',
+        agent_id: rawAgentId,
+        agent_name: 'Alex',
+        delegation_chain: alexResult.delegated_to_maestro ? ['alex', 'maestro'] : ['alex'],
+        delegated: alexResult.delegated_to_maestro,
+        cost_usd: alexResult.cost_usd,
+        intent: alexResult.intent,
+      });
+    }
 
     // Read key from .env file (env.ts does not inject into process.env)
     let anthropicKey: string | undefined = process.env['ANTHROPIC_API_KEY'];
