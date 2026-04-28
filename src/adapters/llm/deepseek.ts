@@ -5,6 +5,11 @@
  */
 
 import { LLMAdapter, LLMRequest, LLMResponse } from './types.js';
+import { readEnvFile } from '../../env.js';
+
+function getDeepSeekKey(): string | undefined {
+  return process.env['DEEPSEEK_API_KEY'] || readEnvFile(['DEEPSEEK_API_KEY'])['DEEPSEEK_API_KEY'];
+}
 
 interface DeepSeekChoice {
   message: { content: string };
@@ -23,11 +28,11 @@ const PRICING: Record<string, { input: number; output: number }> = {
 
 export const deepseekAdapter: LLMAdapter = {
   provider: 'deepseek',
-  available: !!process.env['DEEPSEEK_API_KEY'],
+  available: !!getDeepSeekKey(),
 
   async call(request: LLMRequest): Promise<LLMResponse> {
     const start = Date.now();
-    const apiKey = process.env['DEEPSEEK_API_KEY'];
+    const apiKey = getDeepSeekKey();
     if (!apiKey) throw new Error('DEEPSEEK_API_KEY missing in .env');
 
     const res = await fetch('https://api.deepseek.com/v1/chat/completions', {
