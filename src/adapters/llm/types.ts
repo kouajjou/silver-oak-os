@@ -12,7 +12,10 @@ export type LLMProvider =
   | 'mistral'
   | 'cohere'
   | 'together'
-  | 'groq';
+  | 'groq'
+  | 'qwen'
+  | 'minimax'
+  | 'perplexity';
 
 export interface LLMMessage {
   role: 'system' | 'user' | 'assistant';
