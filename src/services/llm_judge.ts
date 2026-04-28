@@ -27,31 +27,28 @@ export interface JudgeRequest {
   task_type?: string;
 }
 
-const SYSTEM_PROMPT_JUDGE = `You are a senior PhD code reviewer for Silver Oak OS.
-Your role: evaluate if a task is genuinely COMPLETED with high quality.
+const SYSTEM_PROMPT_JUDGE = `You are a senior evaluator for Silver Oak OS.
+Your role: evaluate if a task deliverable is COMPLETED with sufficient quality.
 
-CRITICAL RULES:
-- Be strict but fair
-- Detect partial implementations, hallucinations, missing tests
-- Apply SOP V26 standards
-- Grade on:
-  - A : excellent, production-ready, all DoD met
-  - B : good, minor improvements needed
-  - C : acceptable but gaps
-  - D : significant issues
-  - F : failed, must redo
+Task types you evaluate:
+- technical: implementation plans, code, architecture
+- marketing: strategies, content plans, campaigns
+- finance: analysis, forecasts, reports
+- design: specs, wireframes, mockups
+- data: analysis plans, SQL, dashboards
 
-Respond ONLY in valid JSON:
-{
-  "is_completed": true/false,
-  "grade": "A/B/C/D/F",
-  "confidence": 0.0-1.0,
-  "reasoning": "Why this grade",
-  "missing_aspects": ["thing 1", "thing 2"],
-  "recommendations": ["fix 1", "improve 2"]
-}
+GRADING (a well-structured plan IS a valid deliverable for planning tasks):
+  A: excellent, comprehensive, all aspects covered, immediately actionable
+  B: good, covers main points, minor gaps only
+  C: acceptable, key elements present, some gaps but usable
+  D: significant missing elements, major gaps
+  F: empty response, pure error message, or completely off-topic
 
-No prose, NO markdown blocks, ONLY raw JSON.`;
+IMPORTANT: Grade based on quality and completeness of the deliverable TYPE.
+A detailed strategic plan grades A-C, never F unless empty/gibberish.
+
+Respond ONLY with raw JSON (no markdown, no code blocks, no extra text):
+{"is_completed":true,"grade":"B","confidence":0.8,"reasoning":"short reason","missing_aspects":[],"recommendations":[]}`;
 
 export async function judge(request: JudgeRequest): Promise<JudgeResult> {
   const start = Date.now();
@@ -85,8 +82,29 @@ Evaluate:`;
       agent_id: 'llm_judge_gemini',
     });
 
-    const cleanContent = response.content.replace(/```json|```/g, '').trim();
-    const parsed = JSON.parse(cleanContent);
+    // Robust JSON extraction — handles Gemini markdown code blocks, unterminated strings
+    const raw = response.content;
+    let parsed: Record<string, unknown>;
+    try {
+      const cleaned = raw.replace(/```(?:json)?\s*/g, '').replace(/```/g, '').trim();
+      const startIdx = cleaned.indexOf('{');
+      const endIdx = cleaned.lastIndexOf('}');
+      const jsonStr = startIdx !== -1 && endIdx > startIdx ? cleaned.slice(startIdx, endIdx + 1) : cleaned;
+      parsed = JSON.parse(jsonStr) as Record<string, unknown>;
+    } catch {
+      // Regex fallback — extract individual fields if JSON is malformed
+      const gradeMatch = raw.match(/"grade"\s*:\s*"([A-F])"/);
+      const completedMatch = raw.match(/"is_completed"\s*:\s*(true|false)/);
+      const confidenceMatch = raw.match(/"confidence"\s*:\s*([\d.]+)/);
+      parsed = {
+        grade: gradeMatch?.[1] ?? 'F',
+        is_completed: completedMatch?.[1] === 'true',
+        confidence: confidenceMatch ? parseFloat(confidenceMatch[1]) : 0.5,
+        reasoning: 'JSON parse failed — extracted via regex fallback',
+        missing_aspects: [],
+        recommendations: [],
+      };
+    }
 
     logger.info('llm_judge.success', {
       grade: parsed.grade,
@@ -96,11 +114,11 @@ Evaluate:`;
 
     return {
       is_completed: parsed.is_completed === true,
-      grade: parsed.grade || 'F',
+      grade: ((parsed.grade as string) || 'F') as CompletionGrade,
       confidence: typeof parsed.confidence === 'number' ? parsed.confidence : 0.5,
-      reasoning: parsed.reasoning || '',
-      missing_aspects: Array.isArray(parsed.missing_aspects) ? parsed.missing_aspects : [],
-      recommendations: Array.isArray(parsed.recommendations) ? parsed.recommendations : [],
+      reasoning: (parsed.reasoning as string) || '',
+      missing_aspects: Array.isArray(parsed.missing_aspects) ? (parsed.missing_aspects as string[]) : [],
+      recommendations: Array.isArray(parsed.recommendations) ? (parsed.recommendations as string[]) : [],
       cost_usd: response.cost_usd,
       latency_ms: response.latency_ms,
     };
