@@ -1,20 +1,29 @@
 /**
  * Maestro Dispatcher — Sprint 2 Pipeline V1
- * Receives a technical task from Alex and executes it via the LLM adapter layer (Mode 2).
- * Mode 1 (CLI tmux via MCP Bridge) remains manual for V1.
+ * Mode 1 : CLI tmux via MCP Bridge (forfait Pro Max, $0 marginal)
+ * Mode 2 : API Anthropic directe (fallback ou override)
+ *
+ * Sélection du mode :
+ *   - task.mode === 'mode_1_tmux'      → toujours Mode 1
+ *   - USE_MAESTRO_PRO_MAX=true (env)   → Mode 1 par défaut
+ *   - sinon                            → Mode 2 (API Anthropic)
  */
 
 import { callLLM, getAvailableProviders } from '../adapters/llm/index.js';
 import type { LLMProvider } from '../adapters/llm/types.js';
+import { dispatchToTmuxSession } from '../services/cli_tmux_dispatcher.js';
 import { logger } from '../logger.js';
 
 export type { LLMProvider };
+
+export type MaestroMode = 'mode_1_tmux' | 'mode_2_api';
 
 export interface MaestroTask {
   task_description: string;
   user_id: string;
   preferred_provider?: LLMProvider;
   max_tokens?: number;
+  mode?: MaestroMode;
 }
 
 export interface MaestroResult {
@@ -24,6 +33,7 @@ export interface MaestroResult {
   cost_usd: number;
   latency_ms: number;
   error?: string;
+  mode_used?: MaestroMode;
 }
 
 const SYSTEM_PROMPT_MAESTRO = `You are Maestro, CTO of Silver Oak OS (SOP V26, 78 rules).
@@ -45,18 +55,68 @@ Respond with:
 
 Be concise. Max 300 tokens.`;
 
-export async function dispatchToMaestro(task: MaestroTask): Promise<MaestroResult> {
-  const start = Date.now();
+// ── Mode 1 : CLI tmux Pro Max ($0) ────────────────────────────────────────────
+
+async function dispatchMode1(task: MaestroTask, start: number): Promise<MaestroResult> {
+  logger.info(
+    { task: task.task_description.slice(0, 80), user: task.user_id, mode: 'mode_1_tmux' },
+    'maestro.dispatch.start'
+  );
+
+  try {
+    const tmuxResult = await dispatchToTmuxSession('opus', task.task_description, {
+      timeoutMs: 600_000,
+      pollIntervalMs: 60_000,
+    });
+
+    logger.info(
+      { cost: 0, latency: tmuxResult.latency_ms, model: tmuxResult.model },
+      'maestro.dispatch.mode1.success'
+    );
+
+    return {
+      success: true,
+      result: tmuxResult.content,
+      provider_used: 'anthropic', // Opus is Anthropic model
+      cost_usd: 0,                // Pro Max forfait = $0 marginal
+      latency_ms: tmuxResult.latency_ms,
+      mode_used: 'mode_1_tmux',
+    };
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : String(err);
+    logger.error({ error: msg, mode: 'mode_1_tmux' }, 'maestro.dispatch.mode1.fail');
+    return {
+      success: false,
+      result: '',
+      provider_used: null,
+      cost_usd: 0,
+      latency_ms: Date.now() - start,
+      error: msg,
+      mode_used: 'mode_1_tmux',
+    };
+  }
+}
+
+// ── Mode 2 : API Anthropic directe (classique) ────────────────────────────────
+
+async function dispatchMode2(task: MaestroTask, start: number): Promise<MaestroResult> {
   const provider: LLMProvider = task.preferred_provider ?? 'anthropic';
 
-  logger.info({ task: task.task_description.slice(0, 80), provider, user: task.user_id }, 'maestro.dispatch.start');
+  logger.info(
+    { task: task.task_description.slice(0, 80), provider, user: task.user_id, mode: 'mode_2_api' },
+    'maestro.dispatch.start'
+  );
 
   try {
     const available = getAvailableProviders();
     if (!available.includes(provider)) {
       const err = `Provider ${provider} unavailable. Available: ${available.join(', ')}`;
       logger.warn({ provider, available }, 'maestro.dispatch.provider_unavailable');
-      return { success: false, result: '', provider_used: null, cost_usd: 0, latency_ms: Date.now() - start, error: err };
+      return {
+        success: false, result: '', provider_used: null,
+        cost_usd: 0, latency_ms: Date.now() - start, error: err,
+        mode_used: 'mode_2_api',
+      };
     }
 
     const model = provider === 'anthropic' ? 'claude-sonnet-4-6' : 'gpt-4o-mini';
@@ -72,7 +132,10 @@ export async function dispatchToMaestro(task: MaestroTask): Promise<MaestroResul
       agent_id: `maestro_${task.user_id}`,
     });
 
-    logger.info({ provider, cost: response.cost_usd, latency: response.latency_ms }, 'maestro.dispatch.success');
+    logger.info(
+      { provider, cost: response.cost_usd, latency: response.latency_ms },
+      'maestro.dispatch.mode2.success'
+    );
 
     return {
       success: true,
@@ -80,12 +143,32 @@ export async function dispatchToMaestro(task: MaestroTask): Promise<MaestroResul
       provider_used: provider,
       cost_usd: response.cost_usd,
       latency_ms: response.latency_ms,
+      mode_used: 'mode_2_api',
     };
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : String(err);
-    logger.error({ provider, error: msg }, 'maestro.dispatch.fail');
-    return { success: false, result: '', provider_used: null, cost_usd: 0, latency_ms: Date.now() - start, error: msg };
+    logger.error({ provider, error: msg, mode: 'mode_2_api' }, 'maestro.dispatch.mode2.fail');
+    return {
+      success: false, result: '', provider_used: null,
+      cost_usd: 0, latency_ms: Date.now() - start, error: msg,
+      mode_used: 'mode_2_api',
+    };
   }
+}
+
+// ── Router ────────────────────────────────────────────────────────────────────
+
+export async function dispatchToMaestro(task: MaestroTask): Promise<MaestroResult> {
+  const start = Date.now();
+
+  const useProMax =
+    task.mode === 'mode_1_tmux' ||
+    process.env['USE_MAESTRO_PRO_MAX'] === 'true';
+
+  if (useProMax) {
+    return dispatchMode1(task, start);
+  }
+  return dispatchMode2(task, start);
 }
 
 export default dispatchToMaestro;
