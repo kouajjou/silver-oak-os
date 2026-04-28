@@ -160,7 +160,7 @@ export async function alexHandle(request: AlexRequest): Promise<AlexResponse> {
     }
 
     // 3. Simple question → Alex answers directly
-    // Mode 1: CLI tmux Pro Max ($0 forfait) | Mode 2: API Anthropic Haiku
+    // Mode 1: CLI tmux Pro Max ($0 forfait) | Mode 2: Gemini Flash (PATCH 2026-04-29 — was Anthropic Haiku)
     if (process.env['USE_ALEX_PRO_MAX'] === 'true') {
       // Mode 1 — dispatch via MCP Bridge tmux session 'claude-code'
       const tmuxResult = await dispatchToTmuxSession('claude-code', request.message, {
@@ -187,10 +187,11 @@ export async function alexHandle(request: AlexRequest): Promise<AlexResponse> {
       };
     }
 
-    // Mode 2 — API Anthropic Haiku (fallback si USE_ALEX_PRO_MAX absent)
+    // Mode 2 — Gemini Flash (fallback si USE_ALEX_PRO_MAX absent) — PATCH 2026-04-29: was Anthropic Haiku
     const response = await callLLM({
-      provider: 'anthropic',
-      model: 'claude-haiku-4-5',
+      // archived: provider: 'anthropic', model: 'claude-haiku-4-5' (PATCH 2026-04-29)
+      provider: 'google',
+      model: 'gemini-2.0-flash',
       messages: [
         { role: 'system', content: SYSTEM_PROMPT_ALEX },
         { role: 'user', content: request.message },
@@ -200,7 +201,7 @@ export async function alexHandle(request: AlexRequest): Promise<AlexResponse> {
     });
 
     const totalCost = intent.cost_usd + response.cost_usd;
-    logger.info({ cost: totalCost, intent: intent.intent, mode: 'mode_2_api' }, 'alex.direct_reply');
+    logger.info({ cost: totalCost, intent: intent.intent, mode: 'mode_2_gemini' }, 'alex.direct_reply');
 
     return {
       success: true,
@@ -209,7 +210,7 @@ export async function alexHandle(request: AlexRequest): Promise<AlexResponse> {
       delegated_to_maestro: false,
       cost_usd: totalCost,
       latency_ms: Date.now() - start,
-      metadata: { intent_confidence: intent.confidence, mode: 'mode_2_api' },
+      metadata: { intent_confidence: intent.confidence, mode: 'mode_2_gemini' },
     };
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : String(err);
