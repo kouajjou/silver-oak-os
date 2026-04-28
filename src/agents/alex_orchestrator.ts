@@ -1,13 +1,33 @@
 /**
- * Alex Orchestrator — Sprint 2 Pipeline V1
+ * Alex Orchestrator — Sprint 2 Pipeline V1 + Vision Alex Autonome
  * Chief of Staff. Receives Karim messages, classifies intent,
  * answers directly (simple) or delegates to Maestro (technical).
+ *
+ * V2 extensions (Vision Item #4):
+ * - alexHandleAutonomous(): autonomous loop + delegation to 5 employees
+ * - task_breaker for file content decomposition
+ * - llm_judge for quality evaluation (Gemini cross-LLM, SOP R14)
+ * - session_state for DB persistence (agent_runs + agent_run_tasks)
+ * - Telegram progress updates every 5 tasks
  */
 
 import { callLLM } from '../adapters/llm/index.js';
 import { classifyIntent } from './intent_classifier.js';
 import { dispatchToMaestro } from './maestro_dispatcher.js';
 import { logger } from '../logger.js';
+import { breakDownTasks } from './task_breaker.js';
+import type { BrokenDownTask } from './task_breaker.js';
+import { judge as llmJudge } from '../services/llm_judge.js';
+import { createRun, updateRun, endRun, createTask, updateTask } from '../services/session_state.js';
+import { readEnvFile } from '../env.js';
+
+// ── Constants ─────────────────────────────────────────────────────────────
+
+const MAX_RETRIES_PER_TASK = 3;
+const MAX_ITERATIONS = 20;
+const KARIM_CHAT_ID = '5566541774';
+
+// ── Interfaces ────────────────────────────────────────────────────────────
 
 export interface AlexRequest {
   message: string;
@@ -25,11 +45,80 @@ export interface AlexResponse {
   metadata?: Record<string, unknown>;
 }
 
+export interface AlexAutonomousRequest extends AlexRequest {
+  file_content?: string;
+}
+
+export interface AlexAutonomousResponse extends AlexResponse {
+  run_id?: string;
+}
+
+// ── Internal types ────────────────────────────────────────────────────────
+
+interface DispatchResult {
+  result: string;
+  cost_usd: number;
+  latency_ms: number;
+  success: boolean;
+}
+
+// ── System prompts ────────────────────────────────────────────────────────
+
 const SYSTEM_PROMPT_ALEX = `You are Alex, Chief of Staff for Karim Kouajjou (Silver Oak founder).
 Personality: warm, direct, bilingual FR/EN, ADHD-aware (short sentences, bullet points, emojis when helpful).
 
 Answer simple questions directly and concisely (max 150 words unless more detail is needed).
 Do not explain your reasoning unless asked.`;
+
+// ── Helpers ───────────────────────────────────────────────────────────────
+
+async function sendTelegramProgress(text: string): Promise<void> {
+  const envVars = readEnvFile(['TELEGRAM_BOT_TOKEN']);
+  const token = process.env['TELEGRAM_BOT_TOKEN'] ?? envVars['TELEGRAM_BOT_TOKEN'] ?? '';
+  if (!token) return;
+  try {
+    await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ chat_id: KARIM_CHAT_ID, text }),
+    });
+  } catch {
+    // Non-blocking — Telegram updates are best-effort
+  }
+}
+
+async function dispatchToEmployee(employee: string, task: BrokenDownTask): Promise<DispatchResult> {
+  const EMPLOYEE_PROMPTS: Record<string, string> = {
+    sara: 'You are Sara, marketing expert for Silver Oak OS. Execute marketing tasks: copy, campaigns, growth.',
+    leo: 'You are Leo, design expert for Silver Oak OS. Execute design tasks: UI/UX, visuals, layouts.',
+    marco: 'You are Marco, finance expert for Silver Oak OS. Execute finance tasks: budgets, analysis, projections.',
+    nina: 'You are Nina, data expert for Silver Oak OS. Execute data tasks: analytics, reports, pipelines.',
+  };
+
+  const sys = EMPLOYEE_PROMPTS[employee] ?? `You are ${employee}, an expert assistant for Silver Oak OS.`;
+  const start = Date.now();
+
+  try {
+    const r = await callLLM({
+      provider: 'deepseek',
+      model: 'deepseek-chat',
+      messages: [
+        { role: 'system', content: sys },
+        { role: 'user', content: task.description },
+      ],
+      max_tokens: 600,
+      agent_id: `${employee}_employee`,
+    });
+
+    return { result: r.content, cost_usd: r.cost_usd, latency_ms: r.latency_ms, success: true };
+  } catch (e: unknown) {
+    const msg = e instanceof Error ? e.message : String(e);
+    logger.error({ employee, error: msg }, 'alex.employee.fail');
+    return { result: `Employee ${employee} error: ${msg}`, cost_usd: 0, latency_ms: Date.now() - start, success: false };
+  }
+}
+
+// ── V1 — Original alexHandle (backward-compatible) ───────────────────────
 
 export async function alexHandle(request: AlexRequest): Promise<AlexResponse> {
   const start = Date.now();
@@ -55,9 +144,7 @@ export async function alexHandle(request: AlexRequest): Promise<AlexResponse> {
       return {
         success: maestroResult.success,
         response: maestroResult.success
-          ? `🤖 **Maestro** (plan d'exécution) :
-
-${maestroResult.result}`
+          ? `🤖 **Maestro** (plan d'exécution) :\n\n${maestroResult.result}`
           : `❌ Maestro error: ${maestroResult.error ?? 'unknown'}`,
         intent: 'technical_task',
         delegated_to_maestro: true,
@@ -106,6 +193,243 @@ ${maestroResult.result}`
       latency_ms: Date.now() - start,
     };
   }
+}
+
+// ── V2 — alexHandleAutonomous: loop + 5 employees ────────────────────────
+
+export async function alexHandleAutonomous(
+  request: AlexAutonomousRequest,
+): Promise<AlexAutonomousResponse> {
+  const start = Date.now();
+
+  logger.info(
+    { user: request.user_id, has_file: !!request.file_content, msg_len: request.message.length },
+    'alex.autonomous.start',
+  );
+
+  // 1. Create run record in DB
+  const run = await createRun({
+    user_id: request.user_id,
+    initial_request: request.message,
+    initial_file_content: request.file_content,
+    status: 'running',
+    max_iterations: MAX_ITERATIONS,
+  });
+
+  const runId = run?.id;
+  let totalCost = 0;
+
+  // 2. Break down tasks (or single-task fallback)
+  let tasks: BrokenDownTask[];
+  if (request.file_content) {
+    const broken = await breakDownTasks(request.file_content, request.user_id);
+    tasks = broken.tasks;
+    totalCost += broken.cost_usd;
+    logger.info({ count: tasks.length, cost: broken.cost_usd }, 'alex.autonomous.tasks_broken');
+  } else {
+    tasks = [{
+      id: 'task_001',
+      title: 'Direct request',
+      description: request.message,
+      type: 'unknown',
+      agent_target: 'maestro',
+      dependencies: [],
+      estimated_effort_min: 30,
+      priority: 'P1',
+      rationale: 'Single direct task — no file_content provided',
+    }];
+  }
+
+  if (runId) {
+    await updateRun(runId, {
+      tasks_total: tasks.length,
+      tasks_pending: tasks.length,
+      tasks_completed: 0,
+      tasks_failed: 0,
+    });
+  }
+
+  // 3. Loop over tasks (Vision Item #4 — autonomous execution)
+  const results: Array<{
+    task: BrokenDownTask;
+    grade: string;
+    is_completed: boolean;
+    result: string;
+    cost_usd: number;
+    attempts: number;
+  }> = [];
+
+  let completedCount = 0;
+  let failedCount = 0;
+
+  for (
+    let taskIndex = 0;
+    taskIndex < Math.min(tasks.length, MAX_ITERATIONS);
+    taskIndex++
+  ) {
+    const task = tasks[taskIndex];
+    if (!task) break;
+
+    let taskResult = '';
+    let taskCost = 0;
+    let judgeGrade = 'F';
+    let isCompleted = false;
+    let attempts = 0;
+
+    // Create DB task record (once per task, not per attempt)
+    const dbTask = runId
+      ? await createTask({
+          run_id: runId,
+          task_id: task.id,
+          title: task.title,
+          task_type: task.type,
+          agent_target: task.agent_target,
+          status: 'running',
+        })
+      : null;
+
+    const dbTaskId = dbTask?.id;
+
+    // Retry loop: up to MAX_RETRIES_PER_TASK attempts per task
+    while (attempts < MAX_RETRIES_PER_TASK) {
+      attempts++;
+
+      logger.info(
+        { task: task.id, attempt: attempts, target: task.agent_target },
+        'alex.autonomous.dispatch',
+      );
+
+      // Dispatch to the appropriate agent
+      let dispatched: DispatchResult;
+      if (task.agent_target === 'maestro') {
+        const maestroResult = await dispatchToMaestro({
+          task_description: task.description,
+          user_id: request.user_id,
+          max_tokens: 800,
+        });
+        dispatched = {
+          result: maestroResult.result,
+          cost_usd: maestroResult.cost_usd,
+          latency_ms: maestroResult.latency_ms,
+          success: maestroResult.success,
+        };
+      } else if (['sara', 'leo', 'marco', 'nina'].includes(task.agent_target)) {
+        dispatched = await dispatchToEmployee(task.agent_target, task);
+      } else {
+        dispatched = { result: 'Unknown agent target', cost_usd: 0, latency_ms: 0, success: false };
+      }
+
+      totalCost += dispatched.cost_usd;
+      taskCost += dispatched.cost_usd;
+      taskResult = dispatched.result;
+
+      // Judge result via Gemini cross-LLM (SOP R14 — no self-grading bias)
+      const judged = await llmJudge({
+        task_description: task.description,
+        expected_output: 'Task completed per description',
+        actual_output: dispatched.result,
+        task_type: task.type,
+      });
+      totalCost += judged.cost_usd;
+      taskCost += judged.cost_usd;
+      judgeGrade = judged.grade;
+      isCompleted = judged.is_completed;
+
+      logger.info(
+        { task: task.id, attempt: attempts, grade: judgeGrade, is_completed: isCompleted },
+        'alex.autonomous.judged',
+      );
+
+      // Success: completed AND quality grade A or B
+      if (isCompleted && (judgeGrade === 'A' || judgeGrade === 'B')) {
+        break;
+      }
+      // grade C/D/F or not completed → retry unless max retries reached
+    }
+
+    // Final DB update for task
+    if (dbTaskId) {
+      await updateTask(dbTaskId, {
+        status: isCompleted ? 'completed' : 'failed',
+        result: taskResult.slice(0, 5000),
+        cost_usd: taskCost,
+        ended_at: new Date().toISOString(),
+      });
+    }
+
+    if (isCompleted) {
+      completedCount++;
+    } else {
+      failedCount++;
+    }
+
+    results.push({
+      task,
+      grade: judgeGrade,
+      is_completed: isCompleted,
+      result: taskResult,
+      cost_usd: taskCost,
+      attempts,
+    });
+
+    // Update run progress in DB
+    if (runId) {
+      await updateRun(runId, {
+        tasks_completed: completedCount,
+        tasks_failed: failedCount,
+        tasks_pending: tasks.length - completedCount - failedCount,
+        current_iteration: taskIndex + 1,
+        total_cost_usd: totalCost,
+      });
+    }
+
+    // Telegram progress update every 5 tasks
+    if ((taskIndex + 1) % 5 === 0) {
+      const progressMsg =
+        `🔄 Alex Loop Progress — ${taskIndex + 1}/${tasks.length} taches traitees\n` +
+        `✅ ${completedCount} completes | ❌ ${failedCount} echecs\n` +
+        `💰 Cout cumule: $${totalCost.toFixed(4)}`;
+      await sendTelegramProgress(progressMsg);
+    }
+  }
+
+  // 4. End run in DB
+  const finalStatus: 'completed' | 'failed' = completedCount === tasks.length ? 'completed' : 'failed';
+  if (runId) {
+    await endRun(runId, finalStatus);
+  }
+
+  // 5. Build summary response
+  const summaryLines = results.map(
+    (r, i) =>
+      `${i + 1}. [${r.grade}] ${r.task.title} → ${r.task.agent_target} (${r.attempts} essai${r.attempts > 1 ? 's' : ''})`,
+  );
+
+  const summary =
+    `🎯 Alex Autonomous Run terminé.\n\n` +
+    `Tasks: ${tasks.length} total | ${completedCount} ✅ | ${failedCount} ❌\n` +
+    `Cout: $${totalCost.toFixed(4)} | Run: ${runId ?? 'no-db'}\n\n` +
+    summaryLines.join('\n');
+
+  logger.info(
+    { run_id: runId, completed: completedCount, failed: failedCount, cost: totalCost },
+    'alex.autonomous.done',
+  );
+
+  return {
+    success: completedCount > 0,
+    response: summary,
+    intent: 'autonomous_run',
+    delegated_to_maestro: true,
+    cost_usd: totalCost,
+    latency_ms: Date.now() - start,
+    run_id: runId,
+    metadata: {
+      tasks_total: tasks.length,
+      tasks_completed: completedCount,
+      tasks_failed: failedCount,
+    },
+  };
 }
 
 export default alexHandle;
