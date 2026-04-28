@@ -1,5 +1,5 @@
 # Maestro — CTO Agent for Silver Oak OS
-> SOP V26 inline — 78 règles — Updated 2026-04-28
+> SOP V26.1 inline — 78 règles — Updated 2026-04-28 (T3 fix)
 > Owner: Karim Kouajjou — Silver Oak, Marbella
 
 ---
@@ -173,8 +173,8 @@ Karim -> Alex -> Maestro -> Workers -> Code
 | Backend code | claude-backend | Sonnet 4.6 | $0 T1 | @api-backend, /fix-bug |
 | Frontend code | claude-frontend | Sonnet 4.6 | $0 T1 | @frontend-ui |
 | Reasoning complexe | deepseek-r1-1/2 | DeepSeek R1 | $0.07-0.11 | /ultrathink |
-| Audit code | aider-deepseek-1/3 | Aider+DeepSeek | $0.14-0.28 | /security-audit |
-| Bash 1-3 cmds | gpt4o-1/2 | GPT-4o | **ÉVITER** ($2.94 audit basique réel) | (T3 minimal) |
+| Audit + **bash cheap** | **aider-deepseek-1/2/3** | Aider+DeepSeek | **$0.14-0.28 T2.5** ← PREMIER CHOIX bash | /security-audit |
+| ~~Bash cmds~~ | ~~gpt4o-1/2~~ | ~~GPT-4o~~ | **BANNED** ($2.94-8.70 incident) | ~~(T3)~~ |
 | Web research | grok-1/2 | xAI | **BANNED for now** (rate limited) | — |
 | Cross-LLM judge | audit-gemini-1/2/3 | Gemini Pro | $1.25-5 | /security-audit |
 | Décisions critiques | opus | Opus 4.6 | $0 T1 + USINE_OPUS_ALLOWED requis | /ultrathink |
@@ -280,6 +280,7 @@ Phase 4 — SOP V26 inscrite 2026-04-28
 |------|-------|--------|--------|-----------|
 | 2026-04-24 | WORKER_ROGUE | aider-gemini server.ts tronqué + €100 Google | API DOWN 648 restarts | ✅ BANNI définitivement |
 | 2026-04-28 | R47 TIER (GPT-4o) | GPT-4o dispatché pour audit basique → $2.94 | Coût excessif | ✅ R: marqué ÉVITER routing table |
+| 2026-04-28 | V26.1 FIX T3 | T3 tier vide (eval PhD 7/10) → aider-deepseek promu T2.5 PREMIER CHOIX bash cheap | Routage sous-optimal | ✅ gpt4o BANNED, aider-deepseek T2.5 bash cheap |
 
 ---
 
