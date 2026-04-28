@@ -9,11 +9,16 @@
  * - llm_judge for quality evaluation (Gemini cross-LLM, SOP R14)
  * - session_state for DB persistence (agent_runs + agent_run_tasks)
  * - Telegram progress updates every 5 tasks
+ *
+ * V3 extensions (Phase 5B.3):
+ * - maestroHandle() wired for tech task delegation (orchestrator pattern)
+ * - graceful fallback to dispatchToMaestro if maestroHandle throws
  */
 
 import { callLLM } from '../adapters/llm/index.js';
 import { classifyIntent } from './intent_classifier.js';
 import { dispatchToMaestro } from './maestro_dispatcher.js';
+import { maestroHandle } from './maestro_orchestrator.js';
 import { logger } from '../logger.js';
 import { breakDownTasks } from './task_breaker.js';
 import type { BrokenDownTask } from './task_breaker.js';
@@ -132,31 +137,68 @@ export async function alexHandle(request: AlexRequest): Promise<AlexResponse> {
     const intent = await classifyIntent(request.message);
     logger.info({ intent: intent.intent, confidence: intent.confidence }, 'alex.intent');
 
-    // 2. Technical task with high confidence → delegate to Maestro
+    // 2. Technical task with high confidence → delegate to Maestro Orchestrator (Phase 5B.3)
     if (intent.intent === 'technical_task' && intent.confidence > 0.6) {
-      const maestroResult = await dispatchToMaestro({
-        task_description: request.message,
-        user_id: request.user_id,
-        max_tokens: 500,
-      });
+      logger.info(
+        { task: request.message.slice(0, 80), user: request.user_id },
+        '[ALEX] Delegating to Maestro for tech task'
+      );
 
-      const totalCost = intent.cost_usd + maestroResult.cost_usd;
-      logger.info({ cost: totalCost, success: maestroResult.success }, 'alex.delegated_to_maestro');
+      try {
+        const maestroResult = await maestroHandle(request.message, {
+          userId: request.user_id,
+        });
 
-      return {
-        success: maestroResult.success,
-        response: maestroResult.success
-          ? `🤖 **Maestro** (plan d'exécution) :\n\n${maestroResult.result}`
-          : `❌ Maestro error: ${maestroResult.error ?? 'unknown'}`,
-        intent: 'technical_task',
-        delegated_to_maestro: true,
-        cost_usd: totalCost,
-        latency_ms: Date.now() - start,
-        metadata: {
-          provider_used: maestroResult.provider_used,
-          intent_confidence: intent.confidence,
-        },
-      };
+        logger.info(
+          { success: maestroResult.success, mode: maestroResult.mode, taskId: maestroResult.taskId },
+          'alex.delegated_to_maestro'
+        );
+
+        return {
+          success: maestroResult.success,
+          response: maestroResult.success
+            ? "🤖 **Maestro** (plan d'exécution) :\n\n" + maestroResult.result
+            : "❌ Maestro error: task failed",
+          intent: 'technical_task',
+          delegated_to_maestro: true,
+          cost_usd: intent.cost_usd,
+          latency_ms: Date.now() - start,
+          metadata: {
+            provider_used: maestroResult.provider,
+            intent_confidence: intent.confidence,
+            maestro_mode: maestroResult.mode,
+            maestro_task_id: maestroResult.taskId,
+            judge_score: maestroResult.judgeScore,
+          },
+        };
+      } catch (maestroErr: unknown) {
+        const errMsg = maestroErr instanceof Error ? maestroErr.message : String(maestroErr);
+        logger.warn({ error: errMsg }, '[ALEX] maestroHandle failed, fallback to dispatchToMaestro');
+
+        // Graceful fallback to original dispatchToMaestro
+        const fallbackResult = await dispatchToMaestro({
+          task_description: request.message,
+          user_id: request.user_id,
+          max_tokens: 500,
+        });
+
+        const totalCostFallback = intent.cost_usd + fallbackResult.cost_usd;
+        return {
+          success: fallbackResult.success,
+          response: fallbackResult.success
+            ? "🤖 **Maestro** (plan d'exécution) :\n\n" + fallbackResult.result
+            : "❌ Maestro error: " + (fallbackResult.error ?? 'unknown'),
+          intent: 'technical_task',
+          delegated_to_maestro: true,
+          cost_usd: totalCostFallback,
+          latency_ms: Date.now() - start,
+          metadata: {
+            provider_used: fallbackResult.provider_used,
+            intent_confidence: intent.confidence,
+            fallback: true,
+          },
+        };
+      }
     }
 
     // 3. Simple question → Alex answers directly
@@ -332,16 +374,17 @@ export async function alexHandleAutonomous(
       // Dispatch to the appropriate agent
       let dispatched: DispatchResult;
       if (task.agent_target === 'maestro') {
-        const maestroResult = await dispatchToMaestro({
-          task_description: task.description,
-          user_id: request.user_id,
-          max_tokens: 800,
+        // Phase 5B.3: use maestroHandle (orchestrator) instead of raw dispatchToMaestro
+        logger.info({ task: task.title }, '[ALEX] Delegating autonomous task to Maestro orchestrator');
+        const maestroOrcResult = await maestroHandle(task.description, {
+          userId: request.user_id,
+          parentTaskId: runId,
         });
         dispatched = {
-          result: maestroResult.result,
-          cost_usd: maestroResult.cost_usd,
-          latency_ms: maestroResult.latency_ms,
-          success: maestroResult.success,
+          result: maestroOrcResult.result,
+          cost_usd: 0, // maestroHandle tracks cost internally via logAgentRun
+          latency_ms: maestroOrcResult.durationMs,
+          success: maestroOrcResult.success,
         };
       } else if (['sara', 'leo', 'marco', 'nina'].includes(task.agent_target)) {
         dispatched = await dispatchToEmployee(task.agent_target, task);
