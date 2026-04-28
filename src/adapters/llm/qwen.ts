@@ -1,24 +1,27 @@
 /**
- * gap-010 Phase 2: Qwen adapter (Alibaba DashScope, OpenAI-compatible)
- * QWEN_API_KEY confirmed present in .env (LEN=73)
+ * gap-010 Phase 2: Qwen adapter via OpenRouter (cle existante est OpenRouter, pas DashScope)
+ * QWEN_API_KEY confirmed present in .env (sk-or-v1-... OpenRouter format)
  */
 
 import { LLMAdapter, LLMRequest, LLMResponse } from './types.js';
 
-interface QwenChoice { message: { content: string }; }
-interface QwenAPIResponse {
-  choices: QwenChoice[];
+interface Choice { message: { content: string }; }
+interface OpenRouterResponse {
+  choices: Choice[];
   usage: { prompt_tokens: number; completion_tokens: number };
   error?: { message: string };
 }
 
 const PRICING: Record<string, { input: number; output: number }> = {
-  'qwen-turbo':        { input: 0.05, output: 0.20 },
-  'qwen-plus':         { input: 0.40, output: 1.20 },
-  'qwen-max':          { input: 1.40, output: 5.60 },
+  'qwen-turbo':           { input: 0.05, output: 0.20 },
+  'qwen-plus':            { input: 0.40, output: 1.20 },
+  'qwen-max':             { input: 1.40, output: 5.60 },
   'qwen2.5-72b-instruct': { input: 0.40, output: 1.20 },
-  'qwen3-coder':       { input: 0.40, output: 1.20 },
+  'qwen3-coder':          { input: 0.40, output: 1.20 },
 };
+
+const OPENROUTER_ENDPOINT = 'https://openrouter.ai/api/v1/chat/completions';
+const OPENROUTER_MODEL_PREFIX = 'qwen/';
 
 export const qwenAdapter: LLMAdapter = {
   provider: 'qwen',
@@ -29,23 +32,27 @@ export const qwenAdapter: LLMAdapter = {
     const apiKey = process.env['QWEN_API_KEY'];
     if (!apiKey) throw new Error('QWEN_API_KEY missing in .env');
 
-    const res = await fetch('https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions', {
+    const model = request.model?.startsWith(OPENROUTER_MODEL_PREFIX)
+      ? request.model
+      : `${OPENROUTER_MODEL_PREFIX}${request.model || 'qwen-turbo'}`;
+
+    const res = await fetch(OPENROUTER_ENDPOINT, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${apiKey}`,
       },
       body: JSON.stringify({
-        model: request.model || 'qwen-turbo',
+        model,
         max_tokens: request.max_tokens ?? 1024,
         temperature: request.temperature ?? 0.7,
         messages: request.messages,
       }),
     });
 
-    const data = (await res.json()) as QwenAPIResponse;
+    const data = (await res.json()) as OpenRouterResponse;
     if (!res.ok || data.error) {
-      throw new Error(`Qwen API error: ${data.error?.message ?? res.status}`);
+      throw new Error(`Qwen/OpenRouter API error: ${data.error?.message ?? res.status}`);
     }
 
     const tokens_in  = data.usage.prompt_tokens;
@@ -55,7 +62,7 @@ export const qwenAdapter: LLMAdapter = {
 
     return {
       provider:   'qwen',
-      model:      request.model,
+      model:      model,
       content:    data.choices[0]?.message.content ?? '',
       tokens_in,
       tokens_out,
