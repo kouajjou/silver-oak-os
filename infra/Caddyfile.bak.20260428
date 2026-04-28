@@ -1,0 +1,32 @@
+os.silveroak.one {
+	# Serve agent photos directly from disk — bypass Next.js entirely
+	# Prevents 404 during Next.js restart cycles (silver-oak-os-frontend had 10 restarts)
+	handle /agents/* {
+		root * /app/silver-oak-os/frontend/public
+		file_server
+		header Cache-Control "public, max-age=31536000, immutable"
+	}
+
+	# Everything else → Next.js on port 3010
+	reverse_proxy localhost:3010
+
+	encode gzip zstd
+
+	log {
+		output file /var/log/caddy/access.log {
+			roll_size 100mb
+			roll_keep 5
+		}
+		format json
+	}
+
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+		X-Content-Type-Options "nosniff"
+		X-Frame-Options "DENY"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		Permissions-Policy "geolocation=(), microphone=(), camera=()"
+		Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self'; connect-src 'self' https:;"
+		-Server
+	}
+}
