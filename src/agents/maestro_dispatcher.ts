@@ -1,22 +1,25 @@
 /**
  * Maestro Dispatcher — Sprint 2 Pipeline V1
- * Mode 1 : CLI tmux via MCP Bridge (forfait Pro Max, $0 marginal)
+ * Mode 1a: CLI tmux via cli_dispatcher.ts (USE_PRO_MAX_CLI, smart routing, 5s poll)
+ * Mode 1b: CLI tmux via cli_tmux_dispatcher.ts (USE_MAESTRO_PRO_MAX, legacy 60s poll)
  * Mode 2 : API Anthropic directe (fallback ou override)
  *
- * Sélection du mode :
- *   - task.mode === 'mode_1_tmux'      → toujours Mode 1
- *   - USE_MAESTRO_PRO_MAX=true (env)   → Mode 1 par défaut
- *   - sinon                            → Mode 2 (API Anthropic)
+ * Sélection du mode (priorité décroissante) :
+ *   1. USE_PRO_MAX_CLI=true             → Mode 1a (smart session routing)
+ *   2. task.mode === 'mode_1_tmux'      → Mode 1b (toujours tmux)
+ *   3. USE_MAESTRO_PRO_MAX=true (env)   → Mode 1b (tmux par défaut)
+ *   4. sinon                            → Mode 2 (API Anthropic)
  */
 
 import { callLLM, getAvailableProviders } from '../adapters/llm/index.js';
 import type { LLMProvider } from '../adapters/llm/types.js';
 import { dispatchToTmuxSession } from '../services/cli_tmux_dispatcher.js';
+import { dispatchToCLI, selectSession } from '../services/cli_dispatcher.js';
 import { logger } from '../logger.js';
 
 export type { LLMProvider };
 
-export type MaestroMode = 'mode_1_tmux' | 'mode_2_api';
+export type MaestroMode = 'mode_1_tmux' | 'mode_1a_cli' | 'mode_2_api';
 
 export interface MaestroTask {
   task_description: string;
@@ -55,9 +58,54 @@ Respond with:
 
 Be concise. Max 300 tokens.`;
 
-// ── Mode 1 : CLI tmux Pro Max ($0) ────────────────────────────────────────────
+// ── Mode 1a : CLI tmux via cli_dispatcher (smart routing, 5s poll) ───────────
 
-async function dispatchMode1(task: MaestroTask, start: number): Promise<MaestroResult> {
+async function dispatchMode1a(task: MaestroTask, start: number): Promise<MaestroResult> {
+  const session = selectSession(task.task_description);
+  logger.info(
+    { task: task.task_description.slice(0, 80), session, user: task.user_id, mode: 'mode_1a_cli' },
+    'maestro.dispatch.start'
+  );
+
+  try {
+    const cliResult = await dispatchToCLI({
+      session,
+      prompt: task.task_description,
+      timeoutMs: 300_000,  // 5 min
+      pollIntervalMs: 5_000, // fast 5s poll
+    });
+
+    logger.info(
+      { cost: 0, session, duration: cliResult.duration_ms, taskDone: cliResult.task_done },
+      'maestro.dispatch.mode1a.success'
+    );
+
+    return {
+      success: cliResult.task_done,
+      result: cliResult.output,
+      provider_used: 'anthropic',
+      cost_usd: 0,
+      latency_ms: cliResult.duration_ms,
+      mode_used: 'mode_1a_cli',
+    };
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : String(err);
+    logger.error({ error: msg, mode: 'mode_1a_cli' }, 'maestro.dispatch.mode1a.fail');
+    return {
+      success: false,
+      result: '',
+      provider_used: null,
+      cost_usd: 0,
+      latency_ms: Date.now() - start,
+      error: msg,
+      mode_used: 'mode_1a_cli',
+    };
+  }
+}
+
+// ── Mode 1b : CLI tmux via cli_tmux_dispatcher (legacy 60s poll) ──────────────
+
+async function dispatchMode1(task: MaestroTask, start: number): Promise<MaestroResult> { // alias: mode_1b
   logger.info(
     { task: task.task_description.slice(0, 80), user: task.user_id, mode: 'mode_1_tmux' },
     'maestro.dispatch.start'
@@ -161,6 +209,12 @@ async function dispatchMode2(task: MaestroTask, start: number): Promise<MaestroR
 export async function dispatchToMaestro(task: MaestroTask): Promise<MaestroResult> {
   const start = Date.now();
 
+  // Mode 1a: USE_PRO_MAX_CLI → smart session routing via cli_dispatcher (5s poll)
+  if (task.mode === 'mode_1a_cli' || process.env['USE_PRO_MAX_CLI'] === 'true') {
+    return dispatchMode1a(task, start);
+  }
+
+  // Mode 1b: USE_MAESTRO_PRO_MAX or explicit mode_1_tmux → legacy tmux (60s poll)
   const useProMax =
     task.mode === 'mode_1_tmux' ||
     process.env['USE_MAESTRO_PRO_MAX'] === 'true';
@@ -168,6 +222,7 @@ export async function dispatchToMaestro(task: MaestroTask): Promise<MaestroResul
   if (useProMax) {
     return dispatchMode1(task, start);
   }
+
   return dispatchMode2(task, start);
 }
 
