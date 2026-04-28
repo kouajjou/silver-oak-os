@@ -6,9 +6,13 @@
  *
  * Endpoints:
  *   GET  /api/voice/agents            — list available agent personas
- *   POST /api/voice/chat/:agentId     — chat with an agent (Anthropic API)
+ *   POST /api/voice/chat/:agentId     — chat with an agent (Gemini API — Mode 2)
  *   POST /api/voice/tts/:agentId      — text-to-speech
  *   POST /api/voice/stt               — speech-to-text (multipart form, audio file)
+ *
+ * PATCH 2026-04-29 — fix(voiceRouter): replace Anthropic API by Gemini API (Mode 2)
+ * Reason: Anthropic API was burning ~$54/day. Gemini 2.0 Flash = ~$0.50/day.
+ * callAnthropic archived below. callGemini is the new Mode 2 handler.
  */
 
 import { Hono } from 'hono';
@@ -76,61 +80,111 @@ const AGENTS: Record<string, AgentPersona> = {
   },
 };
 
-// ── Anthropic chat helper ─────────────────────────────────────────────────────
+// ── Gemini chat helper (Mode 2 — replaces Anthropic) ─────────────────────────
+// Model: gemini-2.0-flash — fast, cheap (~$0.075/1M input tokens vs $3/1M Anthropic)
+// PATCH 2026-04-29: Anthropic callAnthropic archived at bottom of file.
 
 interface ChatMessage {
   role: 'user' | 'assistant';
   content: string;
 }
 
-async function callAnthropic(
+interface GeminiContent { role: string; parts: Array<{ text: string }>; }
+interface GeminiAPIResponse {
+  candidates?: Array<{ content: GeminiContent }>;
+  error?: { message: string; code?: number };
+}
+
+const GEMINI_MODEL = 'gemini-2.0-flash';
+
+async function callGemini(
   systemPrompt: string,
   messages: ChatMessage[],
   apiKey: string,
 ): Promise<string> {
-  const response = await fetch('https://api.anthropic.com/v1/messages', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'x-api-key': apiKey,
-      'anthropic-version': '2023-06-01',
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${apiKey}`;
+
+  // Map ChatMessage[] → Gemini contents (user/model roles, no system)
+  const contents: GeminiContent[] = messages.map((m) => ({
+    role: m.role === 'assistant' ? 'model' : 'user',
+    parts: [{ text: m.content }],
+  }));
+
+  const body = {
+    contents,
+    systemInstruction: { parts: [{ text: systemPrompt }] },
+    generationConfig: {
+      maxOutputTokens: 1024,
+      temperature: 0.7,
     },
-    body: JSON.stringify({
-      model: 'claude-sonnet-4-6',
-      max_tokens: 1024,
-      system: systemPrompt,
-      messages,
-    }),
-  });
-
-  if (!response.ok) {
-    const err = await response.text();
-    throw new Error(`Anthropic API error ${response.status}: ${err.slice(0, 300)}`);
-  }
-
-  const data = (await response.json()) as {
-    content: Array<{ type: string; text: string }>;
   };
 
-  const textBlock = data.content.find((b) => b.type === 'text');
-  if (!textBlock) throw new Error('No text content in Anthropic response');
-  return textBlock.text;
+  const response = await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+
+  const data = (await response.json()) as GeminiAPIResponse;
+
+  if (!response.ok || data.error) {
+    throw new Error(`Gemini API error ${response.status}: ${data.error?.message ?? 'unknown'}`);
+  }
+
+  const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+  if (!text) throw new Error('No text content in Gemini response');
+  return text;
 }
+
+// ── ARCHIVED — callAnthropic (replaced by callGemini 2026-04-29) ─────────────
+// Reason: ~$54/day burned via direct Anthropic API calls. Gemini = ~$0.50/day.
+// DO NOT RESTORE without Karim explicit approval.
+//
+// async function callAnthropic(
+//   systemPrompt: string,
+//   messages: ChatMessage[],
+//   apiKey: string,
+// ): Promise<string> {
+//   const response = await fetch('https://api.anthropic.com/v1/messages', {
+//     method: 'POST',
+//     headers: {
+//       'Content-Type': 'application/json',
+//       'x-api-key': apiKey,
+//       'anthropic-version': '2023-06-01',
+//     },
+//     body: JSON.stringify({
+//       model: 'claude-sonnet-4-6',
+//       max_tokens: 1024,
+//       system: systemPrompt,
+//       messages,
+//     }),
+//   });
+//   if (!response.ok) {
+//     const err = await response.text();
+//     throw new Error(`Anthropic API error ${response.status}: ${err.slice(0, 300)}`);
+//   }
+//   const data = (await response.json()) as {
+//     content: Array<{ type: string; text: string }>;
+//   };
+//   const textBlock = data.content.find((b) => b.type === 'text');
+//   if (!textBlock) throw new Error('No text content in Anthropic response');
+//   return textBlock.text;
+// }
 
 // ── Voice API server ──────────────────────────────────────────────────────────
 
 const VOICE_API_PORT = parseInt(process.env.VOICE_API_PORT ?? '3000', 10);
 
 export function startVoiceApiServer(): void {
-  const env = readEnvFile(['ANTHROPIC_API_KEY', 'VOICE_API_PORT', 'USE_VOICE_PRO_MAX']);
-  const anthropicKey = env.ANTHROPIC_API_KEY ?? process.env.ANTHROPIC_API_KEY ?? '';
+  const env = readEnvFile(['GOOGLE_API_KEY', 'VOICE_API_PORT', 'USE_VOICE_PRO_MAX']);
+  const googleKey = env.GOOGLE_API_KEY ?? process.env.GOOGLE_API_KEY ?? '';
   // Mode 1 — Route via tmux session 'claude-frontend' (Pro Max forfait, $0 marginal)
-  // Set USE_VOICE_PRO_MAX=true in .env to activate. Falls back to Anthropic API.
+  // Set USE_VOICE_PRO_MAX=true in .env to activate. Falls back to Gemini API (Mode 2).
   const useVoiceProMax =
     (env.USE_VOICE_PRO_MAX ?? process.env['USE_VOICE_PRO_MAX']) === 'true';
 
-  if (!anthropicKey) {
-    logger.warn('ANTHROPIC_API_KEY not set — voice chat endpoint will return 503');
+  if (!googleKey) {
+    logger.warn('GOOGLE_API_KEY not set — voice chat endpoint (Mode 2) will return 503');
   }
 
   const app = new Hono();
@@ -161,9 +215,6 @@ export function startVoiceApiServer(): void {
     const agent = AGENTS[agentId];
     if (!agent) {
       return c.json({ error: `Unknown agent: ${agentId}` }, 404);
-    }
-    if (!anthropicKey) {
-      return c.json({ error: 'ANTHROPIC_API_KEY not configured' }, 503);
     }
 
     let body: { message?: string; messages?: ChatMessage[] };
@@ -207,7 +258,7 @@ export function startVoiceApiServer(): void {
         // Extract reply: everything before TASK_DONE, strip tmux noise
         reply = tmuxResult.content
           .replace(/TASK_DONE(_[a-z0-9-]+)?/gi, '')
-          .replace(/\[[0-9;]*[mGKHF]/g, '') // strip ANSI escape codes
+          .replace(/\[[0-9;]*[mGKHF]/g, '') // strip ANSI escape codes
           .replace(/^\s*>\s*/gm, '')              // strip tmux prompt artifacts
           .trim();
 
@@ -220,19 +271,20 @@ export function startVoiceApiServer(): void {
           'voice.chat.mode1_done'
         );
       } else {
-        // ── Mode 2: Anthropic API ($) ────────────────────────────────────────
-        if (!anthropicKey) {
-          return c.json({ error: 'ANTHROPIC_API_KEY not configured' }, 503);
+        // ── Mode 2: Gemini API (replaces Anthropic — PATCH 2026-04-29) ──────
+        // Anthropic was burning ~$54/day. Gemini 2.0 Flash = ~$0.50/day.
+        if (!googleKey) {
+          return c.json({ error: 'GOOGLE_API_KEY not configured' }, 503);
         }
-        logger.info({ agentId }, 'voice.chat.mode2_api');
-        reply = await callAnthropic(agent.systemPrompt, messages, anthropicKey);
+        logger.info({ agentId, model: GEMINI_MODEL }, 'voice.chat.mode2_gemini');
+        reply = await callGemini(agent.systemPrompt, messages, googleKey);
       }
 
       return c.json({
         agent: { id: agent.id, name: agent.name },
         reply,
         messages: [...messages, { role: 'assistant', content: reply }],
-        mode: useVoiceProMax ? 'mode_1_tmux' : 'mode_2_api',
+        mode: useVoiceProMax ? 'mode_1_tmux' : 'mode_2_gemini',
       });
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err);
