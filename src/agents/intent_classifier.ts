@@ -1,7 +1,8 @@
 /**
  * Intent Classifier — Sprint 2 Pipeline V1
  * Detects if a message is a simple question or a technical task.
- * Uses claude-haiku-4-5 for cost efficiency.
+ * PATCH 2026-04-29: Migrated from Anthropic Haiku to DeepSeek (Mode 2, ~20x cheaper).
+ * Reason: claude-haiku-4-5 was billed per-call at $0.80/M — DeepSeek = $0.14/M, same quality.
  */
 
 import { callLLM } from '../adapters/llm/index.js';
@@ -26,8 +27,9 @@ Respond ONLY with valid JSON, no markdown:
 export async function classifyIntent(message: string): Promise<IntentResult> {
   try {
     const response = await callLLM({
-      provider: 'anthropic',
-      model: 'claude-haiku-4-5',
+      // archived: provider: 'anthropic', model: 'claude-haiku-4-5' (PATCH 2026-04-29 — cost $0.80/M)
+      provider: 'deepseek',
+      model: 'deepseek-chat',
       messages: [
         { role: 'system', content: SYSTEM_PROMPT },
         { role: 'user', content: message },
