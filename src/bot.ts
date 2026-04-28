@@ -45,6 +45,7 @@ import { buildCostFooter } from './cost-footer.js';
 import { setHighImportanceCallback } from './memory-ingest.js';
 import { messageQueue } from './message-queue.js';
 import { parseDelegation, delegateToAgent, getAvailableAgents } from './orchestrator.js';
+import { alexHandle } from './agents/alex_orchestrator.js'; // PATCH 2026-04-29 — feat/alex-intelligence
 import { emitChatEvent, setProcessing, setActiveAbort, abortActiveQuery } from './state.js';
 import {
   isLocked,
@@ -468,6 +469,38 @@ async function handleMessage(ctx: Context, message: string, forceVoiceReply = fa
     }
     return;
   }
+
+
+  // ── Alex Intelligence Layer (PATCH 2026-04-29 — feat/alex-intelligence) ─────
+  // Gated by USE_ALEX_INTELLIGENCE=true. Falls back to runAgentWithRetry on failure.
+  // Mark parseDelegation/delegateToAgent is preserved above (for @agent: and /delegate).
+  // This layer activates: intent classifier + Maestro dispatch + task_breaker + llm_judge + DB tracking.
+  if (process.env['USE_ALEX_INTELLIGENCE'] === 'true') {
+    setProcessing(chatIdStr, true);
+    await sendTyping(ctx.api, chatId);
+    try {
+      const alexResult = await alexHandle({ message, user_id: chatIdStr });
+      if (alexResult.success) {
+        if (!skipLog) {
+          saveConversationTurn(chatIdStr, message, alexResult.response, undefined, 'alex');
+        }
+        emitChatEvent({ type: 'assistant_message', chatId: chatIdStr, content: alexResult.response, source: 'telegram' });
+        for (const part of splitMessage(formatForTelegram(alexResult.response))) {
+          await ctx.reply(part, { parse_mode: 'HTML' });
+        }
+        setProcessing(chatIdStr, false);
+        return;
+      }
+      // alexHandle returned failure — fall through to runAgentWithRetry (Mark pattern)
+      logger.warn({ intent: alexResult.intent }, 'alexHandle.failure_fallback_to_runAgent');
+    } catch (alexErr: unknown) {
+      const alexErrMsg = alexErr instanceof Error ? alexErr.message : String(alexErr);
+      logger.warn({ err: alexErrMsg }, 'alexHandle.threw_fallback_to_runAgent');
+    } finally {
+      setProcessing(chatIdStr, false);
+    }
+  }
+  // ── End Alex Intelligence Layer ──────────────────────────────────────────────
 
   // Fetch session first: if resuming, the model already has the system prompt in context.
   const sessionId = getSession(chatIdStr, AGENT_ID);
