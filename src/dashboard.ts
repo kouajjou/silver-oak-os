@@ -1534,6 +1534,7 @@ export function startDashboard(botApi?: Api<RawApi>): void {
         logger.info({ from: rawAgentId, to: delegation.agentId }, 'Dashboard sync delegation');
         return c.json({
           reply: delegatedReply,
+          response: delegatedReply,
           source: 'claude',
           agent_id: delegation.agentId,
           agent_name: agentDisplayMap[delegation.agentId] ?? delegation.agentId,
@@ -1545,6 +1546,7 @@ export function startDashboard(botApi?: Api<RawApi>): void {
 
     return c.json({
       reply: firstReply,
+      response: firstReply,
       source: 'claude',
       agent_id: rawAgentId,
       agent_name: agentDisplayMap[rawAgentId] ?? rawAgentId,
