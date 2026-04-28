@@ -25,16 +25,16 @@ export const WORKERS: WorkerConfig[] = [
   { session: 'deepseek-r1-2', tier: 'T1.5', model: 'deepseek-r1', cost_per_million_in: 0.07, cost_per_million_out: 0.11, use_cases: ['complex reasoning', 'planning'], banned: false },
 
   // T2 Audit
-  { session: 'aider-deepseek-1', tier: 'T2', model: 'aider+deepseek', cost_per_million_in: 0.14, cost_per_million_out: 0.28, use_cases: ['code audit', 'fix mecanique'], banned: false },
-  { session: 'aider-deepseek-2', tier: 'T2', model: 'aider+deepseek', cost_per_million_in: 0.14, cost_per_million_out: 0.28, use_cases: ['code audit'], banned: false },
-  { session: 'aider-deepseek-3', tier: 'T2', model: 'aider+deepseek', cost_per_million_in: 0.14, cost_per_million_out: 0.28, use_cases: ['code audit'], banned: false },
+  { session: 'aider-deepseek-1', tier: 'T2', model: 'aider+deepseek', cost_per_million_in: 0.14, cost_per_million_out: 0.28, use_cases: ['code audit', 'fix mecanique', 'bash simple', 'file ops', 'curl tests'], banned: false }, // T2.5 — PREMIER CHOIX bash cheap
+  { session: 'aider-deepseek-2', tier: 'T2', model: 'aider+deepseek', cost_per_million_in: 0.14, cost_per_million_out: 0.28, use_cases: ['code audit', 'bash simple', 'file ops'], banned: false }, // T2.5 bash cheap
+  { session: 'aider-deepseek-3', tier: 'T2', model: 'aider+deepseek', cost_per_million_in: 0.14, cost_per_million_out: 0.28, use_cases: ['code audit', 'bash simple'], banned: false }, // T2.5 bash cheap
   { session: 'aider-gemini-1', tier: 'T2', model: 'aider+gemini', cost_per_million_in: 0, cost_per_million_out: 0, use_cases: [], banned: true },
   { session: 'aider-gemini-2', tier: 'T2', model: 'aider+gemini', cost_per_million_in: 0, cost_per_million_out: 0, use_cases: [], banned: true },
   { session: 'aider-gemini-3', tier: 'T2', model: 'aider+gemini', cost_per_million_in: 0, cost_per_million_out: 0, use_cases: [], banned: true },
 
   // T3 Bash (full models)
-  { session: 'gpt4o-1', tier: 'T3', model: 'gpt-4o', cost_per_million_in: 2.5, cost_per_million_out: 10, use_cases: ['bash simple', 'file ops', 'curl tests'], banned: false },
-  { session: 'gpt4o-2', tier: 'T3', model: 'gpt-4o', cost_per_million_in: 2.5, cost_per_million_out: 10, use_cases: ['bash simple', 'file ops'], banned: false },
+  { session: 'gpt4o-1', tier: 'T3', model: 'gpt-4o', cost_per_million_in: 2.5, cost_per_million_out: 10, use_cases: ['bash simple', 'file ops', 'curl tests'], banned: true }, // BANNED: $2.94-8.70 incident — use aider-deepseek-* instead
+  { session: 'gpt4o-2', tier: 'T3', model: 'gpt-4o', cost_per_million_in: 2.5, cost_per_million_out: 10, use_cases: ['bash simple', 'file ops'], banned: true }, // BANNED: cost incident 2026-04-28
   { session: 'grok-1', tier: 'T3', model: 'grok-2', cost_per_million_in: 5, cost_per_million_out: 15, use_cases: ['bash', 'web research'], banned: false },
   { session: 'grok-2', tier: 'T3', model: 'grok-2', cost_per_million_in: 5, cost_per_million_out: 15, use_cases: ['bash'], banned: false },
 
