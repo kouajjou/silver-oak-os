@@ -79,6 +79,7 @@ import { getWarRoomHtml } from './warroom-html.js';
 import { WARROOM_ENABLED, WARROOM_PORT } from './config.js';
 import { logger } from './logger.js';
 import { alexHandle } from './agents/alex_orchestrator.js';
+import { dispatchToTmuxSession } from './services/cli_tmux_dispatcher.js';
 import { getBudgetStatusData } from './dashboard/budget-status.js';
 import { getTelegramConnected, getBotInfo, chatEvents, getIsProcessing, abortActiveQuery, ChatEvent, readAgentConnState } from './state.js';
 
@@ -1486,6 +1487,59 @@ export function startDashboard(botApi?: Api<RawApi>): void {
         cost_usd: alexResult.cost_usd,
         intent: alexResult.intent,
       });
+    }
+
+    // Mode 1 — CLI tmux Pro Max forfait ($0 marginal cost)
+    // Activated when USE_BOT_PRO_MAX=true in .env
+    let useBotProMax = process.env['USE_BOT_PRO_MAX'] === 'true';
+    if (!useBotProMax) {
+      try {
+        const envRaw2 = fs.readFileSync(path.join(PROJECT_ROOT, '.env'), 'utf-8');
+        for (const line of envRaw2.split('\n')) {
+          if (line.startsWith('USE_BOT_PRO_MAX=')) {
+            useBotProMax = line.slice('USE_BOT_PRO_MAX='.length).trim() === 'true';
+            break;
+          }
+        }
+      } catch { /* .env not readable */ }
+    }
+
+    if (useBotProMax) {
+      try {
+        const agentFolderIdTmux = agentFolderMap[rawAgentId] ?? rawAgentId;
+        const claudeMdPathTmux = path.join(PROJECT_ROOT, 'agents', agentFolderIdTmux, 'CLAUDE.md');
+        let systemCtx = '';
+        try { systemCtx = fs.readFileSync(claudeMdPathTmux, 'utf-8').slice(0, 800); } catch { /* ok */ }
+        const fullPrompt = systemCtx
+          ? `[${agentDisplayMap[rawAgentId] ?? rawAgentId} context]\n${systemCtx}\n\n[User message]\n${message}`
+          : message;
+        const tmuxResult = await dispatchToTmuxSession(
+          'claude-backend',
+          fullPrompt,
+          { timeoutMs: 90_000, pollIntervalMs: 5_000 }
+        );
+        // Strip TASK_DONE lines and extract clean response
+        const cleanedOutput = tmuxResult.content
+          .split('\n')
+          .filter((l) => !l.match(/TASK_DONE_[a-z0-9-]+/i) && !l.startsWith('touch /tmp/'))
+          .join('\n')
+          .trim();
+        return c.json({
+          reply: cleanedOutput || tmuxResult.content,
+          response: cleanedOutput || tmuxResult.content,
+          source: 'pro_max_forfait',
+          model: tmuxResult.model,
+          agent_id: rawAgentId,
+          agent_name: agentDisplayMap[rawAgentId] ?? rawAgentId,
+          delegation_chain: [rawAgentId],
+          delegated: false,
+          cost_usd: 0,
+          latency_ms: tmuxResult.latency_ms,
+        });
+      } catch (err) {
+        logger.warn({ err, agent: rawAgentId }, 'bot_mode1_tmux_fallback');
+        // Fall through to Anthropic API on error
+      }
     }
 
     // Read key from .env file (env.ts does not inject into process.env)

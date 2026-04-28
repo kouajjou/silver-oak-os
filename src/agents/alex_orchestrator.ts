@@ -20,6 +20,7 @@ import type { BrokenDownTask } from './task_breaker.js';
 import { judge as llmJudge } from '../services/llm_judge.js';
 import { createRun, updateRun, endRun, createTask, updateTask } from '../services/session_state.js';
 import { readEnvFile } from '../env.js';
+import { dispatchToTmuxSession } from '../services/cli_tmux_dispatcher.js';
 
 // ── Constants ─────────────────────────────────────────────────────────────
 
@@ -158,6 +159,34 @@ export async function alexHandle(request: AlexRequest): Promise<AlexResponse> {
     }
 
     // 3. Simple question → Alex answers directly
+    // Mode 1: CLI tmux Pro Max ($0 forfait) | Mode 2: API Anthropic Haiku
+    if (process.env['USE_ALEX_PRO_MAX'] === 'true') {
+      // Mode 1 — dispatch via MCP Bridge tmux session 'claude-code'
+      const tmuxResult = await dispatchToTmuxSession('claude-code', request.message, {
+        timeoutMs: 300_000,
+        pollIntervalMs: 30_000,
+      });
+      logger.info(
+        { cost: 0, model: tmuxResult.model, mode: 'mode_1_tmux' },
+        'alex.direct_reply.mode1'
+      );
+      return {
+        success: true,
+        response: tmuxResult.content,
+        intent: intent.intent,
+        delegated_to_maestro: false,
+        cost_usd: intent.cost_usd, // intent classification cost (small)
+        latency_ms: Date.now() - start,
+        metadata: {
+          intent_confidence: intent.confidence,
+          mode: 'mode_1_tmux',
+          source: 'pro_max_forfait',
+          model: tmuxResult.model,
+        },
+      };
+    }
+
+    // Mode 2 — API Anthropic Haiku (fallback si USE_ALEX_PRO_MAX absent)
     const response = await callLLM({
       provider: 'anthropic',
       model: 'claude-haiku-4-5',
@@ -170,7 +199,7 @@ export async function alexHandle(request: AlexRequest): Promise<AlexResponse> {
     });
 
     const totalCost = intent.cost_usd + response.cost_usd;
-    logger.info({ cost: totalCost, intent: intent.intent }, 'alex.direct_reply');
+    logger.info({ cost: totalCost, intent: intent.intent, mode: 'mode_2_api' }, 'alex.direct_reply');
 
     return {
       success: true,
@@ -179,7 +208,7 @@ export async function alexHandle(request: AlexRequest): Promise<AlexResponse> {
       delegated_to_maestro: false,
       cost_usd: totalCost,
       latency_ms: Date.now() - start,
-      metadata: { intent_confidence: intent.confidence },
+      metadata: { intent_confidence: intent.confidence, mode: 'mode_2_api' },
     };
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : String(err);
