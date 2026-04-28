@@ -6,3 +6,10 @@ data/
 *.db
 *.db-shm
 *.db-wal
+
+# Environment files (NEVER commit - security P0)
+.env
+.env.local
+.env.*.local
+*.env.bak*
+.env.*
