@@ -137,16 +137,21 @@ export function startDashboard(botApi?: Api<RawApi>): void {
     return c.json({ error: 'Internal server error' }, 500);
   });
 
+  // Public routes that skip token auth
+  const PUBLIC_ROUTES = ['/api/health'];
+
   // Token auth middleware
   app.use('*', async (c, next) => {
+    const url = new URL(c.req.url, 'http://localhost');
+    if (PUBLIC_ROUTES.some(route => url.pathname.startsWith(route))) {
+      return await next();
+    }
     const token = c.req.query('token');
     if (!DASHBOARD_TOKEN || !token || token !== DASHBOARD_TOKEN) {
       return c.json({ error: 'Unauthorized' }, 401);
     }
     await next();
   });
-
-  // Serve dashboard HTML
   app.get('/', (c) => {
     const chatId = c.req.query('chatId') || '';
     return c.html(getDashboardHtml(DASHBOARD_TOKEN, chatId, WARROOM_ENABLED));
