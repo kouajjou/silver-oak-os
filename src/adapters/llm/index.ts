@@ -1,26 +1,38 @@
 /**
  * gap-010: Multi-LLM router — Maestro entry point for all LLM dispatch
  *
- * Phase 1: Anthropic + OpenAI + DeepSeek wired
- * Phase 2 TODO: xAI, Google, Mistral, Cohere, Together, Groq
+ * Phase 1 (complete): Anthropic + OpenAI + DeepSeek
+ * Phase 2 (complete): Google + xAI + Mistral + Cohere + Together + Groq + Qwen + MiniMax + Perplexity
  */
 
 import { LLMRequest, LLMResponse, LLMAdapter, LLMProvider } from './types.js';
-import { anthropicAdapter } from './anthropic.js';
-import { openaiAdapter } from './openai.js';
-import { deepseekAdapter } from './deepseek.js';
+import { anthropicAdapter }  from './anthropic.js';
+import { openaiAdapter }     from './openai.js';
+import { deepseekAdapter }   from './deepseek.js';
+import { googleAdapter }     from './google.js';
+import { xaiAdapter }        from './xai.js';
+import { mistralAdapter }    from './mistral.js';
+import { cohereAdapter }     from './cohere.js';
+import { togetherAdapter }   from './together.js';
+import { groqAdapter }       from './groq.js';
+import { qwenAdapter }       from './qwen.js';
+import { minimaxAdapter }    from './minimax.js';
+import { perplexityAdapter } from './perplexity.js';
 import { trackCost } from '../../services/budget-tracker.js';
 
 const ADAPTERS: Partial<Record<LLMProvider, LLMAdapter>> = {
-  anthropic: anthropicAdapter,
-  openai:    openaiAdapter,
-  deepseek:  deepseekAdapter,
-  // xai:     TODO Phase 2 (rate limited, planned)
-  // google:  TODO Phase 2 (@google/genai SDK — see gemini.ts)
-  // mistral: TODO Phase 2
-  // cohere:  TODO Phase 2
-  // together:TODO Phase 2
-  // groq:    TODO Phase 2 (GROQ_API_KEY present in .env)
+  anthropic:  anthropicAdapter,
+  openai:     openaiAdapter,
+  deepseek:   deepseekAdapter,
+  google:     googleAdapter,
+  xai:        xaiAdapter,
+  mistral:    mistralAdapter,
+  cohere:     cohereAdapter,
+  together:   togetherAdapter,
+  groq:       groqAdapter,
+  qwen:       qwenAdapter,
+  minimax:    minimaxAdapter,
+  perplexity: perplexityAdapter,
 };
 
 /**
@@ -30,9 +42,7 @@ const ADAPTERS: Partial<Record<LLMProvider, LLMAdapter>> = {
 export async function callLLM(request: LLMRequest): Promise<LLMResponse> {
   const adapter = ADAPTERS[request.provider];
   if (!adapter) {
-    throw new Error(
-      `LLM provider '${request.provider}' not implemented yet — Phase 2 TODO`,
-    );
+    throw new Error(`LLM provider '${request.provider}' not registered`);
   }
   if (!adapter.available) {
     throw new Error(
@@ -62,6 +72,14 @@ export function getAvailableProviders(): LLMProvider[] {
   return (Object.entries(ADAPTERS) as Array<[LLMProvider, LLMAdapter | undefined]>)
     .filter(([, a]) => a?.available)
     .map(([p]) => p);
+}
+
+/**
+ * Return status of all 12 registered providers.
+ */
+export function getProvidersStatus(): Array<{ provider: LLMProvider; available: boolean }> {
+  return (Object.entries(ADAPTERS) as Array<[LLMProvider, LLMAdapter | undefined]>)
+    .map(([p, a]) => ({ provider: p, available: a?.available ?? false }));
 }
 
 export type { LLMRequest, LLMResponse, LLMAdapter, LLMProvider };
