@@ -5,6 +5,11 @@
  */
 
 import { LLMAdapter, LLMRequest, LLMResponse, LLMMessage } from './types.js';
+import { readEnvFile } from '../../env.js';
+
+function getGoogleKey(): string | undefined {
+  return process.env['GOOGLE_API_KEY'] || readEnvFile(['GOOGLE_API_KEY'])['GOOGLE_API_KEY'];
+}
 
 interface GeminiPart { text: string; }
 interface GeminiContent { role: string; parts: GeminiPart[]; }
@@ -37,11 +42,11 @@ function extractSystemInstruction(messages: LLMMessage[]): string | undefined {
 
 export const googleAdapter: LLMAdapter = {
   provider: 'google',
-  available: !!process.env['GOOGLE_API_KEY'],
+  get available(): boolean { return !!getGoogleKey(); },
 
   async call(request: LLMRequest): Promise<LLMResponse> {
     const start = Date.now();
-    const apiKey = process.env['GOOGLE_API_KEY'];
+    const apiKey = getGoogleKey();
     if (!apiKey) throw new Error('GOOGLE_API_KEY missing in .env');
 
     const model = request.model || 'gemini-2.5-flash';
