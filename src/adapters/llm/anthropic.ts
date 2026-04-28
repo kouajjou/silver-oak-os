@@ -4,6 +4,12 @@
  */
 
 import { LLMAdapter, LLMRequest, LLMResponse } from './types.js';
+import { readEnvFile } from '../../env.js';
+
+// Fall back to .env file if process.env key is absent (readEnvFile does not pollute process.env)
+function getApiKey(): string | undefined {
+  return process.env['ANTHROPIC_API_KEY'] || readEnvFile(['ANTHROPIC_API_KEY'])['ANTHROPIC_API_KEY'];
+}
 
 interface AnthropicContent {
   type: string;
@@ -24,11 +30,11 @@ const PRICING: Record<string, { input: number; output: number }> = {
 
 export const anthropicAdapter: LLMAdapter = {
   provider: 'anthropic',
-  available: !!process.env['ANTHROPIC_API_KEY'],
+  get available(): boolean { return !!getApiKey(); },
 
   async call(request: LLMRequest): Promise<LLMResponse> {
     const start = Date.now();
-    const apiKey = process.env['ANTHROPIC_API_KEY'];
+    const apiKey = getApiKey();
     if (!apiKey) throw new Error('ANTHROPIC_API_KEY missing in .env');
 
     const res = await fetch('https://api.anthropic.com/v1/messages', {
@@ -42,7 +48,10 @@ export const anthropicAdapter: LLMAdapter = {
         model: request.model,
         max_tokens: request.max_tokens ?? 1024,
         temperature: request.temperature ?? 0.7,
-        messages: request.messages,
+        ...(request.messages.some(m => m.role === 'system') && {
+          system: request.messages.find(m => m.role === 'system')?.content ?? '',
+        }),
+        messages: request.messages.filter(m => m.role !== 'system'),
       }),
     });
 
