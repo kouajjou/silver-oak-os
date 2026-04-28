@@ -288,3 +288,12 @@ Phase 4 — SOP V26 inscrite 2026-04-28
 
 - Owner: Karim Kouajjou (karim@silveroak.one)
 - Telegram: 5566541774
+
+### Group K — Anti-Auto-Merge Safety (R79) ⭐ NEW
+
+> Ajout SOP V26.5 — 28/04/2026
+> Cause : Pattern récurrent workers auto-mergent main sans validation Karim (claude-frontend + claude-backend cette session)
+
+| Règle | Description |
+|-------|-------------|
+| R79 | ABSOLUE : JAMAIS merge main sans validation Karim explicite. Workflow obligatoire : 1) Worker termine sur branche feature/fix → push origin. 2) Telegram Karim avec status DoD + commit hash + branche + texte exact "Karim valide push merge main pour Xeme victoire". 3) STOP NET (TASK_DONE). 4) Karim valide explicitement. 5) Worker SÉPARÉ (différent du worker original) exécute git merge --no-ff. Anti-pattern interdit : git merge + git push main par le même worker. Détection : grep "git merge.*main" suivi de "git push origin main" sur même branche = violation. Exception : override explicite "Override R79 pour cette tâche, autorise auto-merge". Sanctions : 1ere = reconnaissance Telegram + logs violations. 2eme = SOP discussion + dispatch template ajusté. 3eme = pause session + audit pattern systémique. |

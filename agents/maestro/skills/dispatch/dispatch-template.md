@@ -99,3 +99,13 @@ R78 : Cuisinier 1700eur/h n epluche pas carottes (delegation strict).
 - grep avant assertions (R54)
 - DoD criteres binaires (R55)
 - Sentinelle commit hash avant/apres (R60)
+
+## R79 ABSOLUE — Anti-auto-merge
+
+JAMAIS merge main même branche worker. Workflow :
+1. Push branche feature/fix
+2. Telegram "Karim valide push merge main"
+3. STOP TASK_DONE
+4. Worker SÉPARÉ pour merge après validation explicite Karim
+
+Violation = conséquences : reconnaissance log + ajustement dispatch.
