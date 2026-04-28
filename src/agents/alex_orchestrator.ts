@@ -73,6 +73,7 @@ Do not explain your reasoning unless asked.`;
 // ── Helpers ───────────────────────────────────────────────────────────────
 
 async function sendTelegramProgress(text: string): Promise<void> {
+  if (process.env["TELEGRAM_NOTIFICATIONS_DISABLED"] === "true") return;
   const envVars = readEnvFile(['TELEGRAM_BOT_TOKEN']);
   const token = process.env['TELEGRAM_BOT_TOKEN'] ?? envVars['TELEGRAM_BOT_TOKEN'] ?? '';
   if (!token) return;
@@ -324,9 +325,22 @@ export async function alexHandleAutonomous(
       taskResult = dispatched.result;
 
       // Judge result via Gemini cross-LLM (SOP R14 — no self-grading bias)
+      // Build expected_output per agent type — sets fair judge expectations
+      const expectedOutput = task.agent_target === 'maestro'
+        ? 'Detailed implementation plan with specific steps, code guidance, and technical approach'
+        : task.agent_target === 'sara'
+        ? 'Marketing strategy with target audience, content plan, channels, KPIs, and timeline'
+        : task.agent_target === 'marco'
+        ? 'Financial analysis with numbers, scenarios (best/base/worst), risks, and recommendations'
+        : task.agent_target === 'leo'
+        ? 'Design specification with user journey, wireframe description, components, and accessibility notes'
+        : task.agent_target === 'nina'
+        ? 'Data analysis plan with data sources, methodology, findings, and action items'
+        : 'Detailed professional deliverable addressing all key aspects of the task';
+
       const judged = await llmJudge({
         task_description: task.description,
-        expected_output: 'Task completed per description',
+        expected_output: expectedOutput,
         actual_output: dispatched.result,
         task_type: task.type,
       });
