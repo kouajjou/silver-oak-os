@@ -18,6 +18,7 @@ import path from 'path';
 import os from 'os';
 
 import { readEnvFile } from '../env.js';
+import { dispatchToTmuxSession } from '../services/cli_tmux_dispatcher.js';
 import { synthesizeSpeech, transcribeAudio, UPLOADS_DIR } from '../voice.js';
 import { logger } from '../logger.js';
 
@@ -121,8 +122,12 @@ async function callAnthropic(
 const VOICE_API_PORT = parseInt(process.env.VOICE_API_PORT ?? '3000', 10);
 
 export function startVoiceApiServer(): void {
-  const env = readEnvFile(['ANTHROPIC_API_KEY', 'VOICE_API_PORT']);
+  const env = readEnvFile(['ANTHROPIC_API_KEY', 'VOICE_API_PORT', 'USE_VOICE_PRO_MAX']);
   const anthropicKey = env.ANTHROPIC_API_KEY ?? process.env.ANTHROPIC_API_KEY ?? '';
+  // Mode 1 — Route via tmux session 'claude-frontend' (Pro Max forfait, $0 marginal)
+  // Set USE_VOICE_PRO_MAX=true in .env to activate. Falls back to Anthropic API.
+  const useVoiceProMax =
+    (env.USE_VOICE_PRO_MAX ?? process.env['USE_VOICE_PRO_MAX']) === 'true';
 
   if (!anthropicKey) {
     logger.warn('ANTHROPIC_API_KEY not set — voice chat endpoint will return 503');
@@ -177,11 +182,57 @@ export function startVoiceApiServer(): void {
     }
 
     try {
-      const reply = await callAnthropic(agent.systemPrompt, messages, anthropicKey);
+      let reply: string;
+
+      if (useVoiceProMax) {
+        // ── Mode 1: CLI tmux Pro Max forfait ($0) ───────────────────────────
+        // Build a self-contained prompt including system context + last message
+        const lastUserMsg = [...messages].reverse().find((m) => m.role === 'user');
+        const userText = lastUserMsg?.content ?? messages[messages.length - 1]?.content ?? '';
+        const prompt = [
+          `[System: ${agent.systemPrompt}]`,
+          '',
+          `User: ${userText}`,
+          '',
+          'Please respond concisely. When done, output exactly: TASK_DONE',
+        ].join('\n');
+
+        logger.info({ agentId, session: 'claude-frontend' }, 'voice.chat.mode1_tmux');
+
+        const tmuxResult = await dispatchToTmuxSession('claude-frontend', prompt, {
+          timeoutMs: 120_000,   // 2 min max for voice
+          pollIntervalMs: 5_000, // poll every 5s (voice needs lower latency than Maestro)
+        });
+
+        // Extract reply: everything before TASK_DONE, strip tmux noise
+        reply = tmuxResult.content
+          .replace(/TASK_DONE(_[a-z0-9-]+)?/gi, '')
+          .replace(/\[[0-9;]*[mGKHF]/g, '') // strip ANSI escape codes
+          .replace(/^\s*>\s*/gm, '')              // strip tmux prompt artifacts
+          .trim();
+
+        if (!reply) {
+          throw new Error('Mode 1 tmux dispatch returned empty reply');
+        }
+
+        logger.info(
+          { agentId, latency: tmuxResult.latency_ms, cost: 0 },
+          'voice.chat.mode1_done'
+        );
+      } else {
+        // ── Mode 2: Anthropic API ($) ────────────────────────────────────────
+        if (!anthropicKey) {
+          return c.json({ error: 'ANTHROPIC_API_KEY not configured' }, 503);
+        }
+        logger.info({ agentId }, 'voice.chat.mode2_api');
+        reply = await callAnthropic(agent.systemPrompt, messages, anthropicKey);
+      }
+
       return c.json({
         agent: { id: agent.id, name: agent.name },
         reply,
         messages: [...messages, { role: 'assistant', content: reply }],
+        mode: useVoiceProMax ? 'mode_1_tmux' : 'mode_2_api',
       });
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err);
