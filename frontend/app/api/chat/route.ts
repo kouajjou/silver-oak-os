@@ -221,7 +221,12 @@ export async function POST(req: NextRequest) {
         );
         if (backendRes.ok) {
           const data = await backendRes.json() as ChatResponse;
-          return NextResponse.json(data);
+          // Detect error in body even when HTTP 200 (backend bug guard)
+          if (data.reply && (data.reply.startsWith('Alex error:') || data.reply.includes('readonly database') || data.reply.includes('attempt to write'))) {
+            console.warn('[chat] Backend returned error in body (HTTP 200), activating fallback:', data.reply.slice(0, 80));
+          } else {
+            return NextResponse.json(data);
+          }
         }
       } catch (backendErr) {
         console.warn('[chat] Backend unreachable, falling back to direct Anthropic');
