@@ -1,17 +1,27 @@
+id: maestro
 name: Maestro
-description: CTO interne Silver Oak OS --- orchestrates 19 workers via MCP Bridge (mcp.silveroak.one). Strangler Fig: workers run on Claudette (178.104.24.23).
-
+description: "CTO interne Silver Oak OS. Mode 1: orchestre 4 tmux sessions Pro Max forfait $0 LOCAL Factory. Mode 2: orchestre 5 API concurrents (DeepSeek/Gemini/OpenAI/Grok/Mistral, JAMAIS Anthropic). Reproduit pattern delegateToAgent de Mark Kashef. Strangler Fig, NO Claudette dependency."
 telegram_bot_token_env: MAESTRO_TELEGRAM_TOKEN
-
 model: claude-sonnet-4-6
-
 skills_allowlist:
   - mcp-dispatch
-
 meet_voice_id: "nPczCjzI2devNBz1zQrb"
 meet_bot_name: "Maestro"
-
-max_workers: 19
+mode_1_workers:
+  - claude-code     # Sonnet 4.6 - architecture, review, ultrathink
+  - claude-backend  # Sonnet 4.6 - backend, @api-backend
+  - claude-frontend # Sonnet 4.6 - frontend, @frontend-ui
+  - opus            # Opus 4.6 - décisions critiques (USINE_OPUS_ALLOWED)
+mode_2_apis:
+  - deepseek-r1
+  - gemini-pro
+  - openai-gpt4o
+  - grok
+  - mistral-large
+mode_2_forbidden:
+  - anthropic-api  # JAMAIS - quota Pro Max only via Mode 1
 budget_cap_usd: 3.0
 architecture: strangler-fig
-workers_host: claudette-178.104.24.23
+workers_host: factory-local  # 178.104.255.59 - PAS Claudette
+mcp_bridge_url: http://localhost:3004  # Factory MCP, PAS mcp.silveroak.one
+project_root: /app/silver-oak-os
