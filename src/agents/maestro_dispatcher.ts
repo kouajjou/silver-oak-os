@@ -1,12 +1,12 @@
 /**
  * Maestro Dispatcher — Sprint 2 Pipeline V1
  * Mode 1 : CLI tmux via MCP Bridge (forfait Pro Max, $0 marginal)
- * Mode 2 : API Anthropic directe (fallback ou override)
+ * Mode 2 : API DeepSeek/Gemini directe (fallback ou override — archived: était Anthropic)
  *
  * Sélection du mode :
  *   - task.mode === 'mode_1_tmux'      → toujours Mode 1
  *   - USE_MAESTRO_PRO_MAX=true (env)   → Mode 1 par défaut
- *   - sinon                            → Mode 2 (API Anthropic)
+ *   - sinon                            → Mode 2 (API DeepSeek — archived: était Anthropic)
  */
 
 import { callLLM, getAvailableProviders } from '../adapters/llm/index.js';
@@ -77,7 +77,7 @@ async function dispatchMode1(task: MaestroTask, start: number): Promise<MaestroR
     return {
       success: true,
       result: tmuxResult.content,
-      provider_used: 'anthropic', // Opus is Anthropic model
+      provider_used: null, // archived: was 'anthropic' label — tmux mode has no direct API cost
       cost_usd: 0,                // Pro Max forfait = $0 marginal
       latency_ms: tmuxResult.latency_ms,
       mode_used: 'mode_1_tmux',
@@ -97,10 +97,12 @@ async function dispatchMode1(task: MaestroTask, start: number): Promise<MaestroR
   }
 }
 
-// ── Mode 2 : API Anthropic directe (classique) ────────────────────────────────
+// ── Mode 2 : API DeepSeek directe (archived: était Anthropic — zero-anthropic Phase F) ──────────
 
 async function dispatchMode2(task: MaestroTask, start: number): Promise<MaestroResult> {
-  const provider: LLMProvider = task.preferred_provider ?? 'anthropic';
+  // archived: default was 'anthropic' — zero-anthropic Phase F
+  // const provider: LLMProvider = task.preferred_provider ?? 'anthropic';
+  const provider: LLMProvider = task.preferred_provider ?? 'deepseek';
 
   logger.info(
     { task: task.task_description.slice(0, 80), provider, user: task.user_id, mode: 'mode_2_api' },
@@ -119,7 +121,11 @@ async function dispatchMode2(task: MaestroTask, start: number): Promise<MaestroR
       };
     }
 
-    const model = provider === 'anthropic' ? 'claude-sonnet-4-6' : 'gpt-4o-mini';
+    // archived: was anthropic→claude-sonnet-4-6, else→gpt-4o-mini — zero-anthropic Phase F
+    // const model = provider === 'anthropic' ? 'claude-sonnet-4-6' : 'gpt-4o-mini';
+    const model = provider === 'deepseek' ? 'deepseek-chat'
+      : provider === 'google' ? 'gemini-2.5-flash'
+      : 'gpt-4o-mini'; // openai/xai fallback
 
     const response = await callLLM({
       provider,

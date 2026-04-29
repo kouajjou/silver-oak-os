@@ -6,7 +6,7 @@
  *
  * Endpoints:
  *   GET  /api/voice/agents            — list available agent personas
- *   POST /api/voice/chat/:agentId     — chat with an agent (Anthropic API)
+ *   POST /api/voice/chat/:agentId     — chat with an agent (Gemini Flash / tmux Pro Max)
  *   POST /api/voice/tts/:agentId      — text-to-speech
  *   POST /api/voice/stt               — speech-to-text (multipart form, audio file)
  */
@@ -76,45 +76,61 @@ const AGENTS: Record<string, AgentPersona> = {
   },
 };
 
-// ── Anthropic chat helper ─────────────────────────────────────────────────────
+// ── Gemini Flash chat helper (archived: was callAnthropic — zero-anthropic Phase F) ────────────
 
 interface ChatMessage {
   role: 'user' | 'assistant';
   content: string;
 }
 
-async function callAnthropic(
+// archived: callAnthropic replaced by callGemini (zero-anthropic Phase F)
+// async function callAnthropic(systemPrompt: string, messages: ChatMessage[], apiKey: string): Promise<string> {
+//   const response = await fetch('https://api.anthropic.com/v1/messages', {
+//     method: 'POST',
+//     headers: { 'Content-Type': 'application/json', 'x-api-key': apiKey, 'anthropic-version': '2023-06-01' },
+//     body: JSON.stringify({ model: 'claude-sonnet-4-6', max_tokens: 1024, system: systemPrompt, messages }),
+//   });
+//   if (!response.ok) { const err = await response.text(); throw new Error('Anthropic API error ' + response.status + ': ' + err.slice(0, 300)); }
+//   const data = await response.json() as { content: Array<{ type: string; text: string }> };
+//   const textBlock = data.content.find((b) => b.type === 'text');
+//   if (!textBlock) throw new Error('No text content in Anthropic response');
+//   return textBlock.text;
+// }
+
+async function callGemini(
   systemPrompt: string,
   messages: ChatMessage[],
   apiKey: string,
 ): Promise<string> {
-  const response = await fetch('https://api.anthropic.com/v1/messages', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'x-api-key': apiKey,
-      'anthropic-version': '2023-06-01',
+  const geminiMessages = messages.map((m) => ({
+    role: m.role === 'assistant' ? 'model' : 'user',
+    parts: [{ text: m.content }],
+  }));
+  const response = await fetch(
+    'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=' + apiKey,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        system_instruction: { parts: [{ text: systemPrompt }] },
+        contents: geminiMessages,
+        generationConfig: { temperature: 0.7, maxOutputTokens: 1024 },
+      }),
     },
-    body: JSON.stringify({
-      model: 'claude-sonnet-4-6',
-      max_tokens: 1024,
-      system: systemPrompt,
-      messages,
-    }),
-  });
+  );
 
   if (!response.ok) {
     const err = await response.text();
-    throw new Error(`Anthropic API error ${response.status}: ${err.slice(0, 300)}`);
+    throw new Error('Gemini API error ' + response.status + ': ' + err.slice(0, 300));
   }
 
   const data = (await response.json()) as {
-    content: Array<{ type: string; text: string }>;
+    candidates: Array<{ content: { parts: Array<{ text: string }> } }>;
   };
 
-  const textBlock = data.content.find((b) => b.type === 'text');
-  if (!textBlock) throw new Error('No text content in Anthropic response');
-  return textBlock.text;
+  const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+  if (!text) throw new Error('No text content in Gemini response');
+  return text;
 }
 
 // ── Voice API server ──────────────────────────────────────────────────────────
@@ -122,15 +138,17 @@ async function callAnthropic(
 const VOICE_API_PORT = parseInt(process.env.VOICE_API_PORT ?? '3000', 10);
 
 export function startVoiceApiServer(): void {
-  const env = readEnvFile(['ANTHROPIC_API_KEY', 'VOICE_API_PORT', 'USE_VOICE_PRO_MAX']);
-  const anthropicKey = env.ANTHROPIC_API_KEY ?? process.env.ANTHROPIC_API_KEY ?? '';
+  const env = readEnvFile(['GOOGLE_API_KEY', 'VOICE_API_PORT', 'USE_VOICE_PRO_MAX']);
+  // archived: was ANTHROPIC_API_KEY — zero-anthropic Phase F
+  // const anthropicKey = env.ANTHROPIC_API_KEY ?? process.env.ANTHROPIC_API_KEY ?? '';
+  const geminiKey = env.GOOGLE_API_KEY ?? process.env['GOOGLE_API_KEY'] ?? '';
   // Mode 1 — Route via tmux session 'claude-frontend' (Pro Max forfait, $0 marginal)
-  // Set USE_VOICE_PRO_MAX=true in .env to activate. Falls back to Anthropic API.
+  // Set USE_VOICE_PRO_MAX=true in .env to activate. Falls back to Gemini Flash API.
   const useVoiceProMax =
     (env.USE_VOICE_PRO_MAX ?? process.env['USE_VOICE_PRO_MAX']) === 'true';
 
-  if (!anthropicKey) {
-    logger.warn('ANTHROPIC_API_KEY not set — voice chat endpoint will return 503');
+  if (!geminiKey) {
+    logger.warn('GOOGLE_API_KEY not set — voice chat Mode 2 will return 503');
   }
 
   const app = new Hono();
@@ -162,8 +180,8 @@ export function startVoiceApiServer(): void {
     if (!agent) {
       return c.json({ error: `Unknown agent: ${agentId}` }, 404);
     }
-    if (!anthropicKey) {
-      return c.json({ error: 'ANTHROPIC_API_KEY not configured' }, 503);
+    if (!useVoiceProMax && !geminiKey) {
+      return c.json({ error: 'GOOGLE_API_KEY not configured for voice chat Mode 2' }, 503);
     }
 
     let body: { message?: string; messages?: ChatMessage[] };
@@ -220,19 +238,19 @@ export function startVoiceApiServer(): void {
           'voice.chat.mode1_done'
         );
       } else {
-        // ── Mode 2: Anthropic API ($) ────────────────────────────────────────
-        if (!anthropicKey) {
-          return c.json({ error: 'ANTHROPIC_API_KEY not configured' }, 503);
+        // ── Mode 2: Gemini Flash API (archived: was Anthropic API — zero-anthropic Phase F) ──
+        if (!geminiKey) {
+          return c.json({ error: 'GOOGLE_API_KEY not configured' }, 503);
         }
-        logger.info({ agentId }, 'voice.chat.mode2_api');
-        reply = await callAnthropic(agent.systemPrompt, messages, anthropicKey);
+        logger.info({ agentId }, 'voice.chat.mode2_gemini');
+        reply = await callGemini(agent.systemPrompt, messages, geminiKey);
       }
 
       return c.json({
         agent: { id: agent.id, name: agent.name },
         reply,
         messages: [...messages, { role: 'assistant', content: reply }],
-        mode: useVoiceProMax ? 'mode_1_tmux' : 'mode_2_api',
+        mode: useVoiceProMax ? 'mode_1_tmux' : 'mode_2_gemini',
       });
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err);

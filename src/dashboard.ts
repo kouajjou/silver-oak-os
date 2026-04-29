@@ -1542,53 +1542,57 @@ export function startDashboard(botApi?: Api<RawApi>): void {
       }
     }
 
-    // Read key from .env file (env.ts does not inject into process.env)
-    let anthropicKey: string | undefined = process.env['ANTHROPIC_API_KEY'];
-    if (!anthropicKey) {
+    // archived: was ANTHROPIC_API_KEY — zero-anthropic Phase F
+    // let anthropicKey: string | undefined = process.env['ANTHROPIC_API_KEY'];
+    // Read GOOGLE_API_KEY for Gemini Flash fallback
+    let geminiKey: string | undefined = process.env['GOOGLE_API_KEY'];
+    if (!geminiKey) {
       try {
         const envRaw = fs.readFileSync(path.join(PROJECT_ROOT, '.env'), 'utf-8');
         for (const line of envRaw.split('\n')) {
-          if (line.startsWith('ANTHROPIC_API_KEY=')) {
-            anthropicKey = line.slice('ANTHROPIC_API_KEY='.length).trim();
+          if (line.startsWith('GOOGLE_API_KEY=')) {
+            geminiKey = line.slice('GOOGLE_API_KEY='.length).trim();
             break;
           }
         }
       } catch { /* .env not readable */ }
     }
-    if (!anthropicKey) return c.json({ error: 'ANTHROPIC_API_KEY not set' }, 503);
+    if (!geminiKey) return c.json({ error: 'GOOGLE_API_KEY not set' }, 503);
 
     const agentFolderId = agentFolderMap[rawAgentId] ?? rawAgentId;
     const claudeMdPath = path.join(PROJECT_ROOT, 'agents', agentFolderId, 'CLAUDE.md');
     let systemPrompt = '';
     try { systemPrompt = fs.readFileSync(claudeMdPath, 'utf-8'); } catch { /* no CLAUDE.md */ }
 
-    async function callAnthropicSync(sysPrompt: string, userMsg: string, msgHistory: Array<{ role: string; content: string }>): Promise<string | null> {
-      const messages = [
+    // archived: callGeminiSync replaced by callGeminiSync (zero-anthropic Phase F)
+    // async function callGeminiSync(sysPrompt: string, userMsg: string, msgHistory: Array<{ role: string; content: string }>): Promise<string | null> {
+    //   ... used fetch('https://api.anthropic.com/v1/messages', ...) with anthropicKey
+    // }
+    async function callGeminiSync(sysPrompt: string, userMsg: string, msgHistory: Array<{ role: string; content: string }>): Promise<string | null> {
+      const geminiMessages = [
         ...msgHistory.slice(-10).map((m) => ({
-          role: m.role === 'agent' ? 'assistant' : 'user' as 'user' | 'assistant',
-          content: m.content,
+          role: m.role === 'agent' ? 'model' : 'user',
+          parts: [{ text: m.content }],
         })),
-        { role: 'user' as const, content: userMsg },
+        { role: 'user' as const, parts: [{ text: userMsg }] },
       ];
       try {
-        const res = await fetch('https://api.anthropic.com/v1/messages', {
-          method: 'POST',
-          headers: {
-            'x-api-key': anthropicKey as string,
-            'anthropic-version': '2023-06-01',
-            'content-type': 'application/json',
+        const res = await fetch(
+          'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=' + geminiKey,
+          {
+            method: 'POST',
+            headers: { 'content-type': 'application/json' },
+            body: JSON.stringify({
+              system_instruction: { parts: [{ text: sysPrompt || 'You are a helpful assistant.' }] },
+              contents: geminiMessages,
+              generationConfig: { maxOutputTokens: 1024, temperature: 0.7 },
+            }),
+            signal: AbortSignal.timeout(15000),
           },
-          body: JSON.stringify({
-            model: agentDefaultModel || 'claude-sonnet-4-6',
-            max_tokens: 1024,
-            system: sysPrompt || 'You are a helpful assistant.',
-            messages,
-          }),
-          signal: AbortSignal.timeout(15000),
-        });
+        );
         if (!res.ok) return null;
-        const data = await res.json() as { content?: Array<{ text: string }> };
-        return data.content?.[0]?.text ?? null;
+        const data = await res.json() as { candidates?: Array<{ content: { parts: Array<{ text: string }> } }> };
+        return data.candidates?.[0]?.content?.parts?.[0]?.text ?? null;
       } catch {
         return null;
       }
@@ -1603,7 +1607,7 @@ export function startDashboard(botApi?: Api<RawApi>): void {
       return null;
     }
 
-    const firstReply = await callAnthropicSync(systemPrompt, message, history);
+    const firstReply = await callGeminiSync(systemPrompt, message, history);
     if (!firstReply) return c.json({ error: 'LLM call failed' }, 503);
 
     const delegation = parseDelegationInline(firstReply);
@@ -1612,7 +1616,7 @@ export function startDashboard(botApi?: Api<RawApi>): void {
       const delegateMdPath = path.join(PROJECT_ROOT, 'agents', delegateFolderId, 'CLAUDE.md');
       let delegateSys = '';
       try { delegateSys = fs.readFileSync(delegateMdPath, 'utf-8'); } catch { /* ok */ }
-      const delegatedReply = await callAnthropicSync(delegateSys, delegation.prompt, []);
+      const delegatedReply = await callGeminiSync(delegateSys, delegation.prompt, []);
       if (delegatedReply) {
         logger.info({ from: rawAgentId, to: delegation.agentId }, 'Dashboard sync delegation');
         return c.json({

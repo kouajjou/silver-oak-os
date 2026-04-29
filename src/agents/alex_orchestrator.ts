@@ -202,7 +202,7 @@ export async function alexHandle(request: AlexRequest): Promise<AlexResponse> {
     }
 
     // 3. Simple question → Alex answers directly
-    // Mode 1: CLI tmux Pro Max ($0 forfait) | Mode 2: API Anthropic Haiku
+    // Mode 1: CLI tmux Pro Max ($0 forfait) | Mode 2: API Gemini Flash (archived: was Anthropic Haiku)
     if (process.env['USE_ALEX_PRO_MAX'] === 'true') {
       // Mode 1 — dispatch via MCP Bridge tmux session 'claude-code'
       const tmuxResult = await dispatchToTmuxSession('claude-code', request.message, {
@@ -229,10 +229,13 @@ export async function alexHandle(request: AlexRequest): Promise<AlexResponse> {
       };
     }
 
-    // Mode 2 — API Anthropic Haiku (fallback si USE_ALEX_PRO_MAX absent)
+    // Mode 2 — API Gemini Flash (archived: was Anthropic Haiku — zero-anthropic Phase F)
     const response = await callLLM({
-      provider: 'anthropic',
-      model: 'claude-haiku-4-5',
+      // archived: Anthropic Haiku → Gemini Flash (zero-anthropic Phase F)
+      // provider: 'anthropic',
+      // model: 'claude-haiku-4-5',
+      provider: 'google',
+      model: 'gemini-2.5-flash',
       messages: [
         { role: 'system', content: SYSTEM_PROMPT_ALEX },
         { role: 'user', content: request.message },

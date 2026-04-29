@@ -26,8 +26,11 @@ Respond ONLY with valid JSON, no markdown:
 export async function classifyIntent(message: string): Promise<IntentResult> {
   try {
     const response = await callLLM({
-      provider: 'anthropic',
-      model: 'claude-haiku-4-5',
+      // archived: Anthropic Haiku → DeepSeek (zero-anthropic Phase F)
+      // provider: 'anthropic',
+      // model: 'claude-haiku-4-5',
+      provider: 'deepseek',
+      model: 'deepseek-chat',
       messages: [
         { role: 'system', content: SYSTEM_PROMPT },
         { role: 'user', content: message },
