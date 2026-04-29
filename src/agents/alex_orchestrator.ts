@@ -22,12 +22,13 @@ import { getModelForAgent } from '../config/agent_models.js';
 // Helper: call Claude Code SDK Pro Max ($0 forfait Karim)
 async function callProMax(prompt: string, model: string): Promise<string> {
   let resultText = '';
+  let assistantText = '';
   for await (const event of query({
     prompt,
     options: {
       model,
       allowDangerouslySkipPermissions: true,
-      maxTurns: 1,
+      maxTurns: 3,
       settingSources: ['user'],
     },
   })) {
@@ -35,8 +36,18 @@ async function callProMax(prompt: string, model: string): Promise<string> {
     if (ev['type'] === 'result') {
       resultText = (ev['result'] as string | null | undefined) ?? '';
     }
+    if (ev['type'] === 'assistant') {
+      const msg = ev['message'] as Record<string, unknown> | null | undefined;
+      if (msg && Array.isArray(msg['content'])) {
+        for (const block of msg['content'] as Record<string, unknown>[]) {
+          if (block['type'] === 'text' && typeof block['text'] === 'string') {
+            assistantText += block['text'];
+          }
+        }
+      }
+    }
   }
-  return resultText;
+  return resultText || assistantText;
 }
 import { classifyIntent } from './intent_classifier.js';
 import { dispatchToMaestro } from './maestro_dispatcher.js';
