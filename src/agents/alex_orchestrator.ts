@@ -15,7 +15,29 @@
  * - graceful fallback to dispatchToMaestro if maestroHandle throws
  */
 
-import { callLLM } from '../adapters/llm/index.js';
+// archived: import { callLLM } from '../adapters/llm/index.js'; -- PAYANT (DeepSeek/Gemini API)
+import { query } from '@anthropic-ai/claude-agent-sdk';
+import { getModelForAgent } from '../config/agent_models.js';
+
+// Helper: call Claude Code SDK Pro Max ($0 forfait Karim)
+async function callProMax(prompt: string, model: string): Promise<string> {
+  let resultText = '';
+  for await (const event of query({
+    prompt,
+    options: {
+      model,
+      allowDangerouslySkipPermissions: true,
+      maxTurns: 1,
+      settingSources: ['user'],
+    },
+  })) {
+    const ev = event as Record<string, unknown>;
+    if (ev['type'] === 'result') {
+      resultText = (ev['result'] as string | null | undefined) ?? '';
+    }
+  }
+  return resultText;
+}
 import { classifyIntent } from './intent_classifier.js';
 import { dispatchToMaestro } from './maestro_dispatcher.js';
 import { maestroHandle } from './maestro_orchestrator.js';
@@ -106,18 +128,11 @@ async function dispatchToEmployee(employee: string, task: BrokenDownTask): Promi
   const start = Date.now();
 
   try {
-    const r = await callLLM({
-      provider: 'deepseek',
-      model: 'deepseek-chat',
-      messages: [
-        { role: 'system', content: sys },
-        { role: 'user', content: task.description },
-      ],
-      max_tokens: 600,
-      agent_id: `${employee}_employee`,
-    });
+    // archived: callLLM({ provider: 'deepseek', model: 'deepseek-chat' }) -- PAYANT
+    const fullPrompt = sys + '\n\nTask: ' + task.description;
+    const resultContent = await callProMax(fullPrompt, getModelForAgent('nina')); // Haiku for employee tasks
 
-    return { result: r.content, cost_usd: r.cost_usd, latency_ms: r.latency_ms, success: true };
+    return { result: resultContent, cost_usd: 0, latency_ms: Date.now() - start, success: true };
   } catch (e: unknown) {
     const msg = e instanceof Error ? e.message : String(e);
     logger.error({ employee, error: msg }, 'alex.employee.fail');
@@ -230,31 +245,22 @@ export async function alexHandle(request: AlexRequest): Promise<AlexResponse> {
     }
 
     // Mode 2 — API Gemini Flash (archived: was Anthropic Haiku — zero-anthropic Phase F)
-    const response = await callLLM({
-      // archived: Anthropic Haiku → Gemini Flash (zero-anthropic Phase F)
-      // provider: 'anthropic',
-      // model: 'claude-haiku-4-5',
-      provider: 'google',
-      model: 'gemini-2.5-flash',
-      messages: [
-        { role: 'system', content: SYSTEM_PROMPT_ALEX },
-        { role: 'user', content: request.message },
-      ],
-      max_tokens: 600,
-      agent_id: `alex_${request.user_id}`,
-    });
+    // archived: callLLM({ provider: 'google', model: 'gemini-2.5-flash' }) -- PAYANT
+    // archived: callLLM({ provider: 'anthropic', model: 'claude-haiku-4-5' }) -- zero-anthropic Phase F
+    const alexPrompt = SYSTEM_PROMPT_ALEX + '\n\nUser: ' + request.message;
+    const alexContent = await callProMax(alexPrompt, getModelForAgent('alex')); // Sonnet Pro Max
 
-    const totalCost = intent.cost_usd + response.cost_usd;
+    const totalCost = intent.cost_usd + 0; // Pro Max forfait = $0
     logger.info({ cost: totalCost, intent: intent.intent, mode: 'mode_2_api' }, 'alex.direct_reply');
 
     return {
       success: true,
-      response: response.content,
+      response: alexContent,
       intent: intent.intent,
       delegated_to_maestro: false,
       cost_usd: totalCost,
       latency_ms: Date.now() - start,
-      metadata: { intent_confidence: intent.confidence, mode: 'mode_2_api' },
+      metadata: { intent_confidence: intent.confidence, mode: 'mode_2_claude_code_sdk' },
     };
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : String(err);

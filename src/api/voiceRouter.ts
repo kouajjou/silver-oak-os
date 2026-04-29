@@ -19,6 +19,37 @@ import os from 'os';
 
 import { readEnvFile } from '../env.js';
 import { dispatchToTmuxSession } from '../services/cli_tmux_dispatcher.js';
+import { query } from '@anthropic-ai/claude-agent-sdk';
+
+// Helper: call Claude Code SDK Pro Max ($0 forfait Karim)
+// archived: callGemini (PAYANT zero-anthropic Phase F)
+async function callClaudeCodeSDK(
+  systemPrompt: string,
+  messages: ChatMessage[],
+  model: string,
+): Promise<string> {
+  const conversationText = messages
+    .map((m) => (m.role === 'user' ? 'User' : 'Assistant') + ': ' + m.content)
+    .join('\n');
+  const fullPrompt = systemPrompt + '\n\nConversation:\n' + conversationText + '\n\nRespond as assistant:';
+
+  let resultText = '';
+  for await (const event of query({
+    prompt: fullPrompt,
+    options: {
+      model,
+      allowDangerouslySkipPermissions: true,
+      maxTurns: 1,
+      settingSources: ['user'],
+    },
+  })) {
+    const ev = event as Record<string, unknown>;
+    if (ev['type'] === 'result') {
+      resultText = (ev['result'] as string | null | undefined) ?? '';
+    }
+  }
+  return resultText;
+}
 import { synthesizeSpeech, transcribeAudio, UPLOADS_DIR } from '../voice.js';
 import { logger } from '../logger.js';
 
@@ -243,14 +274,15 @@ export function startVoiceApiServer(): void {
           return c.json({ error: 'GOOGLE_API_KEY not configured' }, 503);
         }
         logger.info({ agentId }, 'voice.chat.mode2_gemini');
-        reply = await callGemini(agent.systemPrompt, messages, geminiKey);
+        // archived: callGemini(agent.systemPrompt, messages, geminiKey) -- PAYANT
+        reply = await callClaudeCodeSDK(agent.systemPrompt, messages, 'claude-sonnet-4-5');
       }
 
       return c.json({
         agent: { id: agent.id, name: agent.name },
         reply,
         messages: [...messages, { role: 'assistant', content: reply }],
-        mode: useVoiceProMax ? 'mode_1_tmux' : 'mode_2_gemini',
+        mode: useVoiceProMax ? 'mode_1_tmux' : 'mode_2_claude_code_sdk',
       });
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err);
