@@ -171,7 +171,7 @@ async function callClaude(agentId: string, message: string, history: HistoryItem
         system: systemPrompt,
         messages,
       }),
-      signal: AbortSignal.timeout(15000),
+      signal: AbortSignal.timeout(35000),
     });
 
     if (!res.ok) {
@@ -216,7 +216,7 @@ export async function POST(req: NextRequest) {
             method: 'POST',
             headers: { 'content-type': 'application/json' },
             body: JSON.stringify({ agentId: resolvedAgentId, message, history }),
-            signal: AbortSignal.timeout(20000),
+            signal: AbortSignal.timeout(35000),
           },
         );
         if (backendRes.ok) {

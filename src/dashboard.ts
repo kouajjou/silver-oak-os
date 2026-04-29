@@ -80,6 +80,8 @@ import { WARROOM_ENABLED, WARROOM_PORT } from './config.js';
 import { logger } from './logger.js';
 import { alexHandle } from './agents/alex_orchestrator.js';
 import { dispatchToTmuxSession } from './services/cli_tmux_dispatcher.js';
+import { runAgent } from './services/claude_sdk_runner.js';
+import type { AgentName } from './config/agent_models.js';
 import { getBudgetStatusData } from './dashboard/budget-status.js';
 import { getTelegramConnected, getBotInfo, chatEvents, getIsProcessing, abortActiveQuery, ChatEvent, readAgentConnState } from './state.js';
 
@@ -1489,157 +1491,32 @@ export function startDashboard(botApi?: Api<RawApi>): void {
       });
     }
 
-    // Mode 1 — CLI tmux Pro Max forfait ($0 marginal cost)
-    // Activated when USE_BOT_PRO_MAX=true in .env
-    let useBotProMax = process.env['USE_BOT_PRO_MAX'] === 'true';
-    if (!useBotProMax) {
-      try {
-        const envRaw2 = fs.readFileSync(path.join(PROJECT_ROOT, '.env'), 'utf-8');
-        for (const line of envRaw2.split('\n')) {
-          if (line.startsWith('USE_BOT_PRO_MAX=')) {
-            useBotProMax = line.slice('USE_BOT_PRO_MAX='.length).trim() === 'true';
-            break;
-          }
-        }
-      } catch { /* .env not readable */ }
+    // Mode 2 — SDK Claude Code Pro Max DIRECT (Mark Kashef pattern)
+    // No tmux, no Gemini API fallback — direct in-process SDK call (bash forfait Karim)
+    try {
+      const agentFolderPath = path.join(PROJECT_ROOT, "agents", agentFolderMap[rawAgentId] ?? rawAgentId);
+      const sdkResult = await runAgent({
+        agentName: rawAgentId as AgentName,
+        message,
+        agentCwd: agentFolderPath,
+      });
+      return c.json({
+        reply: sdkResult.reply || "(no response)",
+        response: sdkResult.reply || "(no response)",
+        source: "sdk_direct",
+        model: sdkResult.model,
+        agent_id: rawAgentId,
+        agent_name: agentDisplayMap[rawAgentId] ?? rawAgentId,
+        delegation_chain: [rawAgentId],
+        delegated: false,
+        cost_usd: 0,
+        latency_ms: sdkResult.latencyMs,
+      });
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      logger.error({ err: msg, agent: rawAgentId }, "sdk_direct_error");
+      return c.json({ error: "Agent error: " + msg }, 503);
     }
-
-    if (useBotProMax) {
-      try {
-        const agentFolderIdTmux = agentFolderMap[rawAgentId] ?? rawAgentId;
-        const claudeMdPathTmux = path.join(PROJECT_ROOT, 'agents', agentFolderIdTmux, 'CLAUDE.md');
-        let systemCtx = '';
-        try { systemCtx = fs.readFileSync(claudeMdPathTmux, 'utf-8').slice(0, 800); } catch { /* ok */ }
-        const fullPrompt = systemCtx
-          ? `[${agentDisplayMap[rawAgentId] ?? rawAgentId} context]\n${systemCtx}\n\n[User message]\n${message}`
-          : message;
-        const tmuxResult = await dispatchToTmuxSession(
-          'claude-backend',
-          fullPrompt,
-          { timeoutMs: 90_000, pollIntervalMs: 5_000 }
-        );
-        // Strip TASK_DONE lines and extract clean response
-        const cleanedOutput = tmuxResult.content
-          .split('\n')
-          .filter((l) => !l.match(/TASK_DONE_[a-z0-9-]+/i) && !l.startsWith('touch /tmp/'))
-          .join('\n')
-          .trim();
-        return c.json({
-          reply: cleanedOutput || tmuxResult.content,
-          response: cleanedOutput || tmuxResult.content,
-          source: 'pro_max_forfait',
-          model: tmuxResult.model,
-          agent_id: rawAgentId,
-          agent_name: agentDisplayMap[rawAgentId] ?? rawAgentId,
-          delegation_chain: [rawAgentId],
-          delegated: false,
-          cost_usd: 0,
-          latency_ms: tmuxResult.latency_ms,
-        });
-      } catch (err) {
-        logger.warn({ err, agent: rawAgentId }, 'bot_mode1_tmux_fallback');
-        // Fall through to Anthropic API on error
-      }
-    }
-
-    // archived: was ANTHROPIC_API_KEY — zero-anthropic Phase F
-    // let anthropicKey: string | undefined = process.env['ANTHROPIC_API_KEY'];
-    // Read GOOGLE_API_KEY for Gemini Flash fallback
-    let geminiKey: string | undefined = process.env['GOOGLE_API_KEY'];
-    if (!geminiKey) {
-      try {
-        const envRaw = fs.readFileSync(path.join(PROJECT_ROOT, '.env'), 'utf-8');
-        for (const line of envRaw.split('\n')) {
-          if (line.startsWith('GOOGLE_API_KEY=')) {
-            geminiKey = line.slice('GOOGLE_API_KEY='.length).trim();
-            break;
-          }
-        }
-      } catch { /* .env not readable */ }
-    }
-    if (!geminiKey) return c.json({ error: 'GOOGLE_API_KEY not set' }, 503);
-
-    const agentFolderId = agentFolderMap[rawAgentId] ?? rawAgentId;
-    const claudeMdPath = path.join(PROJECT_ROOT, 'agents', agentFolderId, 'CLAUDE.md');
-    let systemPrompt = '';
-    try { systemPrompt = fs.readFileSync(claudeMdPath, 'utf-8'); } catch { /* no CLAUDE.md */ }
-
-    // archived: callGeminiSync replaced by callGeminiSync (zero-anthropic Phase F)
-    // async function callGeminiSync(sysPrompt: string, userMsg: string, msgHistory: Array<{ role: string; content: string }>): Promise<string | null> {
-    //   ... used fetch('https://api.anthropic.com/v1/messages', ...) with anthropicKey
-    // }
-    async function callGeminiSync(sysPrompt: string, userMsg: string, msgHistory: Array<{ role: string; content: string }>): Promise<string | null> {
-      const geminiMessages = [
-        ...msgHistory.slice(-10).map((m) => ({
-          role: m.role === 'agent' ? 'model' : 'user',
-          parts: [{ text: m.content }],
-        })),
-        { role: 'user' as const, parts: [{ text: userMsg }] },
-      ];
-      try {
-        const res = await fetch(
-          'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=' + geminiKey,
-          {
-            method: 'POST',
-            headers: { 'content-type': 'application/json' },
-            body: JSON.stringify({
-              system_instruction: { parts: [{ text: sysPrompt || 'You are a helpful assistant.' }] },
-              contents: geminiMessages,
-              generationConfig: { maxOutputTokens: 1024, temperature: 0.7 },
-            }),
-            signal: AbortSignal.timeout(15000),
-          },
-        );
-        if (!res.ok) return null;
-        const data = await res.json() as { candidates?: Array<{ content: { parts: Array<{ text: string }> } }> };
-        return data.candidates?.[0]?.content?.parts?.[0]?.text ?? null;
-      } catch {
-        return null;
-      }
-    }
-
-    // Inline parseDelegation (mirrors orchestrator.ts)
-    function parseDelegationInline(text: string): { agentId: string; prompt: string } | null {
-      const cmdMatch = text.match(/^\/delegate\s+(\S+)\s+([\s\S]+)/i);
-      if (cmdMatch) return { agentId: cmdMatch[1], prompt: cmdMatch[2].trim() };
-      const atMatch = text.match(/^@(\S+?):\s*([\s\S]+)/);
-      if (atMatch) return { agentId: atMatch[1], prompt: atMatch[2].trim() };
-      return null;
-    }
-
-    const firstReply = await callGeminiSync(systemPrompt, message, history);
-    if (!firstReply) return c.json({ error: 'LLM call failed' }, 503);
-
-    const delegation = parseDelegationInline(firstReply);
-    if (delegation) {
-      const delegateFolderId = agentFolderMap[delegation.agentId] ?? delegation.agentId;
-      const delegateMdPath = path.join(PROJECT_ROOT, 'agents', delegateFolderId, 'CLAUDE.md');
-      let delegateSys = '';
-      try { delegateSys = fs.readFileSync(delegateMdPath, 'utf-8'); } catch { /* ok */ }
-      const delegatedReply = await callGeminiSync(delegateSys, delegation.prompt, []);
-      if (delegatedReply) {
-        logger.info({ from: rawAgentId, to: delegation.agentId }, 'Dashboard sync delegation');
-        return c.json({
-          reply: delegatedReply,
-          response: delegatedReply,
-          source: 'claude',
-          agent_id: delegation.agentId,
-          agent_name: agentDisplayMap[delegation.agentId] ?? delegation.agentId,
-          delegation_chain: [rawAgentId, delegation.agentId],
-          delegated: true,
-        });
-      }
-    }
-
-    return c.json({
-      reply: firstReply,
-      response: firstReply,
-      source: 'claude',
-      agent_id: rawAgentId,
-      agent_name: agentDisplayMap[rawAgentId] ?? rawAgentId,
-      delegation_chain: [rawAgentId],
-      delegated: false,
-    });
   });
 
   // Abort current processing
