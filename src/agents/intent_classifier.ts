@@ -1,9 +1,14 @@
 /**
- * Intent Classifier - Sprint 2 Pipeline V1
+ * Intent Classifier - Sprint 2 Pipeline V1 + Timeout Optimization
  * Detects if a message is a simple question or a technical task.
- * Uses claude-haiku-4-5 via SDK Claude Code Pro Max ($0 forfait Karim).
+ *
+ * V2 optimization (2026-04-29):
+ * - Regex fast-path for obvious simple greetings (skip LLM entirely)
+ * - 5s timeout wrapper with null fallback (was blocking for ~24s)
+ * - Message hash cache (TTL 5min) to avoid repeated SDK calls
  *
  * archived: was using callLLM DeepSeek API (PAYANT zero-anthropic Phase F)
+ * archived: was using claude-haiku-4-5 via SDK query() without timeout — 24s latency
  */
 
 import { query } from '@anthropic-ai/claude-agent-sdk';
@@ -17,6 +22,84 @@ export interface IntentResult {
   cost_usd: number;
 }
 
+// ── Regex fast-path: detect obvious simple questions without LLM ──────────
+
+const SIMPLE_QUESTION_PATTERNS = [
+  /^(bonjour|bonsoir|salut|hello|hi|hey|coucou)[.!?]?\s*$/i,
+  /^(comment\s+(tu\s+)?vas|how\s+are\s+you)[.!?]?\s*$/i,
+  /^(merci|thanks|ok|d'accord|parfait|super|génial|cool)[.!?]?\s*$/i,
+  /^(oui|non|yes|no|peut-être|maybe)[.!?]?\s*$/i,
+  /^présente-toi/i,
+  /^(qui\s+es-tu|who\s+are\s+you|what\s+are\s+you)[.!?]?\s*$/i,
+];
+
+const TECHNICAL_TASK_PATTERNS = [
+  /\b(déploie|deploy|refactor|corrige|fix|debug|migre|migrate|installe|install)\b/i,
+  /\b(pr|pull\s+request|commit|push|branch|merge)\b/i,
+  /\b(bug|erreur|error|crash|broken|failed)\b/i,
+  /\b(code|script|function|class|module|api|endpoint)\b/i,
+  /\b(pm2|docker|nginx|redis|supabase|database|db)\b/i,
+];
+
+function regexClassify(message: string): IntentResult | null {
+  const trimmed = message.trim();
+
+  // Short greetings / simple conversational
+  for (const pattern of SIMPLE_QUESTION_PATTERNS) {
+    if (pattern.test(trimmed)) {
+      return { intent: 'simple_question', confidence: 0.95, reasoning: 'regex: greeting pattern', cost_usd: 0 };
+    }
+  }
+
+  // Clear technical task
+  let technicalMatches = 0;
+  for (const pattern of TECHNICAL_TASK_PATTERNS) {
+    if (pattern.test(trimmed)) technicalMatches++;
+  }
+  if (technicalMatches >= 2) {
+    return { intent: 'technical_task', confidence: 0.85, reasoning: 'regex: multiple technical keywords', cost_usd: 0 };
+  }
+
+  // Short message (< 30 chars) with no technical keywords → simple question
+  if (trimmed.length < 30 && technicalMatches === 0) {
+    return { intent: 'simple_question', confidence: 0.75, reasoning: 'regex: short non-technical message', cost_usd: 0 };
+  }
+
+  return null; // needs LLM
+}
+
+// ── Cache: message hash → result (TTL 5min) ───────────────────────────────
+
+interface CacheEntry {
+  result: IntentResult;
+  expiresAt: number;
+}
+
+const intentCache = new Map<string, CacheEntry>();
+const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
+
+function getCached(message: string): IntentResult | null {
+  const key = message.slice(0, 200); // use first 200 chars as key
+  const entry = intentCache.get(key);
+  if (entry && Date.now() < entry.expiresAt) {
+    return entry.result;
+  }
+  if (entry) intentCache.delete(key); // expired
+  return null;
+}
+
+function setCached(message: string, result: IntentResult): void {
+  const key = message.slice(0, 200);
+  intentCache.set(key, { result, expiresAt: Date.now() + CACHE_TTL_MS });
+  // Trim cache to max 100 entries (FIFO)
+  if (intentCache.size > 100) {
+    const firstKey = intentCache.keys().next().value;
+    if (firstKey) intentCache.delete(firstKey);
+  }
+}
+
+// ── LLM fallback via Claude Code SDK (with 5s timeout) ───────────────────
+
 const SYSTEM_PROMPT = `You are an intent classifier for Silver Oak OS.
 Classify the user message into exactly one of:
 - "simple_question": general question, conversation, information request, status check
@@ -25,8 +108,6 @@ Classify the user message into exactly one of:
 Respond ONLY with valid JSON, no markdown:
 {"intent": "simple_question", "confidence": 0.95, "reasoning": "brief reason"}`;
 
-// Helper: call Claude Code SDK Pro Max ($0 forfait) for a simple single-turn query
-// archived: was callLLM({ provider: 'deepseek', model: 'deepseek-chat' }) -- PAYANT
 async function callProMaxHaiku(prompt: string): Promise<string> {
   let resultText = '';
   for await (const event of query({
@@ -46,28 +127,69 @@ async function callProMaxHaiku(prompt: string): Promise<string> {
   return resultText;
 }
 
+async function classifyIntentWithTimeout(message: string, timeoutMs = 5000): Promise<IntentResult | null> {
+  let timeoutHandle: ReturnType<typeof setTimeout> | null = null;
+  const timeoutPromise = new Promise<null>((resolve) => {
+    timeoutHandle = setTimeout(() => resolve(null), timeoutMs);
+  });
+
+  const llmPromise = (async () => {
+    try {
+      const fullPrompt = SYSTEM_PROMPT + '\n\nUser message to classify: ' + message;
+      const content = await callProMaxHaiku(fullPrompt);
+      const clean = content.replace(/```json|```/g, '').trim();
+      const parsed = JSON.parse(clean) as { intent?: string; confidence?: number; reasoning?: string };
+      const intent = (parsed.intent === 'simple_question' || parsed.intent === 'technical_task')
+        ? parsed.intent
+        : 'unknown';
+      return {
+        intent: intent as IntentType,
+        confidence: typeof parsed.confidence === 'number' ? parsed.confidence : 0,
+        reasoning: parsed.reasoning ?? '',
+        cost_usd: 0,
+      };
+    } catch {
+      return null;
+    }
+  })();
+
+  const result = await Promise.race([llmPromise, timeoutPromise]);
+  if (timeoutHandle) clearTimeout(timeoutHandle);
+  return result;
+}
+
+// ── Main export ───────────────────────────────────────────────────────────
+
 export async function classifyIntent(message: string): Promise<IntentResult> {
-  try {
-    const fullPrompt = SYSTEM_PROMPT + '\n\nUser message to classify: ' + message;
-    const content = await callProMaxHaiku(fullPrompt);
-
-    const clean = content.replace(/```json|```/g, '').trim();
-    const parsed = JSON.parse(clean) as { intent?: string; confidence?: number; reasoning?: string };
-
-    const intent = (parsed.intent === 'simple_question' || parsed.intent === 'technical_task')
-      ? parsed.intent
-      : 'unknown';
-
-    return {
-      intent,
-      confidence: typeof parsed.confidence === 'number' ? parsed.confidence : 0,
-      reasoning: parsed.reasoning ?? '',
-      cost_usd: 0, // archived: was response.cost_usd -- Pro Max forfait = $0
-    };
-  } catch (err: unknown) {
-    const msg = err instanceof Error ? err.message : String(err);
-    return { intent: 'unknown', confidence: 0, reasoning: 'classifier error: ' + msg, cost_usd: 0 };
+  // 1. Check cache first
+  const cached = getCached(message);
+  if (cached) {
+    return { ...cached, reasoning: cached.reasoning + ' [cached]' };
   }
+
+  // 2. Regex fast-path (instant, no LLM)
+  const regexResult = regexClassify(message);
+  if (regexResult) {
+    setCached(message, regexResult);
+    return regexResult;
+  }
+
+  // 3. LLM with 5s timeout — fallback to unknown if timeout/error
+  const llmResult = await classifyIntentWithTimeout(message, 5000);
+  if (llmResult) {
+    setCached(message, llmResult);
+    return llmResult;
+  }
+
+  // 4. Timeout fallback — treat as simple_question (safer default for conversational messages)
+  const fallback: IntentResult = {
+    intent: 'simple_question',
+    confidence: 0.5,
+    reasoning: 'classifier timeout — default to simple_question',
+    cost_usd: 0,
+  };
+  setCached(message, fallback);
+  return fallback;
 }
 
 export default classifyIntent;
