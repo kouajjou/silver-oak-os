@@ -13,9 +13,17 @@
  */
 
 import axios from 'axios';
+import { randomUUID } from 'crypto';
 import { logger } from '../logger.js';
+import { readEnvFile } from '../env.js';
 
-const MCP_BRIDGE_URL = process.env['MCP_BRIDGE_URL'] ?? 'https://mcp.silveroak.one';
+// PhD fix 2026-04-30: silver-oak-os reads .env via readEnvFile (not dotenv).
+// process.env['MCP_BRIDGE_URL'] was undefined -> fallback to old Claudette URL (502).
+// New: read .env first, then process.env fallback, then Factory local default.
+const _envMcp = readEnvFile(['MCP_BRIDGE_URL']);
+const MCP_BRIDGE_URL = _envMcp['MCP_BRIDGE_URL']
+  ?? process.env['MCP_BRIDGE_URL']
+  ?? 'http://127.0.0.1:3004';  // Factory local default (was https://mcp.silveroak.one - DOWN)
 
 // Sessions supportées (voir SESSION_NAMES dans session-manager.ts)
 export type TmuxSession =
@@ -139,15 +147,30 @@ export async function dispatchToTmuxSession(
   const timeout = options?.timeoutMs ?? 600_000;   // 10 min
   const pollInterval = options?.pollIntervalMs ?? 60_000; // 60s
 
+  // PhD fix 2026-04-30: unique dispatch ID prevents stale TASK_DONE match
+  const dispatchId = `dispatch-${Date.now()}-${randomUUID().slice(0, 8)}`;
+  const taskDoneMarker = `TASK_DONE_${dispatchId}`;
+
+  // Inject the unique marker into the prompt — Claude must end with it
+  const promptWithMarker = `${prompt}
+
+──────────────────────────────────────────────
+⚠️ FIN DE TÂCHE OBLIGATOIRE — Quand tu as TERMINÉ:
+\`\`\`bash
+echo "${taskDoneMarker}"
+\`\`\`
+Cette commande exacte est OBLIGATOIRE comme DERNIÈRE ligne.
+──────────────────────────────────────────────`;
+
   logger.info(
-    { session, promptLen: prompt.length, timeout, pollInterval },
+    { session, promptLen: prompt.length, timeout, pollInterval, dispatchId },
     'cli_tmux_dispatcher.send'
   );
 
   // 1. Send prompt via /dispatch REST endpoint
   await axios.post(
     `${MCP_BRIDGE_URL}/dispatch`,
-    { session, prompt, priority: 'high' },
+    { session, prompt: promptWithMarker, priority: 'high' },
     { timeout: 30_000 }
   );
 
@@ -175,16 +198,24 @@ export async function dispatchToTmuxSession(
       'cli_tmux_dispatcher.poll'
     );
 
-    if (output.includes('TASK_DONE') || /TASK_DONE_[a-z0-9-]+/i.test(output)) {
+    if (output.includes(taskDoneMarker)) {
       const model =
         session === 'opus' ? 'claude-opus-4.7-tmux' : 'claude-sonnet-4.6-tmux';
       logger.info(
-        { session, model, latency: Date.now() - start },
+        { session, model, latency: Date.now() - start, dispatchId },
         'cli_tmux_dispatcher.task_done'
       );
 
+      // Extract output AFTER our dispatch marker injection (skip stale buffer)
+      // Strategy: cut output at the FIRST occurrence of our injected prompt marker
+      // and return everything after. If not found, return full output as-is.
+      const promptMarkerStart = output.lastIndexOf('FIN DE TÂCHE OBLIGATOIRE');
+      const cleanedOutput = promptMarkerStart > 0
+        ? output.slice(promptMarkerStart)
+        : output;
+
       return {
-        content: output,
+        content: cleanedOutput,
         cost_usd: 0,
         model,
         source: 'pro_max_forfait',
