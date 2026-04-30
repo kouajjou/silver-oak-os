@@ -91,6 +91,12 @@ export function startDashboard(botApi) {
         const chatId = c.req.query('chatId') || '';
         return c.html(getDashboardHtml(DASHBOARD_TOKEN, chatId, WARROOM_ENABLED));
     });
+    // PhD fix 2026-04-30: /dashboard alias for / (some clients use this URL)
+    // Returns same HTML as / to avoid 404 on legacy/external links.
+    app.get('/dashboard', (c) => {
+        const chatId = c.req.query('chatId') || '';
+        return c.html(getDashboardHtml(DASHBOARD_TOKEN, chatId, WARROOM_ENABLED));
+    });
     // War Room page
     app.get('/warroom', (c) => {
         const chatId = c.req.query('chatId') || '';
