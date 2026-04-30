@@ -13,6 +13,11 @@
  * V3 extensions (Phase 5B.3):
  * - maestroHandle() wired for tech task delegation (orchestrator pattern)
  * - graceful fallback to dispatchToMaestro if maestroHandle throws
+ *
+ * V4 extensions (Phase 5B.4):
+ * - delegateToAgent() wired for Sara/Leo/Marco/Nina (real CLAUDE.md + MCPs + memory)
+ * - Replaces hardcoded dispatchToEmployee() with dynamic orchestrator delegation
+ * - Extends intent classifier to 6 classes: comms/content/ops/research/technical/main
  */
 
 // archived: import { callLLM } from '../adapters/llm/index.js'; -- PAYANT (DeepSeek/Gemini API)
@@ -59,6 +64,7 @@ import { judge as llmJudge } from '../services/llm_judge.js';
 import { createRun, updateRun, endRun, createTask, updateTask } from '../services/session_state.js';
 import { readEnvFile } from '../env.js';
 import { dispatchToTmuxSession } from '../services/cli_tmux_dispatcher.js';
+import { delegateToAgent } from '../orchestrator.js';
 
 // ── Constants ─────────────────────────────────────────────────────────────
 
@@ -127,28 +133,99 @@ async function sendTelegramProgress(text: string): Promise<void> {
   }
 }
 
-async function dispatchToEmployee(employee: string, task: BrokenDownTask): Promise<DispatchResult> {
-  const EMPLOYEE_PROMPTS: Record<string, string> = {
-    sara: 'You are Sara, marketing expert for Silver Oak OS. Execute marketing tasks: copy, campaigns, growth.',
-    leo: 'You are Leo, design expert for Silver Oak OS. Execute design tasks: UI/UX, visuals, layouts.',
-    marco: 'You are Marco, finance expert for Silver Oak OS. Execute finance tasks: budgets, analysis, projections.',
-    nina: 'You are Nina, data expert for Silver Oak OS. Execute data tasks: analytics, reports, pipelines.',
+async function dispatchToEmployee(employee: string, task: BrokenDownTask, userId: string): Promise<DispatchResult> {
+  // V4 Phase 5B.4: use delegateToAgent() from orchestrator.ts
+  // Loads real CLAUDE.md, agent.yaml MCPs, memory, AGENTS.md per agent.
+  // Archived: hardcoded EMPLOYEE_PROMPTS with wrong descriptions + wrong model binding.
+
+  const EMPLOYEE_TO_AGENT_ID: Record<string, string> = {
+    sara: 'comms',      // Gmail, email drafts, outreach, inbox triage
+    leo: 'content',     // YouTube scripts, LinkedIn posts, content calendar
+    marco: 'ops',       // Google Calendar, Hetzner infra, padel, finance
+    nina: 'research',   // AI competition, EU/RGPD, competitive intel
   };
 
-  const sys = EMPLOYEE_PROMPTS[employee] ?? `You are ${employee}, an expert assistant for Silver Oak OS.`;
+  const agentId = EMPLOYEE_TO_AGENT_ID[employee];
   const start = Date.now();
 
-  try {
-    // archived: callLLM({ provider: 'deepseek', model: 'deepseek-chat' }) -- PAYANT
-    const fullPrompt = sys + '\n\nTask: ' + task.description;
-    const resultContent = await callProMax(fullPrompt, getModelForAgent('nina')); // Haiku for employee tasks
+  if (!agentId) {
+    logger.warn({ employee }, '[ALEX] Unknown employee -- no agentId mapping');
+    return { result: `Unknown employee: ${employee}`, cost_usd: 0, latency_ms: 0, success: false };
+  }
 
-    return { result: resultContent, cost_usd: 0, latency_ms: Date.now() - start, success: true };
+  try {
+    logger.info({ employee, agentId, task: task.title }, '[ALEX] Delegating to employee via delegateToAgent');
+    const delegResult = await delegateToAgent(agentId, task.description, userId, 'main');
+    return {
+      result: delegResult.text ?? '',
+      cost_usd: 0,
+      latency_ms: delegResult.durationMs,
+      success: !!delegResult.text,
+    };
   } catch (e: unknown) {
     const msg = e instanceof Error ? e.message : String(e);
-    logger.error({ employee, error: msg }, 'alex.employee.fail');
-    return { result: `Employee ${employee} error: ${msg}`, cost_usd: 0, latency_ms: Date.now() - start, success: false };
+    logger.error({ employee, agentId, error: msg }, 'alex.employee.fail');
+    return { result: `Employee ${employee} (${agentId}) error: ${msg}`, cost_usd: 0, latency_ms: Date.now() - start, success: false };
   }
+}
+
+// ── Domain intent router — 6-class routing (Phase 5B.4) ─────────────────────
+// Extends binary classifier (simple_question/technical_task) with 4 domain intents.
+// Keyword-based fast-path, zero LLM cost.
+
+type DomainIntent = 'comms_task' | 'content_task' | 'ops_task' | 'research_task';
+
+const DOMAIN_ROUTES: Array<{ intent: DomainIntent; agentId: string; patterns: RegExp[] }> = [
+  {
+    intent: 'comms_task',
+    agentId: 'comms',
+    patterns: [
+      /\b(email|gmail|mail|inbox|message|r[eé]pondr?[ae]?|envoie|envoyer|r[eé]dige|r[eé]diger|draft|outreach|courrier)\b/i,
+    ],
+  },
+  {
+    intent: 'content_task',
+    agentId: 'content',
+    patterns: [
+      /\b(youtube|linkedin|script|post|contenu|content|vid[eé]o|article|carousel|caption|reels?|newsletter)\b/i,
+    ],
+  },
+  {
+    intent: 'ops_task',
+    agentId: 'ops',
+    patterns: [
+      /\b(agenda|calendrier|calendar|r[eé]union|meeting|rendez.vous|schedule|padel|hetzner|facture|finance|paiement|stripe|h[eé]bergement|serveur)\b/i,
+    ],
+  },
+  {
+    intent: 'research_task',
+    agentId: 'research',
+    patterns: [
+      /\b(recherche|research|analys[ae]|veille|concurren|brief|intel|rapport|AI Act|RGPD|benchmark|compare|comparatif)\b/i,
+    ],
+  },
+];
+
+function classifyDomainRoute(message: string): { intent: DomainIntent; agentId: string } | null {
+  // PhD fix 2026-04-30: replaces first-match-wins with score-based selection.
+  // Old bug: "Redige un post LinkedIn" matched comms FIRST (redige) before testing content (linkedin).
+  // New: score each route by total keyword matches, return highest score.
+  let bestRoute: { intent: DomainIntent; agentId: string; score: number } | null = null;
+
+  for (const entry of DOMAIN_ROUTES) {
+    let score = 0;
+    for (const pattern of entry.patterns) {
+      // Use global flag to count all matches (not just first)
+      const globalPattern = new RegExp(pattern.source, pattern.flags.includes('g') ? pattern.flags : pattern.flags + 'g');
+      const matches = message.match(globalPattern);
+      if (matches) score += matches.length;
+    }
+    if (score > 0 && (!bestRoute || score > bestRoute.score)) {
+      bestRoute = { intent: entry.intent, agentId: entry.agentId, score };
+    }
+  }
+
+  return bestRoute ? { intent: bestRoute.intent, agentId: bestRoute.agentId } : null;
 }
 
 // ── V1 — Original alexHandle (backward-compatible) ───────────────────────
@@ -227,7 +304,38 @@ export async function alexHandle(request: AlexRequest): Promise<AlexResponse> {
       }
     }
 
-    // 3. Simple question → Alex answers directly
+    // 3. Domain routing -- check if message targets a specific employee agent
+    // Phase 5B.4: extends binary classifier with comms/content/ops/research
+    const domainRoute = classifyDomainRoute(request.message);
+    if (domainRoute) {
+      logger.info(
+        { agentId: domainRoute.agentId, intent: domainRoute.intent, msg: request.message.slice(0, 60) },
+        '[ALEX] Domain routing to employee agent',
+      );
+      try {
+        const delegResult = await delegateToAgent(domainRoute.agentId, request.message, request.user_id, 'main');
+        return {
+          success: !!delegResult.text,
+          response: delegResult.text ?? `${domainRoute.agentId} returned empty response`,
+          intent: domainRoute.intent,
+          delegated_to_maestro: false,
+          cost_usd: intent.cost_usd,
+          latency_ms: Date.now() - start,
+          metadata: {
+            intent_confidence: intent.confidence,
+            domain_agent: domainRoute.agentId,
+            delegation_task_id: delegResult.taskId,
+            delegation_duration_ms: delegResult.durationMs,
+          },
+        };
+      } catch (delegErr: unknown) {
+        const errMsg = delegErr instanceof Error ? delegErr.message : String(delegErr);
+        logger.warn({ agentId: domainRoute.agentId, error: errMsg }, '[ALEX] delegateToAgent failed, fallback to direct answer');
+        // Fall through to direct Alex answer
+      }
+    }
+
+    // 4. Simple question → Alex answers directly
     // Mode 1: CLI tmux Pro Max ($0 forfait) | Mode 2: API Gemini Flash (archived: was Anthropic Haiku)
     if (process.env['USE_ALEX_PRO_MAX'] === 'true') {
       // Mode 1 — dispatch via MCP Bridge tmux session 'claude-code'
@@ -407,7 +515,7 @@ export async function alexHandleAutonomous(
           success: maestroOrcResult.success,
         };
       } else if (['sara', 'leo', 'marco', 'nina'].includes(task.agent_target)) {
-        dispatched = await dispatchToEmployee(task.agent_target, task);
+        dispatched = await dispatchToEmployee(task.agent_target, task, request.user_id);
       } else {
         dispatched = { result: 'Unknown agent target', cost_usd: 0, latency_ms: 0, success: false };
       }

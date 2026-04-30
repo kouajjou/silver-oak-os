@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Audit C — Features Mark Kashef à connecter</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, sans-serif; background: #0a0a0a; color: #e5e5e5; padding: 16px; line-height: 1.5; max-width: 480px; margin: 0 auto; }
+  h1 { font-size: 22px; color: #fbbf24; margin-bottom: 4px; }
+  h2 { font-size: 17px; color: #34d399; margin: 18px 0 8px; padding-top: 10px; border-top: 1px solid #1f1f1f; }
+  h3 { font-size: 14px; color: #a78bfa; margin: 10px 0 4px; }
+  table { width: 100%; border-collapse: collapse; margin: 6px 0; font-size: 12px; }
+  th, td { padding: 5px 7px; text-align: left; border-bottom: 1px solid #1f1f1f; vertical-align: top; }
+  th { background: #1f1f1f; color: #fbbf24; }
+  td { color: #d4d4d4; }
+  .pass { color: #6ee7b7; }
+  .warn { color: #fcd34d; }
+  .fail { color: #fca5a5; }
+  code { background: #1f1f1f; padding: 1px 5px; border-radius: 3px; font-size: 11px; color: #fcd34d; word-break: break-word; }
+  .stat { font-size: 28px; font-weight: 700; color: #34d399; text-align: center; }
+  .card { background: #111; border: 1px solid #262626; border-radius: 8px; padding: 10px; margin: 6px 0; }
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  ul { padding-left: 18px; margin: 4px 0; }
+  li { margin: 2px 0; font-size: 12px; }
+  .priority-high { background: #064e3b; padding: 8px; border-radius: 6px; font-size: 12px; margin: 6px 0; border-left: 3px solid #6ee7b7; }
+  .priority-mid { background: #1c1917; padding: 8px; border-radius: 6px; font-size: 12px; margin: 6px 0; border-left: 3px solid #fcd34d; }
+  .priority-low { background: #1f1917; padding: 8px; border-radius: 6px; font-size: 12px; margin: 6px 0; border-left: 3px solid #6b7280; }
+</style>
+</head>
+<body>
+  <h1>🅲 Features Mark à connecter</h1>
+  <p style="color: #9ca3af; font-size: 12px;">Inventaire repo claudeclaw-os fork • 30 avril 2026</p>
+
+  <h2>🎯 État des PM2 services</h2>
+  <table>
+    <tr><th>Service</th><th>Status</th><th>Note</th></tr>
+    <tr><td><code>mcp-bridge-factory</code></td><td class="pass">✅ online</td><td>Notre bridge MCP, 77 tools</td></tr>
+    <tr><td><code>silver-oak-os-backend</code></td><td class="warn">🛑 stopped</td><td>Stopped hier soir (debug spam Telegram)</td></tr>
+    <tr><td><code>silver-oak-os-frontend</code></td><td class="warn">🛑 stopped</td><td>Stopped hier soir aussi</td></tr>
+  </table>
+
+  <div class="card">
+    <p><strong>⚠️ silver-oak-os-backend est stoppé.</strong> Tous les services Mark dépendent de lui. Avant de connecter quoi que ce soit, il faut le redémarrer (post-fix Alex orchestrator si possible).</p>
+  </div>
+
+  <h2>📦 Inventaire features Mark</h2>
+
+  <h3 style="color: #6ee7b7;">✅ Déjà actives (4)</h3>
+  <table>
+    <tr><th>Feature</th><th>Statut</th></tr>
+    <tr><td>Telegram bot (bot.ts)</td><td class="pass">✅ Configuré + token</td></tr>
+    <tr><td>Voice ElevenLabs</td><td class="pass">✅ Key + Voice ID Adam</td></tr>
+    <tr><td>Dashboard (dashboard.ts)</td><td class="pass">✅ Token configuré</td></tr>
+    <tr><td>War Room (warroom-html.ts)</td><td class="pass">✅ ENABLED=true</td></tr>
+  </table>
+
+  <h3 style="color: #fcd34d;">⚠️ Présentes mais NON activées (8)</h3>
+  <table>
+    <tr><th>Feature</th><th>Statut</th><th>Priorité</th></tr>
+    <tr><td>Slack bot</td><td>SLACK_BOT_TOKEN vide</td><td class="warn">⚠️ Mid</td></tr>
+    <tr><td>Signal bot</td><td>Pas configuré</td><td class="warn">⚠️ Mid</td></tr>
+    <tr><td>WhatsApp bot</td><td>Pas configuré</td><td class="pass">✅ High</td></tr>
+    <tr><td>Obsidian sync</td><td>OBSIDIAN_VAULT_PATH vide</td><td class="warn">⚠️ Low</td></tr>
+    <tr><td>Daily.co video</td><td>Pas configuré</td><td class="warn">⚠️ Low</td></tr>
+    <tr><td>Google Meet CLI</td><td>Pas configuré</td><td class="warn">⚠️ Mid</td></tr>
+    <tr><td>Mission CLI</td><td>Module présent</td><td class="warn">⚠️ Mid</td></tr>
+    <tr><td>Battle test</td><td>Module présent</td><td class="warn">⚠️ Low</td></tr>
+  </table>
+
+  <h3 style="color: #a78bfa;">🛠️ Modules avancés Mark (à explorer)</h3>
+  <table>
+    <tr><th>Module</th><th>Description</th></tr>
+    <tr><td><code>superpowers/</code></td><td>slash-resolver, tool-executor, wrapper. Système commandes <code>/ultrathink</code>, <code>/riper</code>, etc.</td></tr>
+    <tr><td><code>dispatch/workers-config.ts</code></td><td>Config workers Mark (compatible avec notre Mode 1?)</td></tr>
+    <tr><td><code>middleware/cost-tracker-middleware.ts</code></td><td>Cost tracking middleware HTTP</td></tr>
+    <tr><td><code>memory-consolidate.ts</code></td><td>Consolidation mémoire RAG</td></tr>
+    <tr><td><code>memory-ingest.ts</code></td><td>Ingestion documents pour RAG</td></tr>
+    <tr><td><code>oauth-health.ts</code></td><td>Monitoring OAuth Gmail/Calendar</td></tr>
+    <tr><td><code>scheduler.ts</code></td><td>Cron jobs internes</td></tr>
+    <tr><td><code>skill-health.ts</code></td><td>Health check des skills installés</td></tr>
+    <tr><td><code>skill-registry.ts</code></td><td>Registry skills loader</td></tr>
+  </table>
+
+  <h2>🎯 Plan d'action C — recommandations</h2>
+
+  <div class="priority-high">
+    <strong>🟢 Priorité 1 (avant beta)</strong><br>
+    1. Redémarrer <code>silver-oak-os-backend</code> propre<br>
+    2. Activer <strong>WhatsApp bot</strong> (canal client n°1 selon ta vision)<br>
+    3. Vérifier <code>oauth-health.ts</code> Gmail/Calendar/Drive
+  </div>
+
+  <div class="priority-mid">
+    <strong>🟡 Priorité 2 (post-beta)</strong><br>
+    1. Activer Slack pour communications externes<br>
+    2. Connecter Mission CLI (workflows persistants)<br>
+    3. Explorer <code>superpowers/</code> pour formaliser les slash commands<br>
+    4. Connecter <code>scheduler.ts</code> pour cron jobs (audit nightly, etc.)
+  </div>
+
+  <div class="priority-low">
+    <strong>⚪ Priorité 3 (nice to have)</strong><br>
+    1. Obsidian sync (notes personnelles)<br>
+    2. Daily.co (visio meetings agents)<br>
+    3. Signal bot (alternative Telegram)<br>
+    4. Battle test (testing harness)
+  </div>
+
+  <h2>⚠️ Points d'attention</h2>
+  <ul>
+    <li>Le code Mark a été écrit pour <strong>fonctionner avec Anthropic API directe</strong>. Avec la <strong>zero-anthropic policy</strong> active, certains modules (callProMax, agent.ts runAgent) doivent être audités pour vérifier qu'ils passent par <code>callLLM</code> ou Mode 1 tmux.</li>
+    <li>Beaucoup de modules ont des fichiers <code>.bak.*</code> — preuve qu'on a déjà refactoré pas mal de choses. Faut les archiver pour propreté.</li>
+    <li>Le <code>silver-oak-os-backend</code> tourne en mode <strong>Telegram bot listener</strong> (long-polling), pas en HTTP server pur. Réactiver le backend = réactiver le bot Telegram aussi.</li>
+  </ul>
+
+  <h2>🎓 Verdict C</h2>
+  <div class="card" style="background: #064e3b;">
+    <p>Mark a livré un <strong>repo très complet</strong>. ~30+ modules, dont 4 actifs, 8 dormants, 9 modules avancés à explorer.</p>
+    <p style="margin-top: 6px;"><strong>Priorité 1 = redémarrer backend + activer WhatsApp.</strong></p>
+    <p style="margin-top: 6px;">Le reste = exploration progressive selon ta roadmap.</p>
+  </div>
+
+  <p style="margin-top: 16px; font-size: 11px; color: #6b7280; text-align: center;">
+    🎓 Audit C clôturé. Prêt pour ta vision Silver Oak OS.
+  </p>
+</body>
+</html>

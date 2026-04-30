@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Vérité PhD — Tête à couper</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, sans-serif; background: #0a0a0a; color: #e5e5e5; padding: 16px; line-height: 1.5; max-width: 480px; margin: 0 auto; }
+  h1 { font-size: 22px; color: #fbbf24; margin-bottom: 4px; }
+  h2 { font-size: 17px; color: #34d399; margin: 18px 0 8px; padding-top: 12px; border-top: 1px solid #1f1f1f; }
+  table { width: 100%; border-collapse: collapse; margin: 6px 0; font-size: 12px; }
+  th, td { padding: 5px 7px; text-align: left; border-bottom: 1px solid #1f1f1f; vertical-align: top; }
+  th { background: #1f1f1f; color: #fbbf24; }
+  td { color: #d4d4d4; }
+  .pass { color: #6ee7b7; }
+  .warn { color: #fcd34d; }
+  .fail { color: #fca5a5; }
+  .card { background: #111; border: 1px solid #262626; border-radius: 8px; padding: 12px; margin: 6px 0; }
+  code { background: #1f1f1f; padding: 1px 5px; border-radius: 3px; font-size: 11px; color: #fcd34d; word-break: break-word; }
+  .verite { background: #064e3b; padding: 12px; border-radius: 8px; margin: 8px 0; }
+  .doute { background: #78350f; padding: 12px; border-radius: 8px; margin: 8px 0; }
+  .bug { background: #7f1d1d; padding: 12px; border-radius: 8px; margin: 8px 0; }
+</style>
+</head>
+<body>
+  <h1>🎓 Vérité PhD — Tête à couper</h1>
+  <p style="color: #fcd34d; font-size: 13px;">Karim me pousse au mur. Je réponds honnêtement.</p>
+
+  <h2>🟢 Ce que je mets ma tête à couper</h2>
+  <div class="verite">
+    <strong>1. Le backend tourne.</strong>
+    <ul style="margin-top: 4px;">
+      <li>Database ready ✅</li>
+      <li>6 agents orchestrator (main/comms/content/maestro/ops/research) ✅</li>
+      <li>Telegram bot @sok_ops_bot online ✅</li>
+      <li>War Room WebSocket /ws/warroom + port 7860 ✅</li>
+      <li>Dashboard port 3141 ✅</li>
+      <li>Frontend Next.js port 3010 ✅</li>
+      <li>Voice API port 3000 sécurisé ✅</li>
+    </ul>
+    <strong style="margin-top: 8px; display: block;">2. Maestro EST dans la War Room.</strong>
+    <p style="font-size: 12px;">Via /tmp/warroom-agents.json (généré dynamiquement). Sa description complète "CTO interne Silver Oak OS. Mode 1: orchestre 4 tmux Pro Max..." est servie au persona generator Python.</p>
+
+    <strong style="margin-top: 8px; display: block;">3. Mode 2 (API) fonctionne.</strong>
+    <p style="font-size: 12px;">Test live : Gemini répond en 621ms, $0.000017, success=true.</p>
+
+    <strong style="margin-top: 8px; display: block;">4. Mode 1 (Pro Max tmux) — Claude EXÉCUTE le code.</strong>
+    <p style="font-size: 12px;">Test live : fichier /tmp/maestro-mode1-proof-2026-04-30.txt CRÉÉ physiquement (49 bytes, contenu exact). "Allowed by auto mode classifier" + Write tool utilisé.</p>
+  </div>
+
+  <h2>🟡 Ce que je NE peux PAS mettre ma tête à couper</h2>
+  <div class="doute">
+    <strong>Bug dispatcher Mode 1 — retour d'un VIEUX résultat.</strong>
+    <p style="font-size: 12px; margin-top: 4px;">Quand <code>dispatchToMaestro</code> dispatche un nouveau prompt en Mode 1, le code Claude exécute bien le NOUVEAU prompt (preuve : fichier physique créé). MAIS le retour <code>r.result</code> contient l'output d'un VIEUX dispatch précédent ("PONG mode 1 reel" du test du matin).</p>
+    <p style="font-size: 12px; margin-top: 4px;"><strong>Impact</strong> : Maestro pense que l'ancien output est le nouveau résultat. Si Maestro fait une décision basée sur ce résultat → décision sur de fausses données.</p>
+    <p style="font-size: 12px; margin-top: 4px;"><strong>Cause probable</strong> : <code>cli_tmux_dispatcher.ts</code> matche un vieux marker TASK_DONE au lieu d'attendre le nouveau spécifique au dispatch ID.</p>
+    <p style="font-size: 12px; margin-top: 4px;"><strong>Sévérité</strong> : <span class="warn">⚠️ Important</span> — bloquant pour Maestro autonome de confiance.</p>
+  </div>
+
+  <h2>🔴 Ce que je n'ai PAS encore testé live</h2>
+  <div class="bug">
+    <ol style="font-size: 12px; padding-left: 18px;">
+      <li><strong>War Room réelle live</strong> : ouvrir /warroom dans navigateur, lancer une réunion, voir si Maestro apparaît, peut parler, peut écouter.</li>
+      <li><strong>Maestro dispatche un VRAI changement de code</strong> dans une session puis vérification : le code a bien été modifié + commit Git.</li>
+      <li><strong>Frontend Next.js</strong> : ouvrir / dans navigateur, voir l'UI, cliquer sur un agent.</li>
+      <li><strong>Voice API end-to-end</strong> : POST /api/voice/chat/maestro avec un message, recevoir une vraie réponse.</li>
+      <li><strong>Telegram bot Alex</strong> : envoyer un message au bot et voir si Alex répond, classifie l'intent, délègue à Sara/Léo/etc.</li>
+    </ol>
+  </div>
+
+  <h2>🎯 Conclusion PhD honnête</h2>
+  <div class="card">
+    <p><strong>Karim, je NE peux PAS te dire que c'est 100% fonctionnel.</strong></p>
+    <p style="margin-top: 6px;">Je peux te dire que <strong>l'infrastructure tourne</strong> et que <strong>les briques individuelles répondent</strong>. Mais il y a 1 bug confirmé (dispatcher Mode 1 retourne stale result) et 5 tests E2E live que je n'ai pas faits.</p>
+    <p style="margin-top: 6px;"><strong>Mettre ma tête à couper sans avoir fait ces 5 tests serait malhonnête.</strong></p>
+    <p style="margin-top: 6px;">Si tu veux que je fasse les 5 tests E2E maintenant, dis-le. Sinon, je le note honnêtement et tu me donnes ta vision en sachant ce qui est certain et ce qui ne l'est pas.</p>
+  </div>
+
+  <h2>📋 Plan pour 100% certitude</h2>
+  <table>
+    <tr><th>Test</th><th>Effort</th><th>Bloquant ?</th></tr>
+    <tr><td>1. Fix bug dispatcher Mode 1 (stale result)</td><td>30min-1h</td><td class="fail">🔴 OUI</td></tr>
+    <tr><td>2. Test E2E Maestro édite vrai fichier</td><td>10min</td><td class="warn">🟡 Important</td></tr>
+    <tr><td>3. Test Voice API live (curl avec body)</td><td>5min</td><td class="warn">🟡</td></tr>
+    <tr><td>4. Test frontend Next.js dans navigateur</td><td>5min</td><td class="warn">🟡</td></tr>
+    <tr><td>5. Test Telegram bot Alex live</td><td>5min (toi tu envoies)</td><td class="warn">🟡</td></tr>
+    <tr><td>6. Test War Room ouverte avec Maestro</td><td>5min (toi tu ouvres)</td><td class="warn">🟡</td></tr>
+  </table>
+
+  <p style="margin-top: 16px; font-size: 11px; color: #6b7280; text-align: center;">
+    🎓 Casquette PhD honnête.<br>
+    Mieux vaut admettre 1 bug que mentir et perdre ta confiance.<br>
+    Tu décides : on fait les 6 tests, ou tu me donnes la vision en sachant ce qui est solide vs incertain.
+  </p>
+</body>
+</html>

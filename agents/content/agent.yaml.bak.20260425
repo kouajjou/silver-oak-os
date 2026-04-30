@@ -1,0 +1,6 @@
+name: Léo
+description: Content production — YouTube scripts, LinkedIn posts, content calendar, RGPD-native AI SaaS audience
+
+telegram_bot_token_env: CONTENT_TELEGRAM_TOKEN
+
+model: claude-sonnet-4-6

@@ -1,0 +1,6 @@
+name: Nina
+description: Research — AI multi-agent competition, EU ecosystem, RGPD/AI Act, competitive intel, source-cited briefs
+
+telegram_bot_token_env: RESEARCH_TELEGRAM_TOKEN
+
+model: claude-sonnet-4-6

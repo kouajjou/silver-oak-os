@@ -1,0 +1,9 @@
+name: Maestro
+description: CTO interne Silver Oak OS — orchestrates 18 workers via MCP Bridge (localhost:3003)
+
+telegram_bot_token_env: MAESTRO_TELEGRAM_TOKEN
+
+model: claude-sonnet-4-6
+
+skills_allowlist:
+  - mcp-dispatch

@@ -1,0 +1,6 @@
+name: Alex
+description: Chief of Staff — primary interface for Karim, triage and delegation to Sara/Léo/Marco/Nina/Maestro
+
+telegram_bot_token_env: TELEGRAM_BOT_TOKEN
+
+model: claude-sonnet-4-6

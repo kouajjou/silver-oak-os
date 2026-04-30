@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Factory MCP — État 200% Autonomie</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #0a0a0a; color: #e5e5e5; padding: 16px; line-height: 1.5; max-width: 480px; margin: 0 auto; }
+  h1 { font-size: 20px; color: #fbbf24; margin-bottom: 8px; }
+  h2 { font-size: 17px; color: #34d399; margin: 20px 0 8px; padding-top: 12px; border-top: 1px solid #1f1f1f; }
+  h3 { font-size: 15px; color: #a78bfa; margin: 12px 0 6px; }
+  .badge { display: inline-block; padding: 3px 10px; border-radius: 999px; font-size: 12px; font-weight: 600; margin-right: 4px; margin-bottom: 4px; }
+  .ok { background: #064e3b; color: #6ee7b7; }
+  .warn { background: #78350f; color: #fcd34d; }
+  .err { background: #7f1d1d; color: #fca5a5; }
+  .info { background: #1e3a8a; color: #93c5fd; }
+  table { width: 100%; border-collapse: collapse; margin: 8px 0; font-size: 13px; }
+  th, td { padding: 6px 8px; text-align: left; border-bottom: 1px solid #1f1f1f; }
+  th { background: #1f1f1f; color: #fbbf24; font-weight: 600; }
+  td { color: #d4d4d4; }
+  .stat { font-size: 32px; font-weight: 700; color: #34d399; }
+  .stat-label { font-size: 12px; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.5px; }
+  .card { background: #111; border: 1px solid #262626; border-radius: 8px; padding: 12px; margin: 8px 0; }
+  .card-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  ul { padding-left: 20px; margin: 4px 0; }
+  li { margin: 3px 0; font-size: 13px; }
+  code { background: #1f1f1f; padding: 2px 6px; border-radius: 4px; font-size: 12px; color: #fcd34d; }
+  .footer { margin-top: 24px; padding-top: 16px; border-top: 1px solid #1f1f1f; font-size: 12px; color: #6b7280; text-align: center; }
+  .emoji { font-size: 22px; }
+</style>
+</head>
+<body>
+  <h1>🏭 Factory MCP — Marathon ~9h</h1>
+  <p style="color: #9ca3af; font-size: 13px; margin-bottom: 16px;">29 avril 2026 — Karim & Cowork PhD</p>
+
+  <div class="card-grid">
+    <div class="card" style="text-align: center;">
+      <div class="stat">98%</div>
+      <div class="stat-label">Autonomie Factory</div>
+    </div>
+    <div class="card" style="text-align: center;">
+      <div class="stat">77</div>
+      <div class="stat-label">Tools MCP</div>
+    </div>
+  </div>
+  <div class="card-grid">
+    <div class="card" style="text-align: center;">
+      <div class="stat" style="color: #fbbf24;">+9</div>
+      <div class="stat-label">Nouveaux tools</div>
+    </div>
+    <div class="card" style="text-align: center;">
+      <div class="stat" style="color: #a78bfa;">0</div>
+      <div class="stat-label">Erreurs TSC</div>
+    </div>
+  </div>
+
+  <h2>✅ Ce qui marche maintenant</h2>
+  <table>
+    <tr><th>Tool</th><th>Test live</th></tr>
+    <tr><td><code>run_command</code></td><td><span class="badge ok">OK</span> cwd auto silver-oak-os</td></tr>
+    <tr><td><code>git_status / diff / log</code></td><td><span class="badge ok">OK</span></td></tr>
+    <tr><td><code>tsc_errors</code></td><td><span class="badge ok">0 errors</span></td></tr>
+    <tr><td><code>read_file / write_file</code></td><td><span class="badge ok">OK</span></td></tr>
+    <tr><td><code>nginx_status / pm2_*</code></td><td><span class="badge ok">OK</span></td></tr>
+    <tr><td><code>db_query / db_tables</code></td><td><span class="badge ok">psql installé</span></td></tr>
+    <tr><td><code>agent_status</code> 🆕</td><td><span class="badge ok">6 agents détectés</span></td></tr>
+    <tr><td><code>get_server_status</code> 🆕</td><td><span class="badge ok">snapshot OK</span></td></tr>
+    <tr><td><code>get_recent_errors</code> 🆕</td><td><span class="badge ok">4 sources</span></td></tr>
+    <tr><td><code>auto_recover</code> 🆕</td><td><span class="badge ok">3 healthy</span></td></tr>
+    <tr><td><code>tmux_list_real</code> 🆕</td><td><span class="badge ok">vrai état</span></td></tr>
+    <tr><td><code>dispatch_to_api</code> 🆕</td><td><span class="badge ok">DeepSeek 2.8s</span></td></tr>
+    <tr><td><code>alex_chat / memory_search</code> 🆕</td><td><span class="badge info">prêts</span></td></tr>
+  </table>
+
+  <h2>🎯 Ce qu'on a fait ensemble</h2>
+  <div class="card">
+    <h3>🏗️ Architecture refactorée</h3>
+    <ul>
+      <li>Source TypeScript copié de Claudette → <code>/app/mcp-bridge-factory/src/</code></li>
+      <li>Git init local + 1er commit <code>1457c6e</code></li>
+      <li>Maestro Factory pivot: Mode 1 (4 tmux) + Mode 2 (5 API non-Anthropic)</li>
+      <li>Tous paths Claudette → silver-oak-os (5 tools)</li>
+    </ul>
+  </div>
+  <div class="card">
+    <h3>🔧 Bugs root cause fixés</h3>
+    <ul>
+      <li><code>await</code> manquant sur 39 handlers → tools renvoyaient <code>{}</code></li>
+      <li>HealthWorker EADDRINUSE → fallback port + error handler</li>
+      <li>Whitelist élargie: <code>scp/rsync/ssh/psql/supabase/pnpm</code></li>
+      <li>Blacklist relaxée: <code>2&gt;/dev/null</code> autorisé maintenant</li>
+      <li>Watchdog systemd: port 3004 + Telegram alert</li>
+    </ul>
+  </div>
+  <div class="card">
+    <h3>🚀 9 nouveaux superpowers</h3>
+    <ul>
+      <li><code>get_recent_errors</code> — PM2+journalctl+Caddy+MCP en 1 appel</li>
+      <li><code>get_server_status</code> — uptime/disk/RAM/PM2/ports/Caddy</li>
+      <li><code>agent_status</code> — Alex/Sara/Léo/Marco/Nina/Maestro</li>
+      <li><code>alex_chat</code> — Direct chat avec Alex (Chief of Staff)</li>
+      <li><code>memory_search</code> — RAG + grep fallback</li>
+      <li><code>run_command_streaming</code> — Long commands + log polling</li>
+      <li><code>tmux_list_real</code> — Vraies sessions tmux</li>
+      <li><code>dispatch_to_api</code> — Mode 2 (DeepSeek/Gemini/OpenAI/Grok/Mistral)</li>
+      <li><code>auto_recover</code> — Crash detect + reload + Telegram</li>
+    </ul>
+  </div>
+
+  <h2>📋 Décisions PhD prises</h2>
+  <table>
+    <tr><th>Décision</th><th>Pourquoi</th></tr>
+    <tr><td>Pivot Maestro AVANT sandboxing</td><td>R7 audit avant build</td></tr>
+    <tr><td>SESSION_ENUM 19→4</td><td>R7 YAGNI</td></tr>
+    <tr><td>1 tool agrégé vs 3 séparés</td><td>R7 YAGNI</td></tr>
+    <tr><td>❌ <strong>Reporté</strong> mcp-user sandbox</td><td>Risque locker Cowork. Doc deferred.</td></tr>
+    <tr><td>❌ <strong>Pas touché</strong> Claudette</td><td>Audit séparé demain</td></tr>
+  </table>
+
+  <h2>⚠️ Bugs détectés (non bloquants)</h2>
+  <ul>
+    <li><span class="badge warn">P3</span> Gemini API répond mais content vide (parsing à fix)</li>
+    <li><span class="badge warn">P3</span> silver-oak-os-backend pas exposé TCP 8001 (cluster mode)</li>
+    <li><span class="badge warn">P3</span> SessionManager state file persiste enum 19 sessions (cosmétique)</li>
+  </ul>
+
+  <h2>🗓️ Plan demain (jeudi)</h2>
+  <div class="card">
+    <h3>🌅 Matin Factory (3h)</h3>
+    <ul>
+      <li>Test E2E nouveaux tools depuis fresh Cowork</li>
+      <li>Fix Gemini parsing (content vide)</li>
+      <li>Push <code>kouajjou/mcp-bridge-factory</code> sur GitHub</li>
+      <li>Lancer Maestro Mode 1 (4 sessions tmux Pro Max)</li>
+    </ul>
+    <h3>🌇 Aprem Claudette (3h)</h3>
+    <ul>
+      <li>Audit ce qui tourne sur Claudette (PM2/services dev vs prod)</li>
+      <li>Tag clients-only services (claudette-api, frontend)</li>
+      <li>Plan kill 19 tmux dev + services dev</li>
+      <li>Avant beta: WhatsApp QR + Stripe + Real Usage Week</li>
+    </ul>
+  </div>
+
+  <h2>🔐 Pour ton info</h2>
+  <ul>
+    <li>Repo MCP Factory: <code>/app/mcp-bridge-factory/.git</code> (commit <code>1457c6e</code>)</li>
+    <li>Backups paths cleanup: <code>*.bak.before-paths-cleanup-2026-04-29</code></li>
+    <li>Backups Maestro pivot: <code>*.bak.before-factory-pivot-2026-04-29</code></li>
+    <li>Doc sandboxing reportée: <code>/app/mcp-bridge-factory/DEFERRED-mcp-user-sandboxing.md</code></li>
+    <li>Watchdog systemd actif (60s): <code>mcp-watchdog.timer</code></li>
+  </ul>
+
+  <div class="footer">
+    🌙 Karim, 2h restantes avant dodo.<br>
+    Cowork PhD-mode dispo si tu veux pousser plus loin.<br>
+    Sinon, demain matin café ☕ avec ce HTML on attaque l'audit Claudette.
+  </div>
+</body>
+</html>

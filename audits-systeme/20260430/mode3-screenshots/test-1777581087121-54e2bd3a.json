@@ -1,0 +1,23 @@
+{
+  "test_id": "test-1777581087121-54e2bd3a",
+  "url": "http://localhost:3010/agent/maestro",
+  "scenario": "Test page agent maestro",
+  "status": "PASS",
+  "duration_ms": 461,
+  "page_title": "Silver Oak OS",
+  "current_url": "http://localhost:3010/agent/maestro",
+  "assertions": [
+    {
+      "check": "Title contains Silver Oak",
+      "passed": true,
+      "actual": "Silver Oak OS"
+    },
+    {
+      "check": "Text exists Maestro",
+      "passed": true,
+      "actual": "visible"
+    }
+  ],
+  "errors": [],
+  "screenshot_url": "/tmp/browser-tests/test-1777581087121-54e2bd3a.png"
+}

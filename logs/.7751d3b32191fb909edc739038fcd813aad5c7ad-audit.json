@@ -1,0 +1,20 @@
+{
+    "keep": {
+        "days": true,
+        "amount": 14
+    },
+    "auditLog": "/app/silver-oak-os/logs/.7751d3b32191fb909edc739038fcd813aad5c7ad-audit.json",
+    "files": [
+        {
+            "date": 1777372673217,
+            "name": "/app/silver-oak-os/logs/2026-04-28.log",
+            "hash": "73692c27e618f4527ef6ac05d4c4148a8b8339d9b11d5c4e12bf85e8efdd8573"
+        },
+        {
+            "date": 1777445680056,
+            "name": "/app/silver-oak-os/logs/2026-04-29.log",
+            "hash": "65fc321968c481fd2b5f194e58a51666e89108e8c3705d1fee8724656db618ae"
+        }
+    ],
+    "hashType": "sha256"
+}

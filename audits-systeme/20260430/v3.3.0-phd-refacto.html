@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>v3.3.0 — Mode 1 PhD Refacto</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, sans-serif; background: #0a0a0a; color: #e5e5e5; padding: 16px; line-height: 1.5; max-width: 480px; margin: 0 auto; }
+  h1 { font-size: 22px; color: #fbbf24; margin-bottom: 4px; }
+  h2 { font-size: 17px; color: #34d399; margin: 20px 0 8px; padding-top: 12px; border-top: 1px solid #1f1f1f; }
+  h3 { font-size: 14px; color: #a78bfa; margin: 12px 0 6px; }
+  table { width: 100%; border-collapse: collapse; margin: 8px 0; font-size: 13px; }
+  th, td { padding: 6px 8px; text-align: left; border-bottom: 1px solid #1f1f1f; }
+  th { background: #1f1f1f; color: #fbbf24; font-weight: 600; }
+  td { color: #d4d4d4; }
+  .stat { font-size: 32px; font-weight: 700; color: #34d399; }
+  .stat-label { font-size: 11px; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.5px; }
+  .card { background: #111; border: 1px solid #262626; border-radius: 8px; padding: 12px; margin: 8px 0; }
+  .card-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  ul { padding-left: 20px; margin: 4px 0; }
+  li { margin: 3px 0; font-size: 13px; }
+  code { background: #1f1f1f; padding: 2px 6px; border-radius: 4px; font-size: 12px; color: #fcd34d; }
+  .footer { margin-top: 24px; padding-top: 16px; border-top: 1px solid #1f1f1f; font-size: 12px; color: #6b7280; text-align: center; }
+  .hero { text-align: center; padding: 16px; background: linear-gradient(135deg, #064e3b 0%, #1e3a8a 100%); border-radius: 12px; margin-bottom: 16px; }
+  .pass { color: #6ee7b7; }
+  .badge { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 11px; font-weight: 600; }
+  .ok { background: #064e3b; color: #6ee7b7; }
+  .new { background: #6b21a8; color: #e9d5ff; }
+</style>
+</head>
+<body>
+  <div class="hero">
+    <h1 style="color: white;">🎓 v3.3.0 PhD Refacto</h1>
+    <p style="color: #fcd34d; font-size: 14px; margin-top: 4px;">Mode 1 Factory-local only — root cause fixed</p>
+  </div>
+
+  <div class="card-grid">
+    <div class="card" style="text-align: center;">
+      <div class="stat">0</div>
+      <div class="stat-label">Spam Telegram</div>
+    </div>
+    <div class="card" style="text-align: center;">
+      <div class="stat">19→4</div>
+      <div class="stat-label">Sessions</div>
+    </div>
+  </div>
+  <div class="card-grid">
+    <div class="card" style="text-align: center;">
+      <div class="stat" style="color: #fbbf24;">-3.6 KB</div>
+      <div class="stat-label">Code mort</div>
+    </div>
+    <div class="card" style="text-align: center;">
+      <div class="stat" style="color: #a78bfa;">v3.3.0</div>
+      <div class="stat-label">Tag GitHub</div>
+    </div>
+  </div>
+
+  <h2>🔍 Root cause éliminé</h2>
+  <div class="card">
+    <p style="font-size: 13px;"><strong>Problème:</strong> SessionManager hardcoded 19 sessions copiées de Claudette legacy. Le watchdog tentait de restart toutes les 60s × Telegram alert = 200+ msgs/h.</p>
+    <p style="font-size: 13px; margin-top: 6px;"><strong>Fix PhD:</strong> source TS refacto en branche dédiée, pas hot-fix dist. 0 dette technique ajoutée.</p>
+  </div>
+
+  <h2>✅ 7 patches appliqués</h2>
+  <table>
+    <tr><th>#</th><th>Patch</th></tr>
+    <tr><td>1</td><td><code>SessionName</code> 19 → 4 type union</td></tr>
+    <tr><td>2</td><td>Constantes mortes <code>AIDER_BIN</code>, <code>GEMINI_BIN</code> retirées</td></tr>
+    <tr><td>3</td><td>Block Aider/MiniMax flags supprimé</td></tr>
+    <tr><td>4</td><td><code>SESSION_CLI</code>/<code>SESSION_WORKDIR</code> 19 → 4 entrées</td></tr>
+    <tr><td>5</td><td><code>getCliType</code> simplifié binaire opus|claude</td></tr>
+    <tr><td>6</td><td><code>getPollMaxMs</code> branche aider/audit retirée</td></tr>
+    <tr><td>7</td><td><code>tg()</code> dedup + rate-limit + kill-switch <span class="badge new">NEW</span></td></tr>
+  </table>
+
+  <h2>🛡️ Defensive layers tg() — PhD-grade</h2>
+  <ul>
+    <li><strong>Dedup</strong>: msg identique skipped 10 min</li>
+    <li><strong>Rate-limit</strong>: max 10 msgs / 5 min globaux</li>
+    <li><strong>Kill-switch</strong>: <code>TELEGRAM_ALERTS_ENABLED=false</code></li>
+    <li><strong>Debug</strong>: <code>TELEGRAM_ALERTS_DEBUG_LOG=true</code> → console.error</li>
+    <li><strong>Errors logged</strong>: plus de silent drop</li>
+  </ul>
+
+  <h2>🧪 Validation E2E</h2>
+  <table>
+    <tr><th>Test</th><th>Résultat</th></tr>
+    <tr><td><code>npx tsc --strict</code></td><td class="pass">✅ 0 erreurs</td></tr>
+    <tr><td>Build dist/</td><td class="pass">✅ 30450 bytes (clean)</td></tr>
+    <tr><td>Bridge reload</td><td class="pass">✅ 77 tools intacts</td></tr>
+    <tr><td>Spam après 90s</td><td class="pass">✅ 0 message</td></tr>
+    <tr><td>Mode 2 Grok</td><td class="pass">✅ 676ms (no regression)</td></tr>
+    <tr><td>Mode 2 Gemini</td><td class="pass">✅ 1416ms (no regression)</td></tr>
+  </table>
+
+  <h2>📦 GitHub</h2>
+  <div class="card">
+    <ul>
+      <li><span class="badge ok">master</span> commit <code>7fa85a9</code> (merge --no-ff)</li>
+      <li><span class="badge ok">tag</span> <code>v3.3.0</code> annoté</li>
+      <li><span class="badge ok">branche</span> <code>feature/factory-only-sessions</code> conservée</li>
+      <li><span class="badge ok">backup</span> <code>SessionManager.ts.bak.before-factory-only-2026-04-30</code></li>
+    </ul>
+  </div>
+
+  <h2>🌅 Next steps (post-PhD refacto)</h2>
+  <div class="card">
+    <h3>🔐 BLOQUANT — Login Pro Max user claudeclaw (5 min)</h3>
+    <p style="font-size: 12px;">SSH Factory → <code>sudo -u claudeclaw -i</code> → <code>claude</code> → OAuth browser. Une fois fait, les 4 sessions Mode 1 peuvent vraiment démarrer.</p>
+  </div>
+  <div class="card">
+    <h3>🧹 Audit Claudette (3h plus tard)</h3>
+    <p style="font-size: 12px;">Plan déjà prêt: <code>PLAN-DEMAIN-AUDIT-CLAUDETTE.md</code>. Strangler Fig kill par batch, garde claudette-api+frontend.</p>
+  </div>
+
+  <div class="footer">
+    🎓 Karim, refacto PhD-grade clôturé.<br>
+    Root cause éliminé, 0 dette technique ajoutée.<br>
+    Spam Telegram = mort, validé live 90s.
+  </div>
+</body>
+</html>

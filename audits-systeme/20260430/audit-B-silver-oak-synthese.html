@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Audit B — Synthèse Silver Oak OS</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, sans-serif; background: #0a0a0a; color: #e5e5e5; padding: 16px; line-height: 1.5; max-width: 480px; margin: 0 auto; }
+  h1 { font-size: 22px; color: #fbbf24; margin-bottom: 4px; }
+  h2 { font-size: 17px; color: #34d399; margin: 18px 0 8px; padding-top: 10px; border-top: 1px solid #1f1f1f; }
+  h3 { font-size: 14px; color: #a78bfa; margin: 10px 0 4px; }
+  table { width: 100%; border-collapse: collapse; margin: 6px 0; font-size: 12px; }
+  th, td { padding: 5px 7px; text-align: left; border-bottom: 1px solid #1f1f1f; vertical-align: top; }
+  th { background: #1f1f1f; color: #fbbf24; }
+  td { color: #d4d4d4; }
+  .pass { color: #6ee7b7; }
+  .warn { color: #fcd34d; }
+  .fail { color: #fca5a5; }
+  code { background: #1f1f1f; padding: 1px 5px; border-radius: 3px; font-size: 11px; color: #fcd34d; word-break: break-word; }
+  .stat { font-size: 28px; font-weight: 700; color: #34d399; text-align: center; }
+  .card { background: #111; border: 1px solid #262626; border-radius: 8px; padding: 10px; margin: 6px 0; }
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  ul { padding-left: 18px; margin: 4px 0; }
+  li { margin: 2px 0; font-size: 12px; }
+  .bug { color: #fca5a5; font-weight: 600; }
+  .fixable { background: #064e3b; padding: 8px; border-radius: 6px; font-size: 12px; margin: 6px 0; }
+  .obsolete { background: #7f1d1d40; padding: 8px; border-radius: 6px; font-size: 12px; margin: 6px 0; }
+</style>
+</head>
+<body>
+  <h1>🅱️ Synthèse audits Silver Oak OS</h1>
+  <p style="color: #9ca3af; font-size: 12px;">9 audits MD + 7 docs HTML lus • 30 avril 2026</p>
+
+  <h2>🎯 Conclusion globale</h2>
+  <div class="card">
+    <p>Mark Kashef a fait un travail solide. <strong>Le seul gap réel</strong> est qu'<code>alex_orchestrator.ts</code> hardcode <code>dispatchToEmployee()</code> au lieu d'utiliser <code>delegateToAgent()</code> — qui existe déjà et fait tout (CLAUDE.md, MCPs, mémoire, DB).</p>
+    <p style="margin-top: 6px;"><strong>Effort fix : 1-2h</strong>. Branche dédiée déjà existe : <code>fix/alex-uses-delegateToAgent</code>.</p>
+  </div>
+
+  <h2>👥 6 agents disponibles (tous fonctionnels)</h2>
+  <table>
+    <tr><th>ID</th><th>Nom</th><th>Rôle réel</th></tr>
+    <tr><td>main</td><td>Alex</td><td>Chief of Staff (orchestrateur)</td></tr>
+    <tr><td>comms</td><td>Sara</td><td>Communications (Gmail, email, outreach)</td></tr>
+    <tr><td>content</td><td>Léo</td><td>Content (YouTube, LinkedIn, calendrier)</td></tr>
+    <tr><td>ops</td><td>Marco</td><td>Operations (Calendar, Hetzner, padel)</td></tr>
+    <tr><td>research</td><td>Nina</td><td>Research (AI compétitif, RGPD, briefs)</td></tr>
+    <tr><td>maestro</td><td>Maestro</td><td>CTO (orchestre Mode 1+2)</td></tr>
+  </table>
+
+  <h2>🐛 4 bugs détectés dans <code>alex_orchestrator.ts</code></h2>
+  <table>
+    <tr><th>#</th><th>Bug</th></tr>
+    <tr><td>1</td><td><span class="bug">Descriptions fausses</span> : sara="marketing" (réel=comms), leo="design" (réel=content), marco="finance" (réel=ops), nina="data" (réel=research)</td></tr>
+    <tr><td>2</td><td><span class="bug">Model hardcodé sur 'nina'</span> pour TOUS les employees (binding conceptuellement faux)</td></tr>
+    <tr><td>3</td><td><span class="bug">Zéro context injecté</span> : pas de CLAUDE.md, pas de MCPs, pas de mémoire, pas de DB log</td></tr>
+    <tr><td>4</td><td><span class="bug">Fallback inconnu silencieux</span> : si employee inconnu → string générique au lieu d'erreur</td></tr>
+  </table>
+
+  <h2>🧠 Intent classifier limité (binaire)</h2>
+  <div class="card">
+    <p>Actuel : <code>simple_question</code> ou <code>technical_task</code>. Pas de routing automatique vers Sara/Léo/Marco/Nina.</p>
+    <h3 style="color: #fcd34d;">Manque 4 intents :</h3>
+    <ul>
+      <li><code>comms_task</code> → Sara (Gmail, emails)</li>
+      <li><code>content_task</code> → Léo (YouTube, LinkedIn)</li>
+      <li><code>ops_task</code> → Marco (Calendar, infra)</li>
+      <li><code>research_task</code> → Nina (recherche, briefs)</li>
+    </ul>
+  </div>
+
+  <h2>✅ Le fix complet en 3 lignes (audit 8)</h2>
+  <pre style="background: #1f1f1f; padding: 8px; border-radius: 6px; font-size: 10px; overflow-x: auto;">import { delegateToAgent } from '../orchestrator.js';
+const NAME_TO_AGENT_ID = { sara:'comms', leo:'content', marco:'ops', nina:'research' };
+const result = await delegateToAgent(NAME_TO_AGENT_ID[employee], task.description, request.user_id, 'main');</pre>
+
+  <h2>🔄 Audits PÉRIMÉS (à mettre à jour)</h2>
+  <div class="obsolete">
+    <strong>Audit 12 — Maestro Workers Realite</strong><br>
+    Disait que Maestro ne peut pas modifier <code>alex_orchestrator.ts</code> car les workers tmux tournaient sur Claudette (178.104.24.23).<br><br>
+    <strong>PLUS VRAI depuis ce matin :</strong> les 4 sessions tmux Mode 1 tournent maintenant sur <strong>Factory</strong> (178.104.255.59) avec accès direct à <code>/app/silver-oak-os</code>. Maestro PEUT maintenant modifier le code lui-même.
+  </div>
+
+  <h2>📚 Audits SoulPrompts (audit 6) — All green</h2>
+  <table>
+    <tr><th>Agent</th><th>FR</th><th>ES</th><th>EN</th></tr>
+    <tr><td>main (Alex)</td><td class="pass">✅</td><td class="pass">✅</td><td class="pass">✅</td></tr>
+    <tr><td>comms (Sara)</td><td class="pass">✅</td><td class="pass">✅</td><td class="pass">✅</td></tr>
+    <tr><td>content (Léo)</td><td class="pass">✅</td><td class="pass">✅</td><td class="pass">✅</td></tr>
+    <tr><td>ops (Marco)</td><td class="pass">✅</td><td class="pass">✅</td><td class="pass">✅</td></tr>
+    <tr><td>research (Nina)</td><td class="pass">✅</td><td class="pass">✅</td><td class="pass">✅</td></tr>
+    <tr><td>maestro</td><td class="pass">✅</td><td class="pass">✅</td><td class="pass">✅</td></tr>
+  </table>
+
+  <h2>🌟 Architecture cible (post-fix)</h2>
+  <pre style="background: #1f1f1f; padding: 8px; border-radius: 6px; font-size: 10px; overflow-x: auto; line-height: 1.4;">KARIM
+  ↓
+Frontend / Telegram / API
+  ↓
+ALEX (Sonnet Pro Max)
+  ↓
+Intent classifier (6 classes, étendu)
+  ↓
+delegateToAgent(agentId, ...)
+  ↓
+orchestrator.ts (Mark)
+  ↓
+loadAgentConfig + CLAUDE.md + MCPs + mémoire
+  ↓
+runAgent → Vrai agent répond avec son SoulPrompt</pre>
+
+  <h2>📋 Plan action recommandé</h2>
+  <div class="fixable">
+    <strong>Priorité 1 — Fix Alex orchestrator (1-2h)</strong><br>
+    Branche <code>fix/alex-uses-delegateToAgent</code> existe déjà. Remplacer <code>dispatchToEmployee()</code> par <code>delegateToAgent()</code>.
+  </div>
+  <div class="fixable">
+    <strong>Priorité 2 — Étendre intent classifier (30 min)</strong><br>
+    Ajouter 4 intents (comms/content/ops/research_task) pour routing auto vers Sara/Léo/Marco/Nina.
+  </div>
+  <div class="fixable">
+    <strong>Priorité 3 — Update audit 12 (5 min)</strong><br>
+    Documenter le pivot Factory vs Claudette dans le markdown.
+  </div>
+
+  <p style="margin-top: 16px; font-size: 11px; color: #6b7280; text-align: center;">
+    🎓 Audit B clôturé. Suivant : C — Connecter ce qui était dans repo Mark mais pas activé.
+  </p>
+</body>
+</html>

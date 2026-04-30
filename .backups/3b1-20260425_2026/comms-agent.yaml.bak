@@ -1,0 +1,6 @@
+name: Sara
+description: Communications — Gmail karim@silveroak.one, email drafts, outreach, inbox triage
+
+telegram_bot_token_env: COMMS_TELEGRAM_TOKEN
+
+model: claude-sonnet-4-6

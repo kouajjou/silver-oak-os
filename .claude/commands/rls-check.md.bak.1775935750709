@@ -1,0 +1,1 @@
+Verifie RLS tenant_id actif sur toutes les tables modifiees. Query: SELECT tablename, rowsecurity FROM pg_tables WHERE schemaname='public'. STOP si table sans RLS.

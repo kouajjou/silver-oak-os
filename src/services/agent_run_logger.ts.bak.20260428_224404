@@ -1,0 +1,50 @@
+/**
+ * Agent Run Logger — stub (Phase 5B.2)
+ * Simple interface to log agent runs in DB (wraps session_state).
+ * Created for maestro_orchestrator.ts
+ */
+import { createRun, endRun } from './session_state.js';
+import { logger } from '../logger.js';
+
+export interface AgentRunLog {
+  agent: string;
+  taskId: string;
+  task: string;
+  mode: string;
+  provider?: string | null;
+  success: boolean;
+  judgeScore?: number;
+  error?: string;
+  durationMs: number;
+}
+
+export async function logAgentRun(log: AgentRunLog): Promise<void> {
+  console.log(
+     +
+    
+  );
+
+  try {
+    const run = await createRun({
+      user_id: log.agent,
+      initial_request: log.task.slice(0, 1000),
+      status: log.success ? 'completed' : 'failed',
+      total_cost_usd: 0,
+      metadata: {
+        taskId: log.taskId,
+        mode: log.mode,
+        provider: log.provider ?? null,
+        judgeScore: log.judgeScore ?? null,
+        error: log.error ?? null,
+        durationMs: log.durationMs,
+      },
+    });
+
+    if (run?.id) {
+      await endRun(run.id, log.success ? 'completed' : 'failed');
+    }
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : String(err);
+    logger.error({ error: msg }, 'agent_run_logger.fail');
+  }
+}

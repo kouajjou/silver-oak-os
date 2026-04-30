@@ -1,0 +1,17 @@
+name: Maestro
+description: "CTO interne Silver Oak OS --- orchestrates 19 workers via MCP Bridge (mcp.silveroak.one). Strangler Fig: workers run on Claudette (178.104.24.23)."
+
+telegram_bot_token_env: MAESTRO_TELEGRAM_TOKEN
+
+model: claude-sonnet-4-6
+
+skills_allowlist:
+  - mcp-dispatch
+
+meet_voice_id: "nPczCjzI2devNBz1zQrb"
+meet_bot_name: "Maestro"
+
+max_workers: 19
+budget_cap_usd: 3.0
+architecture: strangler-fig
+workers_host: claudette-178.104.24.23

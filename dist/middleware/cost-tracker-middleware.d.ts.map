@@ -1,0 +1,1 @@
+{"version":3,"file":"cost-tracker-middleware.d.ts","sourceRoot":"","sources":["../../src/middleware/cost-tracker-middleware.ts"],"names":[],"mappings":"AAAA;;;;;;;;GAQG;AAEH,OAAO,KAAK,EAAE,OAAO,EAAE,IAAI,EAAE,MAAM,MAAM,CAAC;AAG1C,wBAAgB,qBAAqB,CAAC,QAAQ,EAAE,MAAM,IACtC,GAAG,OAAO,EAAE,MAAM,IAAI,KAAG,OAAO,CAAC,QAAQ,GAAG,IAAI,CAAC,CAwBhE"}

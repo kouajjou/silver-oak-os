@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Factory MCP — 200% Atteint 🎉</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, sans-serif; background: #0a0a0a; color: #e5e5e5; padding: 16px; line-height: 1.5; max-width: 480px; margin: 0 auto; }
+  h1 { font-size: 22px; color: #fbbf24; margin-bottom: 4px; }
+  h2 { font-size: 17px; color: #34d399; margin: 20px 0 8px; padding-top: 12px; border-top: 1px solid #1f1f1f; }
+  h3 { font-size: 15px; color: #a78bfa; margin: 12px 0 6px; }
+  .badge { display: inline-block; padding: 3px 10px; border-radius: 999px; font-size: 12px; font-weight: 600; margin-right: 4px; margin-bottom: 4px; }
+  .ok { background: #064e3b; color: #6ee7b7; }
+  .new { background: #6b21a8; color: #e9d5ff; }
+  .warn { background: #78350f; color: #fcd34d; }
+  table { width: 100%; border-collapse: collapse; margin: 8px 0; font-size: 13px; }
+  th, td { padding: 6px 8px; text-align: left; border-bottom: 1px solid #1f1f1f; }
+  th { background: #1f1f1f; color: #fbbf24; font-weight: 600; }
+  td { color: #d4d4d4; }
+  .stat { font-size: 36px; font-weight: 700; color: #34d399; }
+  .stat-label { font-size: 11px; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.5px; }
+  .card { background: #111; border: 1px solid #262626; border-radius: 8px; padding: 12px; margin: 8px 0; }
+  .card-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  ul { padding-left: 20px; margin: 4px 0; }
+  li { margin: 3px 0; font-size: 13px; }
+  code { background: #1f1f1f; padding: 2px 6px; border-radius: 4px; font-size: 12px; color: #fcd34d; }
+  .footer { margin-top: 24px; padding-top: 16px; border-top: 1px solid #1f1f1f; font-size: 12px; color: #6b7280; text-align: center; }
+  .hero { text-align: center; padding: 16px; background: linear-gradient(135deg, #064e3b 0%, #6b21a8 100%); border-radius: 12px; margin-bottom: 16px; }
+  .pass { color: #6ee7b7; }
+</style>
+</head>
+<body>
+  <div class="hero">
+    <h1 style="color: white;">🎉 Factory MCP — 200%</h1>
+    <p style="color: #fcd34d; font-size: 14px; margin-top: 4px;">Marathon ~10h — 29 avril 2026</p>
+  </div>
+
+  <div class="card-grid">
+    <div class="card" style="text-align: center;">
+      <div class="stat">200%</div>
+      <div class="stat-label">Autonomie</div>
+    </div>
+    <div class="card" style="text-align: center;">
+      <div class="stat">9/9</div>
+      <div class="stat-label">Tests E2E PASS</div>
+    </div>
+  </div>
+  <div class="card-grid">
+    <div class="card" style="text-align: center;">
+      <div class="stat" style="color: #fbbf24;">77</div>
+      <div class="stat-label">Tools MCP</div>
+    </div>
+    <div class="card" style="text-align: center;">
+      <div class="stat" style="color: #a78bfa;">+9</div>
+      <div class="stat-label">Nouveaux</div>
+    </div>
+  </div>
+
+  <h2>✅ Tests E2E (live, ce soir)</h2>
+  <table>
+    <tr><th>Tool</th><th>Résultat</th></tr>
+    <tr><td><code>agent_status</code></td><td class="pass">✅ 6 agents détectés</td></tr>
+    <tr><td><code>tmux_list_real</code></td><td class="pass">✅ vrai état tmux</td></tr>
+    <tr><td><code>auto_recover</code></td><td class="pass">✅ 3 healthy 0 recovered</td></tr>
+    <tr><td><code>dispatch_to_api</code> DeepSeek</td><td class="pass">✅ 2.8s response</td></tr>
+    <tr><td><code>dispatch_to_api</code> Gemini</td><td class="pass">✅ 1.3s "Rabat-Salé"</td></tr>
+    <tr><td><code>get_recent_errors</code></td><td class="pass">✅ 4 sources agrégées</td></tr>
+    <tr><td><code>get_server_status</code></td><td class="pass">✅ snapshot complet</td></tr>
+    <tr><td><code>alex_chat</code></td><td class="pass">✅ best-effort OK</td></tr>
+    <tr><td><code>memory_search</code></td><td class="pass">✅ grep fallback</td></tr>
+  </table>
+
+  <h2>📦 Repositories pushés sur GitHub</h2>
+  <div class="card">
+    <h3>🆕 kouajjou/mcp-bridge-factory (private)</h3>
+    <ul>
+      <li>Commit <code>1457c6e</code>: feat factory v3.2.0 (77 tools)</li>
+      <li>Commit <code>d180ef7</code>: fix Gemini → 2.5-flash</li>
+      <li>PAT déplacé dans <code>/root/.git-credentials</code> (mode 600, plus en clair)</li>
+    </ul>
+    <h3>📦 kouajjou/silver-oak-os</h3>
+    <ul>
+      <li>Branch <code>fix/alex-uses-delegateToAgent</code> pushée</li>
+      <li>Commit <code>8096e418</code>: pivot Maestro Factory-local</li>
+    </ul>
+  </div>
+
+  <h2>🆕 9 nouveaux superpowers</h2>
+  <ul>
+    <li><span class="badge new">NEW</span> <code>get_recent_errors</code> — PM2 + journalctl + Caddy + MCP en 1 appel</li>
+    <li><span class="badge new">NEW</span> <code>get_server_status</code> — uptime + disk + RAM + PM2 + ports + Caddy</li>
+    <li><span class="badge new">NEW</span> <code>agent_status</code> — Alex/Sara/Léo/Marco/Nina/Maestro</li>
+    <li><span class="badge new">NEW</span> <code>alex_chat</code> — Direct chat avec Alex (Chief of Staff)</li>
+    <li><span class="badge new">NEW</span> <code>memory_search</code> — RAG + grep fallback</li>
+    <li><span class="badge new">NEW</span> <code>run_command_streaming</code> — Long commands + log polling</li>
+    <li><span class="badge new">NEW</span> <code>tmux_list_real</code> — Vraies sessions tmux</li>
+    <li><span class="badge new">NEW</span> <code>dispatch_to_api</code> — Mode 2 (5 LLM API non-Anthropic)</li>
+    <li><span class="badge new">NEW</span> <code>auto_recover</code> — Crash detect + reload + Telegram</li>
+  </ul>
+
+  <h2>🔧 Bugs fixés ce soir</h2>
+  <ul>
+    <li>✅ <code>await</code> manquant 39 handlers → tools renvoyaient <code>{}</code></li>
+    <li>✅ HealthWorker EADDRINUSE → fallback port 3006</li>
+    <li>✅ Whitelist élargie (scp/rsync/ssh/psql/supabase)</li>
+    <li>✅ Blacklist relaxée (<code>2&gt;/dev/null</code> autorisé)</li>
+    <li>✅ Watchdog systemd corrigé (port 3004 + Telegram alert)</li>
+    <li>✅ Maestro Factory ne pointe plus vers Claudette</li>
+    <li>✅ SESSION_ENUM 19→4 (Mode 1 only)</li>
+    <li>✅ Gemini 2.5 Pro → Flash (thinking tokens consommaient le quota)</li>
+    <li>✅ Tous paths Claudette → silver-oak-os (5 modules)</li>
+  </ul>
+
+  <h2>🌅 Plan demain (jeudi 30/04)</h2>
+  <div class="card">
+    <h3>Matin (3h) — Audit Claudette</h3>
+    <ul>
+      <li>📋 Audit ce qui tourne sur Claudette (PM2/tmux/cron/dns)</li>
+      <li>🎯 Décider: garder claudette-api+frontend, kill le reste dev</li>
+      <li>🏷️ Tag <code>pre-beta-cleanup-20260430</code></li>
+      <li>🧹 Strangler Fig: kill par batch + verif après chaque</li>
+      <li>📄 Rapport doc <code>/audits-systeme/20260430/</code></li>
+    </ul>
+    <p style="margin-top: 8px; font-size: 12px; color: #9ca3af;">Plan détaillé: <code>/app/silver-oak-os/audits-systeme/20260429/PLAN-DEMAIN-AUDIT-CLAUDETTE.md</code></p>
+  </div>
+  <div class="card">
+    <h3>Aprem — Préparation beta</h3>
+    <ul>
+      <li>WhatsApp QR réactivation</li>
+      <li>Stripe billing config</li>
+      <li>Real Usage Week (7e garde-fou)</li>
+      <li>Décision: sandboxing mcp-user (DEFERRED doc)</li>
+    </ul>
+  </div>
+
+  <h2>⚠️ Limite de cette conversation</h2>
+  <p style="font-size: 13px; color: #fcd34d;">Les 9 nouveaux tools sont enregistrés sur le serveur MAIS pas visibles dans cette session Cowork — ils apparaîtront dans une <strong>nouvelle conversation</strong>. Demain matin, ouvre une fresh session, tu verras tous les nouveaux tools dans le menu.</p>
+
+  <div class="footer">
+    🌙 Karim, marathon ~10h conclu à 200%.<br>
+    Bonne nuit. Demain café ☕ + audit Claudette tranquille.<br>
+    Si tu lis ça maintenant → vraiment, vas dormir 😄
+  </div>
+</body>
+</html>

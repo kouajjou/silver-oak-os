@@ -1,0 +1,18 @@
+{
+  "test_id": "test-1777581070102-20d2a8be",
+  "url": "http://localhost:3010",
+  "scenario": "E2E Test Mode 3 — homepage",
+  "status": "PASS",
+  "duration_ms": 681,
+  "page_title": "Silver Oak OS",
+  "current_url": "http://localhost:3010/",
+  "assertions": [
+    {
+      "check": "Title contains Silver Oak",
+      "passed": true,
+      "actual": "Silver Oak OS"
+    }
+  ],
+  "errors": [],
+  "screenshot_url": "/tmp/browser-tests/test-1777581070102-20d2a8be.png"
+}

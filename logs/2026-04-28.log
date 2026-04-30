@@ -1,0 +1,197 @@
+{"component":"maestro","level":"info","message":"Test startup","timestamp":"2026-04-28T10:37:53.223Z","version":"v26.4"}
+{"level":"warn","message":"Test warning","reason":"rate_limit","timestamp":"2026-04-28T10:37:53.224Z","worker":"aider-deepseek-1"}
+{"code":500,"level":"error","message":"Test error simulated error","timestamp":"2026-04-28T10:37:53.225Z"}
+{"event":{"action":"dispatch","category":"maestro","cost":0.001,"task":"gap-010","worker":"aider-deepseek-1"},"level":"info","message":"maestro.dispatch","timestamp":"2026-04-28T10:37:53.226Z"}
+{"event":{"action":"skip","category":"alex","reason":"HUMAN_INPUT_REQUIRED","task":"hitl-required"},"level":"info","message":"alex.skip","timestamp":"2026-04-28T10:37:53.226Z"}
+{"component":"audit","level":"info","message":"phd_audit test","timestamp":"2026-04-28T10:44:57.090Z"}
+{"event":{"action":"phd_check","category":"audit","ts":1777373097091},"level":"info","message":"audit.phd_check","timestamp":"2026-04-28T10:44:57.092Z"}
+{"level":"info","markdown_length":213,"message":"task_breaker.start","timestamp":"2026-04-28T13:10:38.599Z","user_id":"test-vision"}
+{"error":"LLM provider 'deepseek' unavailable — missing API key in .env","level":"error","message":"task_breaker.fail","timestamp":"2026-04-28T13:10:38.600Z"}
+{"level":"info","markdown_length":172,"message":"task_breaker.start","timestamp":"2026-04-28T13:10:55.166Z","user_id":"test-vision"}
+{"cost_usd":0.00013412,"latency_ms":4660,"level":"info","message":"task_breaker.success","timestamp":"2026-04-28T13:10:59.828Z","total_tasks":4}
+{"level":"info","message":"llm_judge.start","output_length":190,"task_length":37,"timestamp":"2026-04-28T13:12:27.039Z"}
+{"error":"LLM provider 'google' unavailable — missing API key in .env","level":"error","message":"llm_judge.fail","timestamp":"2026-04-28T13:12:27.042Z"}
+{"level":"info","message":"llm_judge.start","output_length":78,"task_length":25,"timestamp":"2026-04-28T13:12:27.045Z"}
+{"error":"LLM provider 'google' unavailable — missing API key in .env","level":"error","message":"llm_judge.fail","timestamp":"2026-04-28T13:12:27.046Z"}
+{"level":"info","message":"llm_judge.start","output_length":190,"task_length":37,"timestamp":"2026-04-28T13:12:36.432Z"}
+{"error":"Unterminated string in JSON at position 68 (line 5 column 4)","level":"error","message":"llm_judge.fail","timestamp":"2026-04-28T13:12:41.322Z"}
+{"level":"info","message":"llm_judge.start","output_length":78,"task_length":25,"timestamp":"2026-04-28T13:12:41.324Z"}
+{"cost":0.00009352500000000001,"grade":"F","is_completed":false,"level":"info","message":"llm_judge.success","timestamp":"2026-04-28T13:12:45.314Z"}
+{"level":"info","message":"llm_judge.start","output_length":1391,"task_length":435,"task_type":"unknown","timestamp":"2026-04-28T13:27:32.876Z"}
+{"error":"LLM provider 'google' unavailable — missing API key in .env","level":"error","message":"llm_judge.fail","timestamp":"2026-04-28T13:27:32.878Z"}
+{"level":"info","message":"llm_judge.start","output_length":1503,"task_length":435,"task_type":"unknown","timestamp":"2026-04-28T13:27:43.789Z"}
+{"error":"LLM provider 'google' unavailable — missing API key in .env","level":"error","message":"llm_judge.fail","timestamp":"2026-04-28T13:27:43.790Z"}
+{"level":"info","message":"llm_judge.start","output_length":1407,"task_length":435,"task_type":"unknown","timestamp":"2026-04-28T13:27:53.897Z"}
+{"error":"LLM provider 'google' unavailable — missing API key in .env","level":"error","message":"llm_judge.fail","timestamp":"2026-04-28T13:27:53.898Z"}
+{"level":"info","message":"llm_judge.start","output_length":2,"task_length":8,"task_type":"unknown","timestamp":"2026-04-28T13:34:04.898Z"}
+{"error":"LLM provider 'google' unavailable — missing API key in .env","level":"error","message":"llm_judge.fail","timestamp":"2026-04-28T13:34:04.900Z"}
+{"level":"info","message":"llm_judge.start","output_length":2,"task_length":8,"task_type":"unknown","timestamp":"2026-04-28T13:34:06.311Z"}
+{"error":"LLM provider 'google' unavailable — missing API key in .env","level":"error","message":"llm_judge.fail","timestamp":"2026-04-28T13:34:06.312Z"}
+{"level":"info","message":"llm_judge.start","output_length":2,"task_length":8,"task_type":"unknown","timestamp":"2026-04-28T13:34:07.517Z"}
+{"error":"LLM provider 'google' unavailable — missing API key in .env","level":"error","message":"llm_judge.fail","timestamp":"2026-04-28T13:34:07.517Z"}
+{"level":"info","message":"llm_judge.start","output_length":2,"task_length":8,"task_type":"unknown","timestamp":"2026-04-28T13:35:33.998Z"}
+{"error":"LLM provider 'google' unavailable — missing API key in .env","level":"error","message":"llm_judge.fail","timestamp":"2026-04-28T13:35:34.000Z"}
+{"level":"info","message":"llm_judge.start","output_length":2,"task_length":8,"task_type":"unknown","timestamp":"2026-04-28T13:35:36.280Z"}
+{"error":"LLM provider 'google' unavailable — missing API key in .env","level":"error","message":"llm_judge.fail","timestamp":"2026-04-28T13:35:36.281Z"}
+{"level":"info","message":"llm_judge.start","output_length":2,"task_length":8,"task_type":"unknown","timestamp":"2026-04-28T13:35:37.553Z"}
+{"error":"LLM provider 'google' unavailable — missing API key in .env","level":"error","message":"llm_judge.fail","timestamp":"2026-04-28T13:35:37.553Z"}
+{"level":"info","message":"llm_judge.start","output_length":2,"task_length":8,"task_type":"unknown","timestamp":"2026-04-28T13:37:11.864Z"}
+{"cost":0.000042,"grade":"A","is_completed":true,"level":"info","message":"llm_judge.success","timestamp":"2026-04-28T13:37:14.219Z"}
+{"level":"info","message":"llm_judge.start","output_length":190,"task_length":37,"timestamp":"2026-04-28T13:41:49.745Z"}
+{"error":"Unterminated string in JSON at position 67 (line 5 column 4)","level":"error","message":"llm_judge.fail","timestamp":"2026-04-28T13:41:54.392Z"}
+{"level":"info","message":"llm_judge.start","output_length":78,"task_length":25,"timestamp":"2026-04-28T13:41:54.393Z"}
+{"error":"Unexpected end of JSON input","level":"error","message":"llm_judge.fail","timestamp":"2026-04-28T13:41:59.106Z"}
+{"level":"info","message":"llm_judge.start","output_length":1466,"task_length":110,"task_type":"technical","timestamp":"2026-04-28T13:54:03.938Z"}
+{"cost":0.000127875,"grade":"F","is_completed":false,"level":"info","message":"llm_judge.success","timestamp":"2026-04-28T13:54:06.897Z"}
+{"level":"info","message":"llm_judge.start","output_length":1357,"task_length":110,"task_type":"technical","timestamp":"2026-04-28T13:54:16.291Z"}
+{"error":"Unterminated string in JSON at position 985 (line 13 column 88)","level":"error","message":"llm_judge.fail","timestamp":"2026-04-28T13:54:20.610Z"}
+{"level":"info","message":"llm_judge.start","output_length":1357,"task_length":110,"task_type":"technical","timestamp":"2026-04-28T13:54:31.186Z"}
+{"cost":0.00013514999999999998,"grade":"F","is_completed":false,"level":"info","message":"llm_judge.success","timestamp":"2026-04-28T13:54:33.658Z"}
+{"level":"info","message":"llm_judge.start","output_length":1485,"task_length":112,"task_type":"technical","timestamp":"2026-04-28T13:54:43.140Z"}
+{"error":"Unterminated string in JSON at position 1689 (line 20 column 90)","level":"error","message":"llm_judge.fail","timestamp":"2026-04-28T13:54:47.814Z"}
+{"level":"info","message":"llm_judge.start","output_length":1513,"task_length":112,"task_type":"technical","timestamp":"2026-04-28T13:54:57.415Z"}
+{"cost":0.00013822499999999999,"grade":"F","is_completed":false,"level":"info","message":"llm_judge.success","timestamp":"2026-04-28T13:55:00.302Z"}
+{"level":"info","message":"llm_judge.start","output_length":1593,"task_length":112,"task_type":"technical","timestamp":"2026-04-28T13:55:09.784Z"}
+{"error":"Unterminated string in JSON at position 1670 (line 23 column 84)","level":"error","message":"llm_judge.fail","timestamp":"2026-04-28T13:55:14.141Z"}
+{"level":"info","message":"llm_judge.start","output_length":2597,"task_length":116,"task_type":"marketing","timestamp":"2026-04-28T13:55:22.624Z"}
+{"error":"Expected double-quoted property name in JSON at position 64 (line 4 column 22)","level":"error","message":"llm_judge.fail","timestamp":"2026-04-28T13:55:27.461Z"}
+{"level":"info","message":"llm_judge.start","output_length":2625,"task_length":116,"task_type":"marketing","timestamp":"2026-04-28T13:55:36.545Z"}
+{"error":"Unterminated string in JSON at position 73 (line 5 column 10)","level":"error","message":"llm_judge.fail","timestamp":"2026-04-28T13:55:41.319Z"}
+{"level":"info","message":"llm_judge.start","output_length":2666,"task_length":116,"task_type":"marketing","timestamp":"2026-04-28T13:55:49.936Z"}
+{"error":"Expected double-quoted property name in JSON at position 63 (line 4 column 21)","level":"error","message":"llm_judge.fail","timestamp":"2026-04-28T13:55:54.325Z"}
+{"level":"info","message":"llm_judge.start","output_length":1239,"task_length":96,"task_type":"technical","timestamp":"2026-04-28T15:32:54.856Z"}
+{"cost":0.00013357499999999998,"grade":"F","is_completed":false,"level":"info","message":"llm_judge.success","timestamp":"2026-04-28T15:32:58.824Z"}
+{"level":"info","message":"llm_judge.start","output_length":1138,"task_length":96,"task_type":"technical","timestamp":"2026-04-28T15:33:06.326Z"}
+{"cost":0.0001242,"grade":"F","is_completed":false,"level":"info","message":"llm_judge.success","timestamp":"2026-04-28T15:33:09.600Z"}
+{"level":"info","message":"llm_judge.start","output_length":1338,"task_length":96,"task_type":"technical","timestamp":"2026-04-28T15:33:19.139Z"}
+{"cost":0.00013979999999999998,"grade":"F","is_completed":false,"level":"info","message":"llm_judge.success","timestamp":"2026-04-28T15:33:23.373Z"}
+{"level":"info","message":"llm_judge.start","output_length":1637,"task_length":110,"task_type":"technical","timestamp":"2026-04-28T15:33:33.976Z"}
+{"cost":0.0001416,"grade":"F","is_completed":false,"level":"info","message":"llm_judge.success","timestamp":"2026-04-28T15:33:36.261Z"}
+{"level":"info","message":"llm_judge.start","output_length":1563,"task_length":110,"task_type":"technical","timestamp":"2026-04-28T15:33:47.004Z"}
+{"error":"Unterminated string in JSON at position 1514 (line 19 column 4)","level":"error","message":"llm_judge.fail","timestamp":"2026-04-28T15:33:51.839Z"}
+{"level":"info","message":"llm_judge.start","output_length":1486,"task_length":110,"task_type":"technical","timestamp":"2026-04-28T15:34:02.294Z"}
+{"error":"Unterminated string in JSON at position 1212 (line 15 column 6)","level":"error","message":"llm_judge.fail","timestamp":"2026-04-28T15:34:06.598Z"}
+{"level":"info","message":"llm_judge.start","output_length":2717,"task_length":128,"task_type":"marketing","timestamp":"2026-04-28T15:34:15.428Z"}
+{"error":"Expected double-quoted property name in JSON at position 63 (line 4 column 21)","level":"error","message":"llm_judge.fail","timestamp":"2026-04-28T15:34:19.976Z"}
+{"level":"info","message":"llm_judge.start","output_length":2654,"task_length":128,"task_type":"marketing","timestamp":"2026-04-28T15:34:28.042Z"}
+{"error":"Unterminated string in JSON at position 73 (line 5 column 10)","level":"error","message":"llm_judge.fail","timestamp":"2026-04-28T15:34:32.706Z"}
+{"level":"info","message":"llm_judge.start","output_length":2653,"task_length":128,"task_type":"marketing","timestamp":"2026-04-28T15:34:41.467Z"}
+{"error":"Unterminated string in JSON at position 73 (line 5 column 10)","level":"error","message":"llm_judge.fail","timestamp":"2026-04-28T15:34:46.307Z"}
+{"level":"info","message":"llm_judge.start","output_length":2026,"task_length":107,"task_type":"finance","timestamp":"2026-04-28T15:34:54.142Z"}
+{"error":"Expected double-quoted property name in JSON at position 63 (line 4 column 21)","level":"error","message":"llm_judge.fail","timestamp":"2026-04-28T15:34:58.557Z"}
+{"level":"info","message":"llm_judge.start","output_length":1954,"task_length":107,"task_type":"finance","timestamp":"2026-04-28T15:35:06.439Z"}
+{"error":"Expected double-quoted property name in JSON at position 63 (line 4 column 22)","level":"error","message":"llm_judge.fail","timestamp":"2026-04-28T15:35:10.772Z"}
+{"level":"info","message":"llm_judge.start","output_length":2047,"task_length":107,"task_type":"finance","timestamp":"2026-04-28T15:35:19.213Z"}
+{"error":"Unterminated string in JSON at position 73 (line 5 column 10)","level":"error","message":"llm_judge.fail","timestamp":"2026-04-28T15:35:23.504Z"}
+{"level":"info","message":"llm_judge.start","output_length":4476,"task_length":179,"task_type":"marketing","timestamp":"2026-04-28T15:41:54.072Z"}
+{"error":"Expected double-quoted property name in JSON at position 63 (line 4 column 21)","level":"error","message":"llm_judge.fail","timestamp":"2026-04-28T15:41:58.658Z"}
+{"level":"info","message":"llm_judge.start","output_length":4818,"task_length":179,"task_type":"marketing","timestamp":"2026-04-28T15:42:15.020Z"}
+{"error":"Unterminated string in JSON at position 73 (line 5 column 10)","level":"error","message":"llm_judge.fail","timestamp":"2026-04-28T15:42:20.043Z"}
+{"level":"info","message":"llm_judge.start","output_length":4641,"task_length":179,"task_type":"marketing","timestamp":"2026-04-28T15:42:36.226Z"}
+{"error":"Expected double-quoted property name in JSON at position 63 (line 4 column 21)","level":"error","message":"llm_judge.fail","timestamp":"2026-04-28T15:42:40.281Z"}
+{"level":"info","message":"llm_judge.start","output_length":3481,"task_length":155,"task_type":"finance","timestamp":"2026-04-28T15:42:56.229Z"}
+{"error":"Unterminated string in JSON at position 72 (line 5 column 10)","level":"error","message":"llm_judge.fail","timestamp":"2026-04-28T15:43:00.779Z"}
+{"level":"info","message":"llm_judge.start","output_length":3216,"task_length":155,"task_type":"finance","timestamp":"2026-04-28T15:43:16.365Z"}
+{"error":"Expected double-quoted property name in JSON at position 63 (line 4 column 21)","level":"error","message":"llm_judge.fail","timestamp":"2026-04-28T15:43:20.640Z"}
+{"level":"info","message":"llm_judge.start","output_length":4021,"task_length":155,"task_type":"finance","timestamp":"2026-04-28T15:43:35.661Z"}
+{"error":"Unterminated string in JSON at position 72 (line 5 column 10)","level":"error","message":"llm_judge.fail","timestamp":"2026-04-28T15:43:40.401Z"}
+{"level":"info","message":"llm_judge.start","output_length":4564,"task_length":160,"task_type":"design","timestamp":"2026-04-28T15:43:55.621Z"}
+{"error":"Unterminated string in JSON at position 73 (line 5 column 10)","level":"error","message":"llm_judge.fail","timestamp":"2026-04-28T15:44:00.654Z"}
+{"level":"info","message":"llm_judge.start","output_length":4297,"task_length":160,"task_type":"design","timestamp":"2026-04-28T15:44:15.789Z"}
+{"error":"Unterminated string in JSON at position 73 (line 5 column 10)","level":"error","message":"llm_judge.fail","timestamp":"2026-04-28T15:44:20.514Z"}
+{"level":"info","message":"llm_judge.start","output_length":4531,"task_length":160,"task_type":"design","timestamp":"2026-04-28T15:44:36.950Z"}
+{"error":"Unterminated string in JSON at position 73 (line 5 column 10)","level":"error","message":"llm_judge.fail","timestamp":"2026-04-28T15:44:41.348Z"}
+{"level":"info","message":"llm_judge.start","output_length":4247,"task_length":156,"task_type":"data","timestamp":"2026-04-28T15:44:57.311Z"}
+{"error":"Expected double-quoted property name in JSON at position 63 (line 4 column 22)","level":"error","message":"llm_judge.fail","timestamp":"2026-04-28T15:45:02.441Z"}
+{"level":"info","message":"llm_judge.start","output_length":3998,"task_length":156,"task_type":"data","timestamp":"2026-04-28T15:45:17.963Z"}
+{"error":"Unterminated string in JSON at position 73 (line 5 column 10)","level":"error","message":"llm_judge.fail","timestamp":"2026-04-28T15:45:22.057Z"}
+{"level":"info","message":"llm_judge.start","output_length":3995,"task_length":156,"task_type":"data","timestamp":"2026-04-28T15:45:36.770Z"}
+{"error":"Unterminated string in JSON at position 67 (line 5 column 4)","level":"error","message":"llm_judge.fail","timestamp":"2026-04-28T15:45:41.043Z"}
+{"level":"info","message":"llm_judge.start","output_length":0,"task_length":99,"task_type":"technical","timestamp":"2026-04-28T16:25:16.179Z"}
+{"cost":0.0000492,"grade":"F","is_completed":false,"level":"info","message":"llm_judge.success","timestamp":"2026-04-28T16:25:18.039Z"}
+{"level":"info","message":"llm_judge.start","output_length":0,"task_length":99,"task_type":"technical","timestamp":"2026-04-28T16:25:18.343Z"}
+{"cost":0.0000468,"grade":"F","is_completed":false,"level":"info","message":"llm_judge.success","timestamp":"2026-04-28T16:25:20.163Z"}
+{"level":"info","message":"llm_judge.start","output_length":0,"task_length":99,"task_type":"technical","timestamp":"2026-04-28T16:25:20.301Z"}
+{"cost":0.0000468,"grade":"F","is_completed":false,"level":"info","message":"llm_judge.success","timestamp":"2026-04-28T16:25:22.293Z"}
+{"level":"info","message":"llm_judge.start","output_length":2733,"task_length":114,"task_type":"marketing","timestamp":"2026-04-28T16:25:31.796Z"}
+{"cost":0.00007875,"grade":"F","is_completed":false,"level":"info","message":"llm_judge.success","timestamp":"2026-04-28T16:25:36.058Z"}
+{"level":"info","message":"llm_judge.start","output_length":2687,"task_length":114,"task_type":"marketing","timestamp":"2026-04-28T16:25:44.972Z"}
+{"cost":0.000078975,"grade":"F","is_completed":false,"level":"info","message":"llm_judge.success","timestamp":"2026-04-28T16:25:49.066Z"}
+{"level":"info","message":"llm_judge.start","output_length":2868,"task_length":114,"task_type":"marketing","timestamp":"2026-04-28T16:25:57.160Z"}
+{"cost":0.00007965,"grade":"F","is_completed":false,"level":"info","message":"llm_judge.success","timestamp":"2026-04-28T16:26:01.892Z"}
+{"level":"info","message":"llm_judge.start","output_length":1837,"task_length":112,"task_type":"finance","timestamp":"2026-04-28T16:26:10.712Z"}
+{"cost":0.00008332499999999999,"grade":"D","is_completed":false,"level":"info","message":"llm_judge.success","timestamp":"2026-04-28T16:26:15.367Z"}
+{"level":"info","message":"llm_judge.start","output_length":1933,"task_length":112,"task_type":"finance","timestamp":"2026-04-28T16:26:23.217Z"}
+{"cost":0.000096975,"grade":"D","is_completed":true,"level":"info","message":"llm_judge.success","timestamp":"2026-04-28T16:26:27.944Z"}
+{"level":"info","message":"llm_judge.start","output_length":2286,"task_length":112,"task_type":"finance","timestamp":"2026-04-28T16:26:36.921Z"}
+{"cost":0.000084225,"grade":"D","is_completed":true,"level":"info","message":"llm_judge.success","timestamp":"2026-04-28T16:26:41.099Z"}
+{"level":"info","message":"llm_judge.start","output_length":2497,"task_length":97,"task_type":"design","timestamp":"2026-04-28T16:26:49.220Z"}
+{"cost":0.00007372499999999999,"grade":"B","is_completed":true,"level":"info","message":"llm_judge.success","timestamp":"2026-04-28T16:26:54.017Z"}
+{"level":"info","message":"llm_judge.start","output_length":1241,"task_length":113,"task_type":"technical","timestamp":"2026-04-28T19:01:55.807Z"}
+{"cost":0.000148575,"grade":"F","is_completed":false,"level":"info","message":"llm_judge.success","timestamp":"2026-04-28T19:01:59.917Z"}
+{"level":"info","message":"llm_judge.start","output_length":1244,"task_length":113,"task_type":"technical","timestamp":"2026-04-28T19:02:08.189Z"}
+{"error":"Unterminated string in JSON at position 1210 (line 19 column 62)","level":"error","message":"llm_judge.fail","timestamp":"2026-04-28T19:02:12.862Z"}
+{"level":"info","message":"llm_judge.start","output_length":1272,"task_length":113,"task_type":"technical","timestamp":"2026-04-28T19:02:21.968Z"}
+{"error":"Unterminated string in JSON at position 562 (line 8 column 39)","level":"error","message":"llm_judge.fail","timestamp":"2026-04-28T19:02:26.417Z"}
+{"level":"info","message":"llm_judge.start","output_length":1251,"task_length":97,"task_type":"technical","timestamp":"2026-04-28T19:02:39.008Z"}
+{"cost":0.0001311,"grade":"F","is_completed":false,"level":"info","message":"llm_judge.success","timestamp":"2026-04-28T19:02:41.899Z"}
+{"level":"info","message":"llm_judge.start","output_length":1289,"task_length":97,"task_type":"technical","timestamp":"2026-04-28T19:02:50.439Z"}
+{"error":"Unterminated string in JSON at position 975 (line 16 column 6)","level":"error","message":"llm_judge.fail","timestamp":"2026-04-28T19:02:54.940Z"}
+{"level":"info","message":"llm_judge.start","output_length":1293,"task_length":97,"task_type":"technical","timestamp":"2026-04-28T19:03:03.307Z"}
+{"error":"Unterminated string in JSON at position 995 (line 16 column 62)","level":"error","message":"llm_judge.fail","timestamp":"2026-04-28T19:03:08.312Z"}
+{"level":"info","message":"llm_judge.start","output_length":2740,"task_length":116,"task_type":"marketing","timestamp":"2026-04-28T19:03:16.369Z"}
+{"error":"Unterminated string in JSON at position 68 (line 5 column 4)","level":"error","message":"llm_judge.fail","timestamp":"2026-04-28T19:03:20.798Z"}
+{"level":"info","message":"llm_judge.start","output_length":2810,"task_length":116,"task_type":"marketing","timestamp":"2026-04-28T19:03:28.590Z"}
+{"error":"Unterminated string in JSON at position 67 (line 5 column 4)","level":"error","message":"llm_judge.fail","timestamp":"2026-04-28T19:03:33.426Z"}
+{"level":"info","message":"llm_judge.start","output_length":2669,"task_length":116,"task_type":"marketing","timestamp":"2026-04-28T19:03:41.695Z"}
+{"error":"Unexpected end of JSON input","level":"error","message":"llm_judge.fail","timestamp":"2026-04-28T19:03:46.718Z"}
+{"level":"info","message":"llm_judge.start","output_length":2402,"task_length":104,"task_type":"finance","timestamp":"2026-04-28T19:03:54.817Z"}
+{"error":"Unterminated string in JSON at position 67 (line 5 column 4)","level":"error","message":"llm_judge.fail","timestamp":"2026-04-28T19:03:58.706Z"}
+{"level":"info","message":"llm_judge.start","output_length":2366,"task_length":104,"task_type":"finance","timestamp":"2026-04-28T19:04:06.515Z"}
+{"error":"Expected double-quoted property name in JSON at position 63 (line 4 column 21)","level":"error","message":"llm_judge.fail","timestamp":"2026-04-28T19:04:11.117Z"}
+{"level":"info","message":"llm_judge.start","output_length":2097,"task_length":104,"task_type":"finance","timestamp":"2026-04-28T19:04:18.798Z"}
+{"error":"Unterminated string in JSON at position 66 (line 5 column 4)","level":"error","message":"llm_judge.fail","timestamp":"2026-04-28T19:04:22.673Z"}
+{"level":"info","message":"llm_judge.start","output_length":1174,"task_length":112,"task_type":"technical","timestamp":"2026-04-28T19:04:50.572Z"}
+{"cost":0.00014519999999999998,"grade":"F","is_completed":false,"level":"info","message":"llm_judge.success","timestamp":"2026-04-28T19:04:53.501Z"}
+{"level":"info","message":"llm_judge.start","output_length":1274,"task_length":112,"task_type":"technical","timestamp":"2026-04-28T19:05:02.785Z"}
+{"error":"Unterminated string in JSON at position 800 (line 10 column 51)","level":"error","message":"llm_judge.fail","timestamp":"2026-04-28T19:05:07.817Z"}
+{"level":"info","message":"llm_judge.start","output_length":1175,"task_length":112,"task_type":"technical","timestamp":"2026-04-28T19:05:16.432Z"}
+{"error":"Unterminated string in JSON at position 759 (line 11 column 19)","level":"error","message":"llm_judge.fail","timestamp":"2026-04-28T19:05:20.828Z"}
+{"level":"info","message":"llm_judge.start","output_length":1304,"task_length":98,"task_type":"technical","timestamp":"2026-04-28T19:05:29.754Z"}
+{"cost":0.00013717500000000001,"grade":"F","is_completed":false,"level":"info","message":"llm_judge.success","timestamp":"2026-04-28T19:05:33.269Z"}
+{"level":"info","message":"llm_judge.start","output_length":1312,"task_length":98,"task_type":"technical","timestamp":"2026-04-28T19:05:42.882Z"}
+{"cost":0.0001392,"grade":"F","is_completed":false,"level":"info","message":"llm_judge.success","timestamp":"2026-04-28T19:05:46.486Z"}
+{"level":"info","message":"llm_judge.start","output_length":1401,"task_length":98,"task_type":"technical","timestamp":"2026-04-28T19:05:55.103Z"}
+{"cost":0.000140775,"grade":"F","is_completed":false,"level":"info","message":"llm_judge.success","timestamp":"2026-04-28T19:05:58.659Z"}
+{"level":"info","message":"llm_judge.start","output_length":2598,"task_length":132,"task_type":"marketing","timestamp":"2026-04-28T19:06:06.905Z"}
+{"error":"Unterminated string in JSON at position 73 (line 5 column 10)","level":"error","message":"llm_judge.fail","timestamp":"2026-04-28T19:06:11.334Z"}
+{"level":"info","message":"llm_judge.start","output_length":2672,"task_length":132,"task_type":"marketing","timestamp":"2026-04-28T19:06:19.024Z"}
+{"error":"Unterminated string in JSON at position 73 (line 5 column 10)","level":"error","message":"llm_judge.fail","timestamp":"2026-04-28T19:06:24.090Z"}
+{"level":"info","message":"llm_judge.start","output_length":2730,"task_length":132,"task_type":"marketing","timestamp":"2026-04-28T19:06:32.225Z"}
+{"error":"Expected double-quoted property name in JSON at position 63 (line 4 column 21)","level":"error","message":"llm_judge.fail","timestamp":"2026-04-28T19:06:36.631Z"}
+{"level":"info","message":"llm_judge.start","output_length":2083,"task_length":99,"task_type":"finance","timestamp":"2026-04-28T19:06:44.435Z"}
+{"error":"Unterminated string in JSON at position 73 (line 5 column 10)","level":"error","message":"llm_judge.fail","timestamp":"2026-04-28T19:06:49.102Z"}
+{"level":"info","message":"llm_judge.start","output_length":1025,"task_length":99,"task_type":"finance","timestamp":"2026-04-28T19:06:52.494Z"}
+{"error":"Unterminated string in JSON at position 461 (line 5 column 398)","level":"error","message":"llm_judge.fail","timestamp":"2026-04-28T19:06:57.071Z"}
+{"level":"info","message":"llm_judge.start","output_length":2090,"task_length":99,"task_type":"finance","timestamp":"2026-04-28T19:07:04.905Z"}
+{"error":"Expected double-quoted property name in JSON at position 63 (line 4 column 21)","level":"error","message":"llm_judge.fail","timestamp":"2026-04-28T19:07:09.725Z"}
+{"level":"info","message":"llm_judge.start","output_length":146,"task_length":46,"task_type":"technical","timestamp":"2026-04-28T19:10:02.261Z"}
+{"cost":0.000050325000000000004,"grade":"F","is_completed":false,"level":"info","message":"llm_judge.success","timestamp":"2026-04-28T19:10:04.777Z"}
+{"level":"info","message":"llm_judge.start","output_length":486,"task_length":96,"task_type":"marketing","timestamp":"2026-04-28T19:10:38.500Z"}
+{"cost":0.000041625,"grade":"B","is_completed":true,"level":"info","message":"llm_judge.success","timestamp":"2026-04-28T19:10:43.542Z"}
+{"level":"info","message":"llm_judge.start","output_length":1489,"task_length":101,"task_type":"technical","timestamp":"2026-04-28T19:11:23.775Z"}
+{"cost":0.00005955,"grade":"A","is_completed":true,"level":"info","message":"llm_judge.success","timestamp":"2026-04-28T19:11:28.772Z"}
+{"level":"info","message":"llm_judge.start","output_length":1319,"task_length":97,"task_type":"technical","timestamp":"2026-04-28T19:11:37.664Z"}
+{"cost":0.000060824999999999994,"grade":"B","is_completed":true,"level":"info","message":"llm_judge.success","timestamp":"2026-04-28T19:11:42.211Z"}
+{"level":"info","message":"llm_judge.start","output_length":2727,"task_length":129,"task_type":"marketing","timestamp":"2026-04-28T19:11:50.385Z"}
+{"cost":0.0000795,"grade":"F","is_completed":false,"level":"info","message":"llm_judge.success","timestamp":"2026-04-28T19:11:54.848Z"}
+{"level":"info","message":"llm_judge.start","output_length":2861,"task_length":129,"task_type":"marketing","timestamp":"2026-04-28T19:12:02.375Z"}
+{"cost":0.00009164999999999999,"grade":"F","is_completed":false,"level":"info","message":"llm_judge.success","timestamp":"2026-04-28T19:12:07.218Z"}
+{"level":"info","message":"llm_judge.start","output_length":2682,"task_length":129,"task_type":"marketing","timestamp":"2026-04-28T19:12:15.571Z"}
+{"cost":0.00008047499999999999,"grade":"F","is_completed":false,"level":"info","message":"llm_judge.success","timestamp":"2026-04-28T19:12:20.463Z"}
+{"level":"info","message":"llm_judge.start","output_length":1875,"task_length":107,"task_type":"finance","timestamp":"2026-04-28T19:12:28.031Z"}
+{"cost":0.0000915,"grade":"C","is_completed":true,"level":"info","message":"llm_judge.success","timestamp":"2026-04-28T19:12:32.495Z"}
+{"level":"info","message":"llm_judge.start","output_length":857,"task_length":107,"task_type":"finance","timestamp":"2026-04-28T19:12:36.117Z"}
+{"cost":0.000054375,"grade":"C","is_completed":true,"level":"info","message":"llm_judge.success","timestamp":"2026-04-28T19:12:40.643Z"}
+{"level":"info","message":"llm_judge.start","output_length":1447,"task_length":107,"task_type":"finance","timestamp":"2026-04-28T19:12:45.895Z"}
+{"cost":0.000109875,"grade":"B","is_completed":true,"level":"info","message":"llm_judge.success","timestamp":"2026-04-28T19:12:50.342Z"}

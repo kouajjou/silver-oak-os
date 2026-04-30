@@ -1,0 +1,8 @@
+You have triggered an unhandledRejection, you may have forgotten to catch a Promise rejection:
+HttpError: Network request for 'getUpdates' failed!
+    at /app/silver-oak-os/node_modules/grammy/out/core/error.js:85:15
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at ApiClient.call (/app/silver-oak-os/node_modules/grammy/out/core/client.js:54:29)
+    at ApiClient.callApi (/app/silver-oak-os/node_modules/grammy/out/core/client.js:93:22)
+    at Bot.stop (/app/silver-oak-os/node_modules/grammy/out/bot.js:343:13)
+    at shutdown (file:///app/silver-oak-os/src/index.ts:379:14)

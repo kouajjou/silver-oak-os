@@ -1,0 +1,22 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(jq --version)",
+      "Bash(gh --version)",
+      "Bash(sudo npm:*)",
+      "Bash(env)",
+      "Bash(2)",
+      "Bash(xargs -I{} basename {})",
+      "Bash(python3 -c \"import sys,json; d=json.load\\(sys.stdin\\); [print\\(f''''  {k}''''\\) for k in d.get\\(''''mcpServers'''',{}\\)]\")",
+      "mcp__claude_ai_Supabase__execute_sql"
+    ]
+  },
+  "enabledMcpjsonServers": [
+    "filesystem",
+    "memory",
+    "github",
+    "postgres",
+    "puppeteer",
+    "playwright"
+  ]
+}

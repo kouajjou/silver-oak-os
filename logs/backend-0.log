@@ -1,0 +1,599 @@
+2026-04-29T07:27:37: {"level":30,"time":1777447657634,"pid":132986,"hostname":"silver-oak-os-prod","source":"/app/silver-oak-os/agents/main/CLAUDE.md","msg":"Loaded CLAUDE.md from CLAUDECLAW_CONFIG"}
+2026-04-29T07:27:37: 
+ ██████╗██╗      █████╗ ██╗   ██╗██████╗ ███████╗
+██╔════╝██║     ██╔══██╗██║   ██║██╔══██╗██╔════╝
+██║     ██║     ███████║██║   ██║██║  ██║█████╗
+██║     ██║     ██╔══██║██║   ██║██║  ██║██╔══╝
+╚██████╗███████╗██║  ██║╚██████╔╝██████╔╝███████╗
+ ╚═════╝╚══════╝╚═╝  ╚═╝ ╚═════╝ ╚═════╝╚══════╝
+
+ ██████╗██╗      █████╗ ██╗    ██╗
+██╔════╝██║     ██╔══██╗██║    ██║
+██║     ██║     ███████║██║ █╗ ██║
+██║     ██║     ██╔══██║██║███╗██║
+╚██████╗███████╗██║  ██║╚███╔███╔╝
+ ╚═════╝╚══════╝╚═╝  ╚═╝ ╚══╝╚══╝
+
+2026-04-29T07:27:37: {"level":30,"time":1777447657640,"pid":132986,"hostname":"silver-oak-os-prod","msg":"Database ready"}
+2026-04-29T07:27:37: {"level":30,"time":1777447657640,"pid":132986,"hostname":"silver-oak-os-prod","msg":"Security: PIN lock enabled, bot starts locked"}
+2026-04-29T07:27:37: {"level":30,"time":1777447657641,"pid":132986,"hostname":"silver-oak-os-prod","minutes":30,"msg":"Security: idle auto-lock enabled"}
+2026-04-29T07:27:37: {"level":30,"time":1777447657641,"pid":132986,"hostname":"silver-oak-os-prod","msg":"Security: emergency kill phrase configured"}
+2026-04-29T07:27:37: {"level":40,"time":1777447657647,"pid":132986,"hostname":"silver-oak-os-prod","agentId":"maestro","err":{"type":"YAMLException$1","message":"bad indentation of a mapping entry (2:117)\n\n 1 |  ... \n 2 |  ... p.silveroak.one). Strangler Fig: workers run on Claudette (178. ...\n-----------------------------------------^\n 3 |  ... \n 4 |  ... ","stack":"YAMLException: bad indentation of a mapping entry (2:117)\n\n 1 |  ... \n 2 |  ... p.silveroak.one). Strangler Fig: workers run on Claudette (178. ...\n-----------------------------------------^\n 3 |  ... \n 4 |  ... \n    at generateError (file:///app/silver-oak-os/node_modules/js-yaml/dist/js-yaml.mjs:1289:10)\n    at throwError (file:///app/silver-oak-os/node_modules/js-yaml/dist/js-yaml.mjs:1293:9)\n    at readBlockMapping (file:///app/silver-oak-os/node_modules/js-yaml/dist/js-yaml.mjs:2278:7)\n    at composeNode (file:///app/silver-oak-os/node_modules/js-yaml/dist/js-yaml.mjs:2537:12)\n    at readDocument (file:///app/silver-oak-os/node_modules/js-yaml/dist/js-yaml.mjs:2721:3)\n    at loadDocuments (file:///app/silver-oak-os/node_modules/js-yaml/dist/js-yaml.mjs:2784:5)\n    at Object.load$1 [as load] (file:///app/silver-oak-os/node_modules/js-yaml/dist/js-yaml.mjs:2810:19)\n    at loadAgentConfig (file:///app/silver-oak-os/src/agent-config.ts:75:20)\n    at initOrchestrator (file:///app/silver-oak-os/src/orchestrator.ts:63:22)\n    at main (file:///app/silver-oak-os/src/index.ts:162:3)\n    at file:///app/silver-oak-os/src/index.ts:432:1\n    at ModuleJob.run (node:internal/modules/esm/module_job:343:25)\n    at processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:665:26)","name":"YAMLException","reason":"bad indentation of a mapping entry","mark":{"name":null,"buffer":"name: Maestro\ndescription: CTO interne Silver Oak OS --- orchestrates 19 workers via MCP Bridge (mcp.silveroak.one). Strangler Fig: workers run on Claudette (178.104.24.23).\n\ntelegram_bot_token_env: MAESTRO_TELEGRAM_TOKEN\n\nmodel: claude-sonnet-4-6\n\nskills_allowlist:\n  - mcp-dispatch\n\nmeet_voice_id: \"nPczCjzI2devNBz1zQrb\"\nmeet_bot_name: \"Maestro\"\n\nmax_workers: 19\nbudget_cap_usd: 3.0\narchitecture: strangler-fig\nworkers_host: claudette-178.104.24.23\n","position":130,"line":1,"column":116,"snippet":" 1 |  ... \n 2 |  ... p.silveroak.one). Strangler Fig: workers run on Claudette (178. ...\n-----------------------------------------^\n 3 |  ... \n 4 |  ... "}},"msg":"Skipping agent — config load failed"}
+2026-04-29T07:27:37: {"level":30,"time":1777447657671,"pid":132986,"hostname":"silver-oak-os-prod","agents":["comms","content","main","ops","research"],"msg":"Orchestrator initialized"}
+2026-04-29T07:27:37: {"level":30,"time":1777447657673,"pid":132986,"hostname":"silver-oak-os-prod","msg":"Memory consolidation enabled (every 30 min)"}
+2026-04-29T07:27:37: {"level":30,"time":1777447657701,"pid":132986,"hostname":"silver-oak-os-prod","msg":"War Room WebSocket proxy active at /ws/warroom"}
+2026-04-29T07:27:37: {"level":40,"time":1777447657704,"pid":132986,"hostname":"silver-oak-os-prod","err":{"type":"Error","message":"EACCES: permission denied, open '/tmp/warroom-agents.json'","stack":"Error: EACCES: permission denied, open '/tmp/warroom-agents.json'\n    at Object.writeFileSync (node:fs:2430:20)\n    at main (file:///app/silver-oak-os/src/index.ts:250:12)\n    at processTicksAndRejections (node:internal/process/task_queues:103:5)","errno":-13,"code":"EACCES","syscall":"open","path":"/tmp/warroom-agents.json"},"msg":"Could not write warroom agent roster"}
+2026-04-29T07:27:37: {"level":40,"time":1777447657859,"pid":132986,"hostname":"silver-oak-os-prod","err":{"type":"Error","message":"EACCES: permission denied, open '/tmp/warroom-debug.log'","stack":"Error: EACCES: permission denied, open '/tmp/warroom-debug.log'\n    at Object.openSync (node:fs:560:18)\n    at main (file:///app/silver-oak-os/src/index.ts:271:29)\n    at processTicksAndRejections (node:internal/process/task_queues:103:5)","errno":-13,"code":"EACCES","syscall":"open","path":"/tmp/warroom-debug.log"},"warroomLogPath":"/tmp/warroom-debug.log","msg":"Could not open warroom log"}
+2026-04-29T07:27:37: {"level":30,"time":1777447657873,"pid":132986,"hostname":"silver-oak-os-prod","agentId":"main","msg":"Scheduler started (scheduled: 60s, mission: 2-30s adaptive)"}
+2026-04-29T07:27:37: {"level":30,"time":1777447657873,"pid":132986,"hostname":"silver-oak-os-prod","msg":"OAuth health check disabled (set OAUTH_HEALTH_ENABLED=true in .env to enable)"}
+2026-04-29T07:27:37: {"level":30,"time":1777447657874,"pid":132986,"hostname":"silver-oak-os-prod","agentId":"main","messenger":"telegram","msg":"Starting ClaudeClaw..."}
+2026-04-29T07:27:37: {"level":30,"time":1777447657894,"pid":132986,"hostname":"silver-oak-os-prod","port":3141,"msg":"Dashboard server running"}
+2026-04-29T07:27:38: {"level":30,"time":1777447658203,"pid":132986,"hostname":"silver-oak-os-prod","count":1,"allowlisted":false,"msg":"Registered 1 skill commands with Telegram"}
+2026-04-29T07:27:38: {"level":30,"time":1777447658503,"pid":132986,"hostname":"silver-oak-os-prod","username":"sok_ops_bot","msg":"ClaudeClaw is running"}
+2026-04-29T07:27:38: 
+  ClaudeClaw online: @sok_ops_bot
+2026-04-29T07:27:38: 
+2026-04-29T07:27:44: {"level":30,"time":1777447664067,"pid":132986,"hostname":"silver-oak-os-prod","port":7860,"ws_url":"ws://localhost:7860","pid":133000,"msg":"War Room server started"}
+2026-04-29T07:39:12: {"level":40,"time":1777448352347,"pid":132986,"hostname":"silver-oak-os-prod","msg":"Security: incorrect PIN attempt"}
+2026-04-29T07:39:12: {"level":30,"time":1777448352347,"pid":132986,"hostname":"silver-oak-os-prod","audit":true,"agentId":"main","chatId":"5566541774","action":"blocked","detail":"Session locked, wrong PIN or message rejected","blocked":true,"msg":"Audit: blocked"}
+2026-04-29T07:39:16: {"level":30,"time":1777448356951,"pid":132986,"hostname":"silver-oak-os-prod","msg":"Security: session unlocked"}
+2026-04-29T07:39:16: {"level":30,"time":1777448356951,"pid":132986,"hostname":"silver-oak-os-prod","audit":true,"agentId":"main","chatId":"5566541774","action":"unlock","detail":"PIN accepted","blocked":false,"msg":"Audit: unlock"}
+2026-04-29T07:39:19: {"level":30,"time":1777448359333,"pid":132986,"hostname":"silver-oak-os-prod","audit":true,"agentId":"main","chatId":"5566541774","action":"message","detail":"hey alex","blocked":false,"msg":"Audit: message"}
+2026-04-29T07:39:19: {"level":30,"time":1777448359333,"pid":132986,"hostname":"silver-oak-os-prod","chatId":5566541774,"messageLen":8,"msg":"Processing message"}
+2026-04-29T07:39:19: {"level":30,"time":1777448359715,"pid":132986,"hostname":"silver-oak-os-prod","sessionId":"new","messageLen":3813,"mcpServers":[],"msg":"Starting agent query"}
+2026-04-29T07:39:24: {"level":30,"time":1777448364829,"pid":132986,"hostname":"silver-oak-os-prod","newSessionId":"b4c401d2-6949-4f02-8816-cbbfe03ddfc8","msg":"Session initialized"}
+2026-04-29T07:39:27: {"level":30,"time":1777448367089,"pid":132986,"hostname":"silver-oak-os-prod","inputTokens":3,"cacheReadTokens":0,"lastCallCacheRead":0,"lastCallInputTokens":3,"costUsd":0.19660250000000004,"didCompact":false,"msg":"Turn usage"}
+2026-04-29T07:39:27: {"level":30,"time":1777448367089,"pid":132986,"hostname":"silver-oak-os-prod","hasResult":true,"subtype":"success","msg":"Agent result received"}
+2026-04-29T07:39:27: {"level":30,"time":1777448367881,"pid":132986,"hostname":"silver-oak-os-prod","newSessionId":"b4c401d2-6949-4f02-8816-cbbfe03ddfc8","msg":"Session saved"}
+2026-04-29T07:39:44: {"level":30,"time":1777448384317,"pid":132986,"hostname":"silver-oak-os-prod","audit":true,"agentId":"main","chatId":"5566541774","action":"message","detail":"Comment vas-tu? Tu vas bien? Présente-toi s'il te plaît.","blocked":false,"msg":"Audit: message"}
+2026-04-29T07:39:44: {"level":30,"time":1777448384318,"pid":132986,"hostname":"silver-oak-os-prod","chatId":5566541774,"messageLen":56,"msg":"Processing message"}
+2026-04-29T07:39:44: {"level":30,"time":1777448384649,"pid":132986,"hostname":"silver-oak-os-prod","sessionId":"b4c401d2-6949-4f02-8816-cbbfe03ddfc8","messageLen":56,"mcpServers":[],"msg":"Starting agent query"}
+2026-04-29T07:39:49: {"level":30,"time":1777448389908,"pid":132986,"hostname":"silver-oak-os-prod","newSessionId":"b4c401d2-6949-4f02-8816-cbbfe03ddfc8","msg":"Session initialized"}
+2026-04-29T07:39:57: {"level":30,"time":1777448397290,"pid":132986,"hostname":"silver-oak-os-prod","inputTokens":3,"cacheReadTokens":0,"lastCallCacheRead":0,"lastCallInputTokens":3,"costUsd":0.20235875,"didCompact":false,"msg":"Turn usage"}
+2026-04-29T07:39:57: {"level":30,"time":1777448397292,"pid":132986,"hostname":"silver-oak-os-prod","hasResult":true,"subtype":"success","msg":"Agent result received"}
+2026-04-29T07:39:58: {"level":30,"time":1777448398141,"pid":132986,"hostname":"silver-oak-os-prod","newSessionId":"b4c401d2-6949-4f02-8816-cbbfe03ddfc8","msg":"Session saved"}
+2026-04-29T07:40:01: {"level":30,"time":1777448401895,"pid":132986,"hostname":"silver-oak-os-prod","chatId":"5566541774","importance":0.9,"memoryId":1,"topics":["Assistant identity","Team roles","Workflow","Delegation"],"summary":"The assistant's name is Alex, serving as Chief of Staff at Silver Oak Staff, and","msg":"Memory ingested"}
+2026-04-29T07:47:51: {"level":30,"time":1777448871986,"pid":132986,"hostname":"silver-oak-os-prod","user":"karim","len":7,"msg":"alex.request"}
+2026-04-29T07:47:53: {"level":30,"time":1777448873738,"pid":132986,"hostname":"silver-oak-os-prod","intent":"unknown","confidence":0,"msg":"alex.intent"}
+2026-04-29T07:47:54: {"level":50,"time":1777448874820,"pid":132986,"hostname":"silver-oak-os-prod","error":"attempt to write a readonly database","msg":"alex.fail"}
+2026-04-29T07:54:38: {"level":30,"time":1777449278229,"pid":139645,"hostname":"silver-oak-os-prod","source":"/app/silver-oak-os/agents/main/CLAUDE.md","msg":"Loaded CLAUDE.md from CLAUDECLAW_CONFIG"}
+2026-04-29T07:54:38: {"level":30,"time":1777449278233,"pid":132986,"hostname":"silver-oak-os-prod","msg":"Shutting down..."}
+2026-04-29T07:54:38: 
+ ██████╗██╗      █████╗ ██╗   ██╗██████╗ ███████╗
+██╔════╝██║     ██╔══██╗██║   ██║██╔══██╗██╔════╝
+██║     ██║     ███████║██║   ██║██║  ██║█████╗
+██║     ██║     ██╔══██║██║   ██║██║  ██║██╔══╝
+╚██████╗███████╗██║  ██║╚██████╔╝██████╔╝███████╗
+ ╚═════╝╚══════╝╚═╝  ╚═╝ ╚═════╝ ╚═════╝╚══════╝
+
+ ██████╗██╗      █████╗ ██╗    ██╗
+██╔════╝██║     ██╔══██╗██║    ██║
+██║     ██║     ███████║██║ █╗ ██║
+██║     ██║     ██╔══██║██║███╗██║
+╚██████╗███████╗██║  ██║╚███╔███╔╝
+ ╚═════╝╚══════╝╚═╝  ╚═╝ ╚══╝╚══╝
+
+2026-04-29T07:54:39: {"level":30,"time":1777449279238,"pid":139645,"hostname":"silver-oak-os-prod","msg":"Database ready"}
+2026-04-29T07:54:39: {"level":30,"time":1777449279239,"pid":139645,"hostname":"silver-oak-os-prod","msg":"Security: PIN lock enabled, bot starts locked"}
+2026-04-29T07:54:39: {"level":30,"time":1777449279239,"pid":139645,"hostname":"silver-oak-os-prod","minutes":30,"msg":"Security: idle auto-lock enabled"}
+2026-04-29T07:54:39: {"level":30,"time":1777449279240,"pid":139645,"hostname":"silver-oak-os-prod","msg":"Security: emergency kill phrase configured"}
+2026-04-29T07:54:39: {"level":40,"time":1777449279245,"pid":139645,"hostname":"silver-oak-os-prod","agentId":"maestro","err":{"type":"YAMLException$1","message":"bad indentation of a mapping entry (2:117)\n\n 1 |  ... \n 2 |  ... p.silveroak.one). Strangler Fig: workers run on Claudette (178. ...\n-----------------------------------------^\n 3 |  ... \n 4 |  ... ","stack":"YAMLException: bad indentation of a mapping entry (2:117)\n\n 1 |  ... \n 2 |  ... p.silveroak.one). Strangler Fig: workers run on Claudette (178. ...\n-----------------------------------------^\n 3 |  ... \n 4 |  ... \n    at generateError (file:///app/silver-oak-os/node_modules/js-yaml/dist/js-yaml.mjs:1289:10)\n    at throwError (file:///app/silver-oak-os/node_modules/js-yaml/dist/js-yaml.mjs:1293:9)\n    at readBlockMapping (file:///app/silver-oak-os/node_modules/js-yaml/dist/js-yaml.mjs:2278:7)\n    at composeNode (file:///app/silver-oak-os/node_modules/js-yaml/dist/js-yaml.mjs:2537:12)\n    at readDocument (file:///app/silver-oak-os/node_modules/js-yaml/dist/js-yaml.mjs:2721:3)\n    at loadDocuments (file:///app/silver-oak-os/node_modules/js-yaml/dist/js-yaml.mjs:2784:5)\n    at Object.load$1 [as load] (file:///app/silver-oak-os/node_modules/js-yaml/dist/js-yaml.mjs:2810:19)\n    at loadAgentConfig (file:///app/silver-oak-os/src/agent-config.ts:75:20)\n    at initOrchestrator (file:///app/silver-oak-os/src/orchestrator.ts:63:22)\n    at main (file:///app/silver-oak-os/src/index.ts:162:3)\n    at file:///app/silver-oak-os/src/index.ts:432:1\n    at ModuleJob.run (node:internal/modules/esm/module_job:343:25)\n    at processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:665:26)","name":"YAMLException","reason":"bad indentation of a mapping entry","mark":{"name":null,"buffer":"name: Maestro\ndescription: CTO interne Silver Oak OS --- orchestrates 19 workers via MCP Bridge (mcp.silveroak.one). Strangler Fig: workers run on Claudette (178.104.24.23).\n\ntelegram_bot_token_env: MAESTRO_TELEGRAM_TOKEN\n\nmodel: claude-sonnet-4-6\n\nskills_allowlist:\n  - mcp-dispatch\n\nmeet_voice_id: \"nPczCjzI2devNBz1zQrb\"\nmeet_bot_name: \"Maestro\"\n\nmax_workers: 19\nbudget_cap_usd: 3.0\narchitecture: strangler-fig\nworkers_host: claudette-178.104.24.23\n","position":130,"line":1,"column":116,"snippet":" 1 |  ... \n 2 |  ... p.silveroak.one). Strangler Fig: workers run on Claudette (178. ...\n-----------------------------------------^\n 3 |  ... \n 4 |  ... "}},"msg":"Skipping agent — config load failed"}
+2026-04-29T07:54:39: {"level":30,"time":1777449279267,"pid":139645,"hostname":"silver-oak-os-prod","agents":["comms","content","main","ops","research"],"msg":"Orchestrator initialized"}
+2026-04-29T07:54:39: {"level":30,"time":1777449279269,"pid":139645,"hostname":"silver-oak-os-prod","msg":"Memory consolidation enabled (every 30 min)"}
+2026-04-29T07:54:39: {"level":30,"time":1777449279297,"pid":139645,"hostname":"silver-oak-os-prod","msg":"War Room WebSocket proxy active at /ws/warroom"}
+2026-04-29T07:54:39: {"level":30,"time":1777449279456,"pid":139645,"hostname":"silver-oak-os-prod","agentId":"main","msg":"Scheduler started (scheduled: 60s, mission: 2-30s adaptive)"}
+2026-04-29T07:54:39: {"level":30,"time":1777449279457,"pid":139645,"hostname":"silver-oak-os-prod","msg":"OAuth health check disabled (set OAUTH_HEALTH_ENABLED=true in .env to enable)"}
+2026-04-29T07:54:39: {"level":30,"time":1777449279457,"pid":139645,"hostname":"silver-oak-os-prod","agentId":"main","messenger":"telegram","msg":"Starting ClaudeClaw..."}
+2026-04-29T07:54:39: {"level":30,"time":1777449279472,"pid":139645,"hostname":"silver-oak-os-prod","port":3141,"msg":"Dashboard server running"}
+2026-04-29T07:54:39: {"level":30,"time":1777449279811,"pid":139645,"hostname":"silver-oak-os-prod","count":1,"allowlisted":false,"msg":"Registered 1 skill commands with Telegram"}
+2026-04-29T07:54:39: {"level":30,"time":1777449279824,"pid":139645,"hostname":"silver-oak-os-prod","username":"sok_ops_bot","msg":"ClaudeClaw is running"}
+2026-04-29T07:54:39: 
+  ClaudeClaw online: @sok_ops_bot
+2026-04-29T07:54:39: 
+2026-04-29T07:54:44: {"level":30,"time":1777449284525,"pid":139645,"hostname":"silver-oak-os-prod","port":7860,"ws_url":"ws://localhost:7860","pid":139659,"msg":"War Room server started"}
+2026-04-29T08:12:06: {"level":30,"time":1777450326947,"pid":139645,"hostname":"silver-oak-os-prod","user":"karim","len":10,"msg":"alex.request"}
+2026-04-29T08:12:07: {"level":30,"time":1777450327957,"pid":139645,"hostname":"silver-oak-os-prod","intent":"unknown","confidence":0,"msg":"alex.intent"}
+2026-04-29T08:12:14: {"level":50,"time":1777450334811,"pid":139645,"hostname":"silver-oak-os-prod","error":"attempt to write a readonly database","msg":"alex.fail"}
+2026-04-29T08:13:27: {"level":30,"time":1777450407286,"pid":143228,"hostname":"silver-oak-os-prod","source":"/app/silver-oak-os/agents/main/CLAUDE.md","msg":"Loaded CLAUDE.md from CLAUDECLAW_CONFIG"}
+2026-04-29T08:13:27: {"level":30,"time":1777450407290,"pid":139645,"hostname":"silver-oak-os-prod","msg":"Shutting down..."}
+2026-04-29T08:13:27: 
+ ██████╗██╗      █████╗ ██╗   ██╗██████╗ ███████╗
+██╔════╝██║     ██╔══██╗██║   ██║██╔══██╗██╔════╝
+██║     ██║     ███████║██║   ██║██║  ██║█████╗
+██║     ██║     ██╔══██║██║   ██║██║  ██║██╔══╝
+╚██████╗███████╗██║  ██║╚██████╔╝██████╔╝███████╗
+ ╚═════╝╚══════╝╚═╝  ╚═╝ ╚═════╝ ╚═════╝╚══════╝
+
+ ██████╗██╗      █████╗ ██╗    ██╗
+██╔════╝██║     ██╔══██╗██║    ██║
+██║     ██║     ███████║██║ █╗ ██║
+██║     ██║     ██╔══██║██║███╗██║
+╚██████╗███████╗██║  ██║╚███╔███╔╝
+ ╚═════╝╚══════╝╚═╝  ╚═╝ ╚══╝╚══╝
+
+2026-04-29T08:13:28: {"level":30,"time":1777450408294,"pid":143228,"hostname":"silver-oak-os-prod","msg":"Database ready"}
+2026-04-29T08:13:28: {"level":30,"time":1777450408295,"pid":143228,"hostname":"silver-oak-os-prod","msg":"Security: PIN lock enabled, bot starts locked"}
+2026-04-29T08:13:28: {"level":30,"time":1777450408295,"pid":143228,"hostname":"silver-oak-os-prod","minutes":30,"msg":"Security: idle auto-lock enabled"}
+2026-04-29T08:13:28: {"level":30,"time":1777450408295,"pid":143228,"hostname":"silver-oak-os-prod","msg":"Security: emergency kill phrase configured"}
+2026-04-29T08:13:28: {"level":40,"time":1777450408301,"pid":143228,"hostname":"silver-oak-os-prod","agentId":"maestro","err":{"type":"YAMLException$1","message":"bad indentation of a mapping entry (2:117)\n\n 1 |  ... \n 2 |  ... p.silveroak.one). Strangler Fig: workers run on Claudette (178. ...\n-----------------------------------------^\n 3 |  ... \n 4 |  ... ","stack":"YAMLException: bad indentation of a mapping entry (2:117)\n\n 1 |  ... \n 2 |  ... p.silveroak.one). Strangler Fig: workers run on Claudette (178. ...\n-----------------------------------------^\n 3 |  ... \n 4 |  ... \n    at generateError (file:///app/silver-oak-os/node_modules/js-yaml/dist/js-yaml.mjs:1289:10)\n    at throwError (file:///app/silver-oak-os/node_modules/js-yaml/dist/js-yaml.mjs:1293:9)\n    at readBlockMapping (file:///app/silver-oak-os/node_modules/js-yaml/dist/js-yaml.mjs:2278:7)\n    at composeNode (file:///app/silver-oak-os/node_modules/js-yaml/dist/js-yaml.mjs:2537:12)\n    at readDocument (file:///app/silver-oak-os/node_modules/js-yaml/dist/js-yaml.mjs:2721:3)\n    at loadDocuments (file:///app/silver-oak-os/node_modules/js-yaml/dist/js-yaml.mjs:2784:5)\n    at Object.load$1 [as load] (file:///app/silver-oak-os/node_modules/js-yaml/dist/js-yaml.mjs:2810:19)\n    at loadAgentConfig (file:///app/silver-oak-os/src/agent-config.ts:75:20)\n    at initOrchestrator (file:///app/silver-oak-os/src/orchestrator.ts:63:22)\n    at main (file:///app/silver-oak-os/src/index.ts:162:3)\n    at file:///app/silver-oak-os/src/index.ts:432:1\n    at ModuleJob.run (node:internal/modules/esm/module_job:343:25)\n    at processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:665:26)","name":"YAMLException","reason":"bad indentation of a mapping entry","mark":{"name":null,"buffer":"name: Maestro\ndescription: CTO interne Silver Oak OS --- orchestrates 19 workers via MCP Bridge (mcp.silveroak.one). Strangler Fig: workers run on Claudette (178.104.24.23).\n\ntelegram_bot_token_env: MAESTRO_TELEGRAM_TOKEN\n\nmodel: claude-sonnet-4-6\n\nskills_allowlist:\n  - mcp-dispatch\n\nmeet_voice_id: \"nPczCjzI2devNBz1zQrb\"\nmeet_bot_name: \"Maestro\"\n\nmax_workers: 19\nbudget_cap_usd: 3.0\narchitecture: strangler-fig\nworkers_host: claudette-178.104.24.23\n","position":130,"line":1,"column":116,"snippet":" 1 |  ... \n 2 |  ... p.silveroak.one). Strangler Fig: workers run on Claudette (178. ...\n-----------------------------------------^\n 3 |  ... \n 4 |  ... "}},"msg":"Skipping agent — config load failed"}
+2026-04-29T08:13:28: {"level":30,"time":1777450408321,"pid":143228,"hostname":"silver-oak-os-prod","agents":["comms","content","main","ops","research"],"msg":"Orchestrator initialized"}
+2026-04-29T08:13:28: {"level":30,"time":1777450408323,"pid":143228,"hostname":"silver-oak-os-prod","msg":"Memory consolidation enabled (every 30 min)"}
+2026-04-29T08:13:28: {"level":30,"time":1777450408349,"pid":143228,"hostname":"silver-oak-os-prod","msg":"War Room WebSocket proxy active at /ws/warroom"}
+2026-04-29T08:13:28: {"level":30,"time":1777450408519,"pid":143228,"hostname":"silver-oak-os-prod","agentId":"main","msg":"Scheduler started (scheduled: 60s, mission: 2-30s adaptive)"}
+2026-04-29T08:13:28: {"level":30,"time":1777450408520,"pid":143228,"hostname":"silver-oak-os-prod","msg":"OAuth health check disabled (set OAUTH_HEALTH_ENABLED=true in .env to enable)"}
+2026-04-29T08:13:28: {"level":30,"time":1777450408520,"pid":143228,"hostname":"silver-oak-os-prod","agentId":"main","messenger":"telegram","msg":"Starting ClaudeClaw..."}
+2026-04-29T08:13:28: {"level":30,"time":1777450408535,"pid":143228,"hostname":"silver-oak-os-prod","port":3141,"msg":"Dashboard server running"}
+2026-04-29T08:13:28: {"level":30,"time":1777450408852,"pid":143228,"hostname":"silver-oak-os-prod","count":1,"allowlisted":false,"msg":"Registered 1 skill commands with Telegram"}
+2026-04-29T08:13:29: {"level":30,"time":1777450409152,"pid":143228,"hostname":"silver-oak-os-prod","username":"sok_ops_bot","msg":"ClaudeClaw is running"}
+2026-04-29T08:13:29: 
+  ClaudeClaw online: @sok_ops_bot
+2026-04-29T08:13:29: 
+2026-04-29T08:13:33: {"level":30,"time":1777450413710,"pid":143228,"hostname":"silver-oak-os-prod","port":7860,"ws_url":"ws://localhost:7860","pid":143242,"msg":"War Room server started"}
+2026-04-29T08:13:43: {"level":30,"time":1777450423362,"pid":143228,"hostname":"silver-oak-os-prod","user":"karim","len":10,"msg":"alex.request"}
+2026-04-29T08:13:44: {"level":30,"time":1777450424214,"pid":143228,"hostname":"silver-oak-os-prod","intent":"unknown","confidence":0,"msg":"alex.intent"}
+2026-04-29T08:13:46: {"level":50,"time":1777450426066,"pid":143228,"hostname":"silver-oak-os-prod","error":"attempt to write a readonly database","msg":"alex.fail"}
+2026-04-29T08:13:46: {"level":30,"time":1777450426089,"pid":143228,"hostname":"silver-oak-os-prod","user":"karim","len":7,"msg":"alex.request"}
+2026-04-29T08:13:47: {"level":30,"time":1777450427000,"pid":143228,"hostname":"silver-oak-os-prod","intent":"unknown","confidence":0,"msg":"alex.intent"}
+2026-04-29T08:13:49: {"level":50,"time":1777450429315,"pid":143228,"hostname":"silver-oak-os-prod","error":"attempt to write a readonly database","msg":"alex.fail"}
+2026-04-29T08:16:24: {"level":30,"time":1777450584120,"pid":145102,"hostname":"silver-oak-os-prod","source":"/app/silver-oak-os/agents/main/CLAUDE.md","msg":"Loaded CLAUDE.md from CLAUDECLAW_CONFIG"}
+2026-04-29T08:16:24: {"level":30,"time":1777450584125,"pid":143228,"hostname":"silver-oak-os-prod","msg":"Shutting down..."}
+2026-04-29T08:16:24: 
+ ██████╗██╗      █████╗ ██╗   ██╗██████╗ ███████╗
+██╔════╝██║     ██╔══██╗██║   ██║██╔══██╗██╔════╝
+██║     ██║     ███████║██║   ██║██║  ██║█████╗
+██║     ██║     ██╔══██║██║   ██║██║  ██║██╔══╝
+╚██████╗███████╗██║  ██║╚██████╔╝██████╔╝███████╗
+ ╚═════╝╚══════╝╚═╝  ╚═╝ ╚═════╝ ╚═════╝╚══════╝
+
+ ██████╗██╗      █████╗ ██╗    ██╗
+██╔════╝██║     ██╔══██╗██║    ██║
+██║     ██║     ███████║██║ █╗ ██║
+██║     ██║     ██╔══██║██║███╗██║
+╚██████╗███████╗██║  ██║╚███╔███╔╝
+ ╚═════╝╚══════╝╚═╝  ╚═╝ ╚══╝╚══╝
+
+2026-04-29T08:16:25: {"level":30,"time":1777450585128,"pid":145102,"hostname":"silver-oak-os-prod","msg":"Database ready"}
+2026-04-29T08:16:25: {"level":30,"time":1777450585128,"pid":145102,"hostname":"silver-oak-os-prod","msg":"Security: PIN lock enabled, bot starts locked"}
+2026-04-29T08:16:25: {"level":30,"time":1777450585128,"pid":145102,"hostname":"silver-oak-os-prod","minutes":30,"msg":"Security: idle auto-lock enabled"}
+2026-04-29T08:16:25: {"level":30,"time":1777450585129,"pid":145102,"hostname":"silver-oak-os-prod","msg":"Security: emergency kill phrase configured"}
+2026-04-29T08:16:25: {"level":40,"time":1777450585135,"pid":145102,"hostname":"silver-oak-os-prod","agentId":"maestro","err":{"type":"YAMLException$1","message":"bad indentation of a mapping entry (2:117)\n\n 1 |  ... \n 2 |  ... p.silveroak.one). Strangler Fig: workers run on Claudette (178. ...\n-----------------------------------------^\n 3 |  ... \n 4 |  ... ","stack":"YAMLException: bad indentation of a mapping entry (2:117)\n\n 1 |  ... \n 2 |  ... p.silveroak.one). Strangler Fig: workers run on Claudette (178. ...\n-----------------------------------------^\n 3 |  ... \n 4 |  ... \n    at generateError (file:///app/silver-oak-os/node_modules/js-yaml/dist/js-yaml.mjs:1289:10)\n    at throwError (file:///app/silver-oak-os/node_modules/js-yaml/dist/js-yaml.mjs:1293:9)\n    at readBlockMapping (file:///app/silver-oak-os/node_modules/js-yaml/dist/js-yaml.mjs:2278:7)\n    at composeNode (file:///app/silver-oak-os/node_modules/js-yaml/dist/js-yaml.mjs:2537:12)\n    at readDocument (file:///app/silver-oak-os/node_modules/js-yaml/dist/js-yaml.mjs:2721:3)\n    at loadDocuments (file:///app/silver-oak-os/node_modules/js-yaml/dist/js-yaml.mjs:2784:5)\n    at Object.load$1 [as load] (file:///app/silver-oak-os/node_modules/js-yaml/dist/js-yaml.mjs:2810:19)\n    at loadAgentConfig (file:///app/silver-oak-os/src/agent-config.ts:75:20)\n    at initOrchestrator (file:///app/silver-oak-os/src/orchestrator.ts:63:22)\n    at main (file:///app/silver-oak-os/src/index.ts:162:3)\n    at file:///app/silver-oak-os/src/index.ts:432:1\n    at ModuleJob.run (node:internal/modules/esm/module_job:343:25)\n    at processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:665:26)","name":"YAMLException","reason":"bad indentation of a mapping entry","mark":{"name":null,"buffer":"name: Maestro\ndescription: CTO interne Silver Oak OS --- orchestrates 19 workers via MCP Bridge (mcp.silveroak.one). Strangler Fig: workers run on Claudette (178.104.24.23).\n\ntelegram_bot_token_env: MAESTRO_TELEGRAM_TOKEN\n\nmodel: claude-sonnet-4-6\n\nskills_allowlist:\n  - mcp-dispatch\n\nmeet_voice_id: \"nPczCjzI2devNBz1zQrb\"\nmeet_bot_name: \"Maestro\"\n\nmax_workers: 19\nbudget_cap_usd: 3.0\narchitecture: strangler-fig\nworkers_host: claudette-178.104.24.23\n","position":130,"line":1,"column":116,"snippet":" 1 |  ... \n 2 |  ... p.silveroak.one). Strangler Fig: workers run on Claudette (178. ...\n-----------------------------------------^\n 3 |  ... \n 4 |  ... "}},"msg":"Skipping agent — config load failed"}
+2026-04-29T08:16:25: {"level":30,"time":1777450585155,"pid":145102,"hostname":"silver-oak-os-prod","agents":["comms","content","main","ops","research"],"msg":"Orchestrator initialized"}
+2026-04-29T08:16:25: {"level":30,"time":1777450585157,"pid":145102,"hostname":"silver-oak-os-prod","msg":"Memory consolidation enabled (every 30 min)"}
+2026-04-29T08:16:25: {"level":30,"time":1777450585182,"pid":145102,"hostname":"silver-oak-os-prod","msg":"War Room WebSocket proxy active at /ws/warroom"}
+2026-04-29T08:16:25: {"level":30,"time":1777450585339,"pid":145102,"hostname":"silver-oak-os-prod","agentId":"main","msg":"Scheduler started (scheduled: 60s, mission: 2-30s adaptive)"}
+2026-04-29T08:16:25: {"level":30,"time":1777450585339,"pid":145102,"hostname":"silver-oak-os-prod","msg":"OAuth health check disabled (set OAUTH_HEALTH_ENABLED=true in .env to enable)"}
+2026-04-29T08:16:25: {"level":30,"time":1777450585340,"pid":145102,"hostname":"silver-oak-os-prod","agentId":"main","messenger":"telegram","msg":"Starting ClaudeClaw..."}
+2026-04-29T08:16:25: {"level":30,"time":1777450585353,"pid":145102,"hostname":"silver-oak-os-prod","port":3141,"msg":"Dashboard server running"}
+2026-04-29T08:16:25: {"level":30,"time":1777450585677,"pid":145102,"hostname":"silver-oak-os-prod","count":1,"allowlisted":false,"msg":"Registered 1 skill commands with Telegram"}
+2026-04-29T08:16:25: {"level":30,"time":1777450585960,"pid":145102,"hostname":"silver-oak-os-prod","username":"sok_ops_bot","msg":"ClaudeClaw is running"}
+2026-04-29T08:16:25: 
+  ClaudeClaw online: @sok_ops_bot
+2026-04-29T08:16:25: 
+2026-04-29T08:16:30: {"level":30,"time":1777450590589,"pid":145102,"hostname":"silver-oak-os-prod","port":7860,"ws_url":"ws://localhost:7860","pid":145119,"msg":"War Room server started"}
+2026-04-29T08:16:33: {"level":30,"time":1777450593741,"pid":145102,"hostname":"silver-oak-os-prod","user":"karim","len":10,"msg":"alex.request"}
+2026-04-29T08:16:34: {"level":30,"time":1777450594772,"pid":145102,"hostname":"silver-oak-os-prod","intent":"simple_question","confidence":0.98,"msg":"alex.intent"}
+2026-04-29T08:16:36: {"level":30,"time":1777450596244,"pid":145102,"hostname":"silver-oak-os-prod","cost":0.0009818000000000001,"intent":"simple_question","mode":"mode_2_api","msg":"alex.direct_reply"}
+2026-04-29T08:16:43: {"level":30,"time":1777450603307,"pid":145102,"hostname":"silver-oak-os-prod","user":"karim","len":5,"msg":"alex.request"}
+2026-04-29T08:16:44: {"level":30,"time":1777450604144,"pid":145102,"hostname":"silver-oak-os-prod","intent":"simple_question","confidence":0.98,"msg":"alex.intent"}
+2026-04-29T08:16:46: {"level":30,"time":1777450606329,"pid":145102,"hostname":"silver-oak-os-prod","cost":0.0009580000000000001,"intent":"simple_question","mode":"mode_2_api","msg":"alex.direct_reply"}
+2026-04-29T08:16:46: {"level":30,"time":1777450606380,"pid":145102,"hostname":"silver-oak-os-prod","user":"karim","len":5,"msg":"alex.request"}
+2026-04-29T08:16:48: {"level":30,"time":1777450608251,"pid":145102,"hostname":"silver-oak-os-prod","intent":"simple_question","confidence":0.95,"msg":"alex.intent"}
+2026-04-29T08:16:50: {"level":30,"time":1777450610338,"pid":145102,"hostname":"silver-oak-os-prod","cost":0.0009889999999999999,"intent":"simple_question","mode":"mode_2_api","msg":"alex.direct_reply"}
+2026-04-29T08:16:50: {"level":30,"time":1777450610392,"pid":145102,"hostname":"silver-oak-os-prod","user":"karim","len":5,"msg":"alex.request"}
+2026-04-29T08:16:51: {"level":30,"time":1777450611322,"pid":145102,"hostname":"silver-oak-os-prod","intent":"simple_question","confidence":0.98,"msg":"alex.intent"}
+2026-04-29T08:16:53: {"level":30,"time":1777450613925,"pid":145102,"hostname":"silver-oak-os-prod","cost":0.00097,"intent":"simple_question","mode":"mode_2_api","msg":"alex.direct_reply"}
+2026-04-29T08:16:53: {"level":30,"time":1777450613975,"pid":145102,"hostname":"silver-oak-os-prod","user":"karim","len":5,"msg":"alex.request"}
+2026-04-29T08:16:54: {"level":30,"time":1777450614882,"pid":145102,"hostname":"silver-oak-os-prod","intent":"simple_question","confidence":0.98,"msg":"alex.intent"}
+2026-04-29T08:16:56: {"level":30,"time":1777450616173,"pid":145102,"hostname":"silver-oak-os-prod","cost":0.000761,"intent":"simple_question","mode":"mode_2_api","msg":"alex.direct_reply"}
+2026-04-29T08:16:56: {"level":30,"time":1777450616221,"pid":145102,"hostname":"silver-oak-os-prod","user":"karim","len":5,"msg":"alex.request"}
+2026-04-29T08:16:57: {"level":30,"time":1777450617437,"pid":145102,"hostname":"silver-oak-os-prod","intent":"simple_question","confidence":0.98,"msg":"alex.intent"}
+2026-04-29T08:16:59: {"level":30,"time":1777450619619,"pid":145102,"hostname":"silver-oak-os-prod","cost":0.000741,"intent":"simple_question","mode":"mode_2_api","msg":"alex.direct_reply"}
+2026-04-29T08:16:59: {"level":30,"time":1777450619672,"pid":145102,"hostname":"silver-oak-os-prod","user":"karim","len":5,"msg":"alex.request"}
+2026-04-29T08:17:00: {"level":30,"time":1777450620746,"pid":145102,"hostname":"silver-oak-os-prod","intent":"simple_question","confidence":0.98,"msg":"alex.intent"}
+2026-04-29T08:17:03: {"level":30,"time":1777450623081,"pid":145102,"hostname":"silver-oak-os-prod","cost":0.000997,"intent":"simple_question","mode":"mode_2_api","msg":"alex.direct_reply"}
+2026-04-29T08:17:53: {"level":30,"time":1777450673186,"pid":146336,"hostname":"silver-oak-os-prod","source":"/app/silver-oak-os/agents/main/CLAUDE.md","msg":"Loaded CLAUDE.md from CLAUDECLAW_CONFIG"}
+2026-04-29T08:17:53: {"level":30,"time":1777450673190,"pid":145102,"hostname":"silver-oak-os-prod","msg":"Shutting down..."}
+2026-04-29T08:17:53: 
+ ██████╗██╗      █████╗ ██╗   ██╗██████╗ ███████╗
+██╔════╝██║     ██╔══██╗██║   ██║██╔══██╗██╔════╝
+██║     ██║     ███████║██║   ██║██║  ██║█████╗
+██║     ██║     ██╔══██║██║   ██║██║  ██║██╔══╝
+╚██████╗███████╗██║  ██║╚██████╔╝██████╔╝███████╗
+ ╚═════╝╚══════╝╚═╝  ╚═╝ ╚═════╝ ╚═════╝╚══════╝
+
+ ██████╗██╗      █████╗ ██╗    ██╗
+██╔════╝██║     ██╔══██╗██║    ██║
+██║     ██║     ███████║██║ █╗ ██║
+██║     ██║     ██╔══██║██║███╗██║
+╚██████╗███████╗██║  ██║╚███╔███╔╝
+ ╚═════╝╚══════╝╚═╝  ╚═╝ ╚══╝╚══╝
+
+2026-04-29T08:17:54: {"level":30,"time":1777450674193,"pid":146336,"hostname":"silver-oak-os-prod","msg":"Database ready"}
+2026-04-29T08:17:54: {"level":30,"time":1777450674193,"pid":146336,"hostname":"silver-oak-os-prod","msg":"Security: PIN lock enabled, bot starts locked"}
+2026-04-29T08:17:54: {"level":30,"time":1777450674193,"pid":146336,"hostname":"silver-oak-os-prod","minutes":30,"msg":"Security: idle auto-lock enabled"}
+2026-04-29T08:17:54: {"level":30,"time":1777450674193,"pid":146336,"hostname":"silver-oak-os-prod","msg":"Security: emergency kill phrase configured"}
+2026-04-29T08:17:54: {"level":40,"time":1777450674200,"pid":146336,"hostname":"silver-oak-os-prod","agentId":"maestro","err":{"type":"YAMLException$1","message":"bad indentation of a mapping entry (2:117)\n\n 1 |  ... \n 2 |  ... p.silveroak.one). Strangler Fig: workers run on Claudette (178. ...\n-----------------------------------------^\n 3 |  ... \n 4 |  ... ","stack":"YAMLException: bad indentation of a mapping entry (2:117)\n\n 1 |  ... \n 2 |  ... p.silveroak.one). Strangler Fig: workers run on Claudette (178. ...\n-----------------------------------------^\n 3 |  ... \n 4 |  ... \n    at generateError (file:///app/silver-oak-os/node_modules/js-yaml/dist/js-yaml.mjs:1289:10)\n    at throwError (file:///app/silver-oak-os/node_modules/js-yaml/dist/js-yaml.mjs:1293:9)\n    at readBlockMapping (file:///app/silver-oak-os/node_modules/js-yaml/dist/js-yaml.mjs:2278:7)\n    at composeNode (file:///app/silver-oak-os/node_modules/js-yaml/dist/js-yaml.mjs:2537:12)\n    at readDocument (file:///app/silver-oak-os/node_modules/js-yaml/dist/js-yaml.mjs:2721:3)\n    at loadDocuments (file:///app/silver-oak-os/node_modules/js-yaml/dist/js-yaml.mjs:2784:5)\n    at Object.load$1 [as load] (file:///app/silver-oak-os/node_modules/js-yaml/dist/js-yaml.mjs:2810:19)\n    at loadAgentConfig (file:///app/silver-oak-os/src/agent-config.ts:75:20)\n    at initOrchestrator (file:///app/silver-oak-os/src/orchestrator.ts:63:22)\n    at main (file:///app/silver-oak-os/src/index.ts:162:3)\n    at file:///app/silver-oak-os/src/index.ts:432:1\n    at ModuleJob.run (node:internal/modules/esm/module_job:343:25)\n    at processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:665:26)","name":"YAMLException","reason":"bad indentation of a mapping entry","mark":{"name":null,"buffer":"name: Maestro\ndescription: CTO interne Silver Oak OS --- orchestrates 19 workers via MCP Bridge (mcp.silveroak.one). Strangler Fig: workers run on Claudette (178.104.24.23).\n\ntelegram_bot_token_env: MAESTRO_TELEGRAM_TOKEN\n\nmodel: claude-sonnet-4-6\n\nskills_allowlist:\n  - mcp-dispatch\n\nmeet_voice_id: \"nPczCjzI2devNBz1zQrb\"\nmeet_bot_name: \"Maestro\"\n\nmax_workers: 19\nbudget_cap_usd: 3.0\narchitecture: strangler-fig\nworkers_host: claudette-178.104.24.23\n","position":130,"line":1,"column":116,"snippet":" 1 |  ... \n 2 |  ... p.silveroak.one). Strangler Fig: workers run on Claudette (178. ...\n-----------------------------------------^\n 3 |  ... \n 4 |  ... "}},"msg":"Skipping agent — config load failed"}
+2026-04-29T08:17:54: {"level":30,"time":1777450674222,"pid":146336,"hostname":"silver-oak-os-prod","agents":["comms","content","main","ops","research"],"msg":"Orchestrator initialized"}
+2026-04-29T08:17:54: {"level":30,"time":1777450674224,"pid":146336,"hostname":"silver-oak-os-prod","msg":"Memory consolidation enabled (every 30 min)"}
+2026-04-29T08:17:54: {"level":30,"time":1777450674253,"pid":146336,"hostname":"silver-oak-os-prod","msg":"War Room WebSocket proxy active at /ws/warroom"}
+2026-04-29T08:17:54: {"level":30,"time":1777450674412,"pid":146336,"hostname":"silver-oak-os-prod","agentId":"main","msg":"Scheduler started (scheduled: 60s, mission: 2-30s adaptive)"}
+2026-04-29T08:17:54: {"level":30,"time":1777450674416,"pid":146336,"hostname":"silver-oak-os-prod","msg":"OAuth health check disabled (set OAUTH_HEALTH_ENABLED=true in .env to enable)"}
+2026-04-29T08:17:54: {"level":30,"time":1777450674416,"pid":146336,"hostname":"silver-oak-os-prod","agentId":"main","messenger":"telegram","msg":"Starting ClaudeClaw..."}
+2026-04-29T08:17:54: {"level":30,"time":1777450674432,"pid":146336,"hostname":"silver-oak-os-prod","port":3141,"msg":"Dashboard server running"}
+2026-04-29T08:17:54: {"level":30,"time":1777450674758,"pid":146336,"hostname":"silver-oak-os-prod","count":1,"allowlisted":false,"msg":"Registered 1 skill commands with Telegram"}
+2026-04-29T08:17:55: {"level":30,"time":1777450675062,"pid":146336,"hostname":"silver-oak-os-prod","username":"sok_ops_bot","msg":"ClaudeClaw is running"}
+2026-04-29T08:17:55: 
+  ClaudeClaw online: @sok_ops_bot
+2026-04-29T08:17:55: 
+2026-04-29T08:17:59: {"level":30,"time":1777450679848,"pid":146336,"hostname":"silver-oak-os-prod","port":7860,"ws_url":"ws://localhost:7860","pid":146372,"msg":"War Room server started"}
+2026-04-29T08:18:19: {"level":30,"time":1777450699570,"pid":146336,"hostname":"silver-oak-os-prod","user":"karim","len":5,"msg":"alex.request"}
+2026-04-29T08:18:32: {"level":30,"time":1777450712989,"pid":146336,"hostname":"silver-oak-os-prod","intent":"simple_question","confidence":0.99,"msg":"alex.intent"}
+2026-04-29T08:18:41: {"level":30,"time":1777450721777,"pid":146336,"hostname":"silver-oak-os-prod","user":"karim","len":5,"msg":"alex.request"}
+2026-04-29T08:18:43: {"level":30,"time":1777450723277,"pid":146336,"hostname":"silver-oak-os-prod","cost":0,"intent":"simple_question","mode":"mode_2_api","msg":"alex.direct_reply"}
+2026-04-29T08:18:55: {"level":30,"time":1777450735428,"pid":146336,"hostname":"silver-oak-os-prod","intent":"simple_question","confidence":0.99,"msg":"alex.intent"}
+2026-04-29T08:19:03: {"level":30,"time":1777450743772,"pid":146336,"hostname":"silver-oak-os-prod","user":"karim","len":5,"msg":"alex.request"}
+2026-04-29T08:19:06: {"level":30,"time":1777450746706,"pid":146336,"hostname":"silver-oak-os-prod","cost":0,"intent":"simple_question","mode":"mode_2_api","msg":"alex.direct_reply"}
+2026-04-29T08:19:12: {"level":30,"time":1777450752983,"pid":146336,"hostname":"silver-oak-os-prod","intent":"simple_question","confidence":0.99,"msg":"alex.intent"}
+2026-04-29T08:19:22: {"level":30,"time":1777450762580,"pid":146336,"hostname":"silver-oak-os-prod","cost":0,"intent":"simple_question","mode":"mode_2_api","msg":"alex.direct_reply"}
+2026-04-29T08:19:22: {"level":30,"time":1777450762633,"pid":146336,"hostname":"silver-oak-os-prod","user":"karim","len":5,"msg":"alex.request"}
+2026-04-29T08:19:38: {"level":30,"time":1777450778945,"pid":146336,"hostname":"silver-oak-os-prod","intent":"simple_question","confidence":0.99,"msg":"alex.intent"}
+2026-04-29T08:19:44: {"level":30,"time":1777450784594,"pid":146336,"hostname":"silver-oak-os-prod","user":"karim","len":5,"msg":"alex.request"}
+2026-04-29T08:19:49: {"level":30,"time":1777450789455,"pid":146336,"hostname":"silver-oak-os-prod","cost":0,"intent":"simple_question","mode":"mode_2_api","msg":"alex.direct_reply"}
+2026-04-29T08:19:53: {"level":30,"time":1777450793575,"pid":146336,"hostname":"silver-oak-os-prod","intent":"simple_question","confidence":0.99,"msg":"alex.intent"}
+2026-04-29T08:20:03: {"level":30,"time":1777450803820,"pid":146336,"hostname":"silver-oak-os-prod","cost":0,"intent":"simple_question","mode":"mode_2_api","msg":"alex.direct_reply"}
+2026-04-29T08:20:03: {"level":30,"time":1777450803881,"pid":146336,"hostname":"silver-oak-os-prod","user":"karim","len":5,"msg":"alex.request"}
+2026-04-29T08:20:13: {"level":30,"time":1777450813278,"pid":146336,"hostname":"silver-oak-os-prod","intent":"simple_question","confidence":0.98,"msg":"alex.intent"}
+2026-04-29T08:20:25: {"level":30,"time":1777450825668,"pid":146336,"hostname":"silver-oak-os-prod","cost":0,"intent":"simple_question","mode":"mode_2_api","msg":"alex.direct_reply"}
+2026-04-29T08:26:57: {"level":30,"time":1777451217478,"pid":146336,"hostname":"silver-oak-os-prod","user":"karim","len":35,"msg":"alex.request"}
+2026-04-29T08:27:09: {"level":30,"time":1777451229097,"pid":146336,"hostname":"silver-oak-os-prod","intent":"simple_question","confidence":0.98,"msg":"alex.intent"}
+2026-04-29T08:27:19: {"level":30,"time":1777451239414,"pid":146336,"hostname":"silver-oak-os-prod","user":"karim","len":35,"msg":"alex.request"}
+2026-04-29T08:27:20: {"level":30,"time":1777451240572,"pid":146336,"hostname":"silver-oak-os-prod","cost":0,"intent":"simple_question","mode":"mode_2_api","msg":"alex.direct_reply"}
+2026-04-29T08:27:29: {"level":30,"time":1777451249488,"pid":146336,"hostname":"silver-oak-os-prod","intent":"simple_question","confidence":0.98,"msg":"alex.intent"}
+2026-04-29T08:27:39: {"level":30,"time":1777451259826,"pid":146336,"hostname":"silver-oak-os-prod","cost":0,"intent":"simple_question","mode":"mode_2_api","msg":"alex.direct_reply"}
+2026-04-29T08:27:41: {"level":30,"time":1777451261915,"pid":146336,"hostname":"silver-oak-os-prod","user":"karim","len":35,"msg":"alex.request"}
+2026-04-29T08:27:52: {"level":30,"time":1777451272362,"pid":146336,"hostname":"silver-oak-os-prod","intent":"simple_question","confidence":0.99,"msg":"alex.intent"}
+2026-04-29T08:28:02: {"level":30,"time":1777451282868,"pid":146336,"hostname":"silver-oak-os-prod","cost":0,"intent":"simple_question","mode":"mode_2_api","msg":"alex.direct_reply"}
+2026-04-29T08:28:04: {"level":30,"time":1777451284288,"pid":146336,"hostname":"silver-oak-os-prod","user":"karim","len":35,"msg":"alex.request"}
+2026-04-29T08:28:14: {"level":30,"time":1777451294612,"pid":146336,"hostname":"silver-oak-os-prod","intent":"simple_question","confidence":0.98,"msg":"alex.intent"}
+2026-04-29T08:28:25: {"level":30,"time":1777451305626,"pid":146336,"hostname":"silver-oak-os-prod","cost":0,"intent":"simple_question","mode":"mode_2_api","msg":"alex.direct_reply"}
+2026-04-29T08:28:26: {"level":30,"time":1777451306710,"pid":146336,"hostname":"silver-oak-os-prod","user":"karim","len":35,"msg":"alex.request"}
+2026-04-29T08:28:37: {"level":30,"time":1777451317183,"pid":146336,"hostname":"silver-oak-os-prod","intent":"simple_question","confidence":0.98,"msg":"alex.intent"}
+2026-04-29T08:28:49: {"level":30,"time":1777451329233,"pid":146336,"hostname":"silver-oak-os-prod","user":"karim","len":35,"msg":"alex.request"}
+2026-04-29T08:28:51: {"level":30,"time":1777451331772,"pid":146336,"hostname":"silver-oak-os-prod","cost":0,"intent":"simple_question","mode":"mode_2_api","msg":"alex.direct_reply"}
+2026-04-29T08:28:59: {"level":30,"time":1777451339387,"pid":146336,"hostname":"silver-oak-os-prod","intent":"simple_question","confidence":0.98,"msg":"alex.intent"}
+2026-04-29T08:29:16: {"level":30,"time":1777451356115,"pid":146336,"hostname":"silver-oak-os-prod","cost":0,"intent":"simple_question","mode":"mode_2_api","msg":"alex.direct_reply"}
+2026-04-29T08:31:50: {"level":30,"time":1777451510391,"pid":146336,"hostname":"silver-oak-os-prod","user":"karim","len":7,"msg":"alex.request"}
+2026-04-29T08:32:00: {"level":30,"time":1777451520970,"pid":146336,"hostname":"silver-oak-os-prod","intent":"simple_question","confidence":0.98,"msg":"alex.intent"}
+2026-04-29T08:32:11: {"level":30,"time":1777451531319,"pid":146336,"hostname":"silver-oak-os-prod","cost":0,"intent":"simple_question","mode":"mode_2_api","msg":"alex.direct_reply"}
+2026-04-29T08:32:16: {"level":30,"time":1777451536804,"pid":146336,"hostname":"silver-oak-os-prod","session":"claude-backend","promptLen":839,"timeout":90000,"pollInterval":5000,"msg":"cli_tmux_dispatcher.send"}
+2026-04-29T08:32:27: {"level":30,"time":1777451547824,"pid":146336,"hostname":"silver-oak-os-prod","session":"claude-backend","model":"claude-sonnet-4.6-tmux","latency":11020,"msg":"cli_tmux_dispatcher.task_done"}
+2026-04-29T08:32:36: {"level":30,"time":1777451556182,"pid":146336,"hostname":"silver-oak-os-prod","session":"claude-backend","promptLen":842,"timeout":90000,"pollInterval":5000,"msg":"cli_tmux_dispatcher.send"}
+2026-04-29T08:33:03: {"level":30,"time":1777451583530,"pid":146336,"hostname":"silver-oak-os-prod","session":"claude-backend","model":"claude-sonnet-4.6-tmux","latency":27348,"msg":"cli_tmux_dispatcher.task_done"}
+2026-04-29T08:34:04: {"level":30,"time":1777451644706,"pid":146336,"hostname":"silver-oak-os-prod","user":"karim","len":7,"msg":"alex.request"}
+2026-04-29T08:34:15: {"level":30,"time":1777451655588,"pid":146336,"hostname":"silver-oak-os-prod","intent":"simple_question","confidence":0.99,"msg":"alex.intent"}
+2026-04-29T08:34:25: {"level":30,"time":1777451665806,"pid":146336,"hostname":"silver-oak-os-prod","cost":0,"intent":"simple_question","mode":"mode_2_api","msg":"alex.direct_reply"}
+2026-04-29T08:34:30: {"level":30,"time":1777451670446,"pid":146336,"hostname":"silver-oak-os-prod","user":"karim","len":7,"msg":"alex.request"}
+2026-04-29T08:34:40: {"level":30,"time":1777451680223,"pid":146336,"hostname":"silver-oak-os-prod","intent":"simple_question","confidence":0.99,"msg":"alex.intent"}
+2026-04-29T08:34:51: {"level":30,"time":1777451691454,"pid":146336,"hostname":"silver-oak-os-prod","cost":0,"intent":"simple_question","mode":"mode_2_api","msg":"alex.direct_reply"}
+2026-04-29T08:34:55: {"level":30,"time":1777451695776,"pid":146336,"hostname":"silver-oak-os-prod","user":"karim","len":7,"msg":"alex.request"}
+2026-04-29T08:35:07: {"level":30,"time":1777451707256,"pid":146336,"hostname":"silver-oak-os-prod","intent":"simple_question","confidence":0.99,"msg":"alex.intent"}
+2026-04-29T08:35:20: {"level":30,"time":1777451720241,"pid":146336,"hostname":"silver-oak-os-prod","cost":0,"intent":"simple_question","mode":"mode_2_api","msg":"alex.direct_reply"}
+2026-04-29T08:44:19: {"level":30,"time":1777452259620,"pid":146336,"hostname":"silver-oak-os-prod","session":"claude-backend","promptLen":839,"timeout":90000,"pollInterval":5000,"msg":"cli_tmux_dispatcher.send"}
+2026-04-29T08:44:30: {"level":30,"time":1777452270637,"pid":146336,"hostname":"silver-oak-os-prod","session":"claude-backend","model":"claude-sonnet-4.6-tmux","latency":11017,"msg":"cli_tmux_dispatcher.task_done"}
+2026-04-29T09:23:59: {"level":30,"time":1777454639760,"pid":163688,"hostname":"silver-oak-os-prod","source":"/app/silver-oak-os/agents/main/CLAUDE.md","msg":"Loaded CLAUDE.md from CLAUDECLAW_CONFIG"}
+2026-04-29T09:23:59: {"level":30,"time":1777454639764,"pid":146336,"hostname":"silver-oak-os-prod","msg":"Shutting down..."}
+2026-04-29T09:23:59: 
+ ██████╗██╗      █████╗ ██╗   ██╗██████╗ ███████╗
+██╔════╝██║     ██╔══██╗██║   ██║██╔══██╗██╔════╝
+██║     ██║     ███████║██║   ██║██║  ██║█████╗
+██║     ██║     ██╔══██║██║   ██║██║  ██║██╔══╝
+╚██████╗███████╗██║  ██║╚██████╔╝██████╔╝███████╗
+ ╚═════╝╚══════╝╚═╝  ╚═╝ ╚═════╝ ╚═════╝╚══════╝
+
+ ██████╗██╗      █████╗ ██╗    ██╗
+██╔════╝██║     ██╔══██╗██║    ██║
+██║     ██║     ███████║██║ █╗ ██║
+██║     ██║     ██╔══██║██║███╗██║
+╚██████╗███████╗██║  ██║╚███╔███╔╝
+ ╚═════╝╚══════╝╚═╝  ╚═╝ ╚══╝╚══╝
+
+2026-04-29T09:24:00: {"level":30,"time":1777454640768,"pid":163688,"hostname":"silver-oak-os-prod","msg":"Database ready"}
+2026-04-29T09:24:00: {"level":30,"time":1777454640769,"pid":163688,"hostname":"silver-oak-os-prod","msg":"Security: PIN lock enabled, bot starts locked"}
+2026-04-29T09:24:00: {"level":30,"time":1777454640769,"pid":163688,"hostname":"silver-oak-os-prod","minutes":30,"msg":"Security: idle auto-lock enabled"}
+2026-04-29T09:24:00: {"level":30,"time":1777454640769,"pid":163688,"hostname":"silver-oak-os-prod","msg":"Security: emergency kill phrase configured"}
+2026-04-29T09:24:00: {"level":40,"time":1777454640775,"pid":163688,"hostname":"silver-oak-os-prod","agentId":"maestro","err":{"type":"YAMLException$1","message":"bad indentation of a mapping entry (2:117)\n\n 1 |  ... \n 2 |  ... p.silveroak.one). Strangler Fig: workers run on Claudette (178. ...\n-----------------------------------------^\n 3 |  ... \n 4 |  ... ","stack":"YAMLException: bad indentation of a mapping entry (2:117)\n\n 1 |  ... \n 2 |  ... p.silveroak.one). Strangler Fig: workers run on Claudette (178. ...\n-----------------------------------------^\n 3 |  ... \n 4 |  ... \n    at generateError (file:///app/silver-oak-os/node_modules/js-yaml/dist/js-yaml.mjs:1289:10)\n    at throwError (file:///app/silver-oak-os/node_modules/js-yaml/dist/js-yaml.mjs:1293:9)\n    at readBlockMapping (file:///app/silver-oak-os/node_modules/js-yaml/dist/js-yaml.mjs:2278:7)\n    at composeNode (file:///app/silver-oak-os/node_modules/js-yaml/dist/js-yaml.mjs:2537:12)\n    at readDocument (file:///app/silver-oak-os/node_modules/js-yaml/dist/js-yaml.mjs:2721:3)\n    at loadDocuments (file:///app/silver-oak-os/node_modules/js-yaml/dist/js-yaml.mjs:2784:5)\n    at Object.load$1 [as load] (file:///app/silver-oak-os/node_modules/js-yaml/dist/js-yaml.mjs:2810:19)\n    at loadAgentConfig (file:///app/silver-oak-os/src/agent-config.ts:75:20)\n    at initOrchestrator (file:///app/silver-oak-os/src/orchestrator.ts:63:22)\n    at main (file:///app/silver-oak-os/src/index.ts:162:3)\n    at file:///app/silver-oak-os/src/index.ts:432:1\n    at ModuleJob.run (node:internal/modules/esm/module_job:343:25)\n    at processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:665:26)","name":"YAMLException","reason":"bad indentation of a mapping entry","mark":{"name":null,"buffer":"name: Maestro\ndescription: CTO interne Silver Oak OS --- orchestrates 19 workers via MCP Bridge (mcp.silveroak.one). Strangler Fig: workers run on Claudette (178.104.24.23).\n\ntelegram_bot_token_env: MAESTRO_TELEGRAM_TOKEN\n\nmodel: claude-sonnet-4-6\n\nskills_allowlist:\n  - mcp-dispatch\n\nmeet_voice_id: \"nPczCjzI2devNBz1zQrb\"\nmeet_bot_name: \"Maestro\"\n\nmax_workers: 19\nbudget_cap_usd: 3.0\narchitecture: strangler-fig\nworkers_host: claudette-178.104.24.23\n","position":130,"line":1,"column":116,"snippet":" 1 |  ... \n 2 |  ... p.silveroak.one). Strangler Fig: workers run on Claudette (178. ...\n-----------------------------------------^\n 3 |  ... \n 4 |  ... "}},"msg":"Skipping agent — config load failed"}
+2026-04-29T09:24:00: {"level":30,"time":1777454640796,"pid":163688,"hostname":"silver-oak-os-prod","agents":["comms","content","main","ops","research"],"msg":"Orchestrator initialized"}
+2026-04-29T09:24:00: {"level":30,"time":1777454640798,"pid":163688,"hostname":"silver-oak-os-prod","msg":"Memory consolidation enabled (every 30 min)"}
+2026-04-29T09:24:00: {"level":30,"time":1777454640824,"pid":163688,"hostname":"silver-oak-os-prod","msg":"War Room WebSocket proxy active at /ws/warroom"}
+2026-04-29T09:24:00: {"level":30,"time":1777454640993,"pid":163688,"hostname":"silver-oak-os-prod","agentId":"main","msg":"Scheduler started (scheduled: 60s, mission: 2-30s adaptive)"}
+2026-04-29T09:24:00: {"level":30,"time":1777454640994,"pid":163688,"hostname":"silver-oak-os-prod","msg":"OAuth health check disabled (set OAUTH_HEALTH_ENABLED=true in .env to enable)"}
+2026-04-29T09:24:00: {"level":30,"time":1777454640994,"pid":163688,"hostname":"silver-oak-os-prod","agentId":"main","messenger":"telegram","msg":"Starting ClaudeClaw..."}
+2026-04-29T09:24:01: {"level":30,"time":1777454641012,"pid":163688,"hostname":"silver-oak-os-prod","port":3141,"msg":"Dashboard server running"}
+2026-04-29T09:24:01: {"level":30,"time":1777454641025,"pid":146336,"hostname":"silver-oak-os-prod","msg":"Shutting down..."}
+2026-04-29T09:24:01: {"level":30,"time":1777454641067,"pid":163688,"hostname":"silver-oak-os-prod","count":1,"allowlisted":false,"msg":"Registered 1 skill commands with Telegram"}
+2026-04-29T09:24:01: {"level":30,"time":1777454641316,"pid":163688,"hostname":"silver-oak-os-prod","username":"sok_ops_bot","msg":"ClaudeClaw is running"}
+2026-04-29T09:24:01: 
+  ClaudeClaw online: @sok_ops_bot
+2026-04-29T09:24:01: 
+2026-04-29T09:24:06: {"level":30,"time":1777454646141,"pid":163688,"hostname":"silver-oak-os-prod","port":7860,"ws_url":"ws://localhost:7860","pid":163747,"msg":"War Room server started"}
+2026-04-29T09:26:20: {"level":30,"time":1777454780048,"pid":163688,"hostname":"silver-oak-os-prod","user":"karim","len":12,"msg":"alex.request"}
+2026-04-29T09:26:44: {"level":30,"time":1777454804059,"pid":163688,"hostname":"silver-oak-os-prod","intent":"simple_question","confidence":0.99,"msg":"alex.intent"}
+2026-04-29T09:26:59: {"level":30,"time":1777454819042,"pid":163688,"hostname":"silver-oak-os-prod","cost":0,"intent":"simple_question","mode":"mode_2_api","msg":"alex.direct_reply"}
+2026-04-29T10:10:03: {"level":30,"time":1777457403684,"pid":163688,"hostname":"silver-oak-os-prod","user":"karim","len":7,"msg":"alex.request"}
+2026-04-29T10:10:13: {"level":30,"time":1777457413549,"pid":163688,"hostname":"silver-oak-os-prod","intent":"simple_question","confidence":0.98,"msg":"alex.intent"}
+2026-04-29T10:10:18: {"level":30,"time":1777457418413,"pid":163688,"hostname":"silver-oak-os-prod","user":"karim","len":12,"msg":"alex.request"}
+2026-04-29T10:10:25: {"level":30,"time":1777457425642,"pid":163688,"hostname":"silver-oak-os-prod","cost":0,"intent":"simple_question","mode":"mode_2_api","msg":"alex.direct_reply"}
+2026-04-29T10:10:27: {"level":30,"time":1777457427932,"pid":163688,"hostname":"silver-oak-os-prod","intent":"simple_question","confidence":0.98,"msg":"alex.intent"}
+2026-04-29T10:10:39: {"level":30,"time":1777457439316,"pid":163688,"hostname":"silver-oak-os-prod","cost":0,"intent":"simple_question","mode":"mode_2_api","msg":"alex.direct_reply"}
+2026-04-29T10:11:31: {"level":30,"time":1777457491233,"pid":171549,"hostname":"silver-oak-os-prod","source":"/app/silver-oak-os/agents/main/CLAUDE.md","msg":"Loaded CLAUDE.md from CLAUDECLAW_CONFIG"}
+2026-04-29T10:11:31: 
+ ██████╗██╗      █████╗ ██╗   ██╗██████╗ ███████╗
+██╔════╝██║     ██╔══██╗██║   ██║██╔══██╗██╔════╝
+██║     ██║     ███████║██║   ██║██║  ██║█████╗
+██║     ██║     ██╔══██║██║   ██║██║  ██║██╔══╝
+╚██████╗███████╗██║  ██║╚██████╔╝██████╔╝███████╗
+ ╚═════╝╚══════╝╚═╝  ╚═╝ ╚═════╝ ╚═════╝╚══════╝
+
+ ██████╗██╗      █████╗ ██╗    ██╗
+██╔════╝██║     ██╔══██╗██║    ██║
+██║     ██║     ███████║██║ █╗ ██║
+██║     ██║     ██╔══██║██║███╗██║
+╚██████╗███████╗██║  ██║╚███╔███╔╝
+ ╚═════╝╚══════╝╚═╝  ╚═╝ ╚══╝╚══╝
+
+2026-04-29T10:11:31: {"level":30,"time":1777457491239,"pid":171549,"hostname":"silver-oak-os-prod","msg":"Database ready"}
+2026-04-29T10:11:31: {"level":30,"time":1777457491239,"pid":171549,"hostname":"silver-oak-os-prod","msg":"Security: PIN lock enabled, bot starts locked"}
+2026-04-29T10:11:31: {"level":30,"time":1777457491239,"pid":171549,"hostname":"silver-oak-os-prod","minutes":30,"msg":"Security: idle auto-lock enabled"}
+2026-04-29T10:11:31: {"level":30,"time":1777457491240,"pid":171549,"hostname":"silver-oak-os-prod","msg":"Security: emergency kill phrase configured"}
+2026-04-29T10:11:31: {"level":40,"time":1777457491245,"pid":171549,"hostname":"silver-oak-os-prod","agentId":"maestro","err":{"type":"YAMLException$1","message":"bad indentation of a mapping entry (2:117)\n\n 1 |  ... \n 2 |  ... p.silveroak.one). Strangler Fig: workers run on Claudette (178. ...\n-----------------------------------------^\n 3 |  ... \n 4 |  ... ","stack":"YAMLException: bad indentation of a mapping entry (2:117)\n\n 1 |  ... \n 2 |  ... p.silveroak.one). Strangler Fig: workers run on Claudette (178. ...\n-----------------------------------------^\n 3 |  ... \n 4 |  ... \n    at generateError (file:///app/silver-oak-os/node_modules/js-yaml/dist/js-yaml.mjs:1289:10)\n    at throwError (file:///app/silver-oak-os/node_modules/js-yaml/dist/js-yaml.mjs:1293:9)\n    at readBlockMapping (file:///app/silver-oak-os/node_modules/js-yaml/dist/js-yaml.mjs:2278:7)\n    at composeNode (file:///app/silver-oak-os/node_modules/js-yaml/dist/js-yaml.mjs:2537:12)\n    at readDocument (file:///app/silver-oak-os/node_modules/js-yaml/dist/js-yaml.mjs:2721:3)\n    at loadDocuments (file:///app/silver-oak-os/node_modules/js-yaml/dist/js-yaml.mjs:2784:5)\n    at Object.load$1 [as load] (file:///app/silver-oak-os/node_modules/js-yaml/dist/js-yaml.mjs:2810:19)\n    at loadAgentConfig (file:///app/silver-oak-os/src/agent-config.ts:75:20)\n    at initOrchestrator (file:///app/silver-oak-os/src/orchestrator.ts:63:22)\n    at main (file:///app/silver-oak-os/src/index.ts:162:3)\n    at file:///app/silver-oak-os/src/index.ts:432:1\n    at ModuleJob.run (node:internal/modules/esm/module_job:343:25)\n    at processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:665:26)","name":"YAMLException","reason":"bad indentation of a mapping entry","mark":{"name":null,"buffer":"name: Maestro\ndescription: CTO interne Silver Oak OS --- orchestrates 19 workers via MCP Bridge (mcp.silveroak.one). Strangler Fig: workers run on Claudette (178.104.24.23).\n\ntelegram_bot_token_env: MAESTRO_TELEGRAM_TOKEN\n\nmodel: claude-sonnet-4-6\n\nskills_allowlist:\n  - mcp-dispatch\n\nmeet_voice_id: \"nPczCjzI2devNBz1zQrb\"\nmeet_bot_name: \"Maestro\"\n\nmax_workers: 19\nbudget_cap_usd: 3.0\narchitecture: strangler-fig\nworkers_host: claudette-178.104.24.23\n","position":130,"line":1,"column":116,"snippet":" 1 |  ... \n 2 |  ... p.silveroak.one). Strangler Fig: workers run on Claudette (178. ...\n-----------------------------------------^\n 3 |  ... \n 4 |  ... "}},"msg":"Skipping agent — config load failed"}
+2026-04-29T10:11:31: {"level":30,"time":1777457491267,"pid":171549,"hostname":"silver-oak-os-prod","agents":["comms","content","main","ops","research"],"msg":"Orchestrator initialized"}
+2026-04-29T10:11:31: {"level":30,"time":1777457491269,"pid":171549,"hostname":"silver-oak-os-prod","msg":"Memory consolidation enabled (every 30 min)"}
+2026-04-29T10:11:31: {"level":30,"time":1777457491296,"pid":171549,"hostname":"silver-oak-os-prod","msg":"War Room WebSocket proxy active at /ws/warroom"}
+2026-04-29T10:11:31: {"level":30,"time":1777457491456,"pid":171549,"hostname":"silver-oak-os-prod","agentId":"main","msg":"Scheduler started (scheduled: 60s, mission: 2-30s adaptive)"}
+2026-04-29T10:11:31: {"level":30,"time":1777457491456,"pid":171549,"hostname":"silver-oak-os-prod","msg":"OAuth health check disabled (set OAUTH_HEALTH_ENABLED=true in .env to enable)"}
+2026-04-29T10:11:31: {"level":30,"time":1777457491456,"pid":171549,"hostname":"silver-oak-os-prod","agentId":"main","messenger":"telegram","msg":"Starting ClaudeClaw..."}
+2026-04-29T10:11:31: {"level":30,"time":1777457491472,"pid":171549,"hostname":"silver-oak-os-prod","port":3141,"msg":"Dashboard server running"}
+2026-04-29T10:11:31: {"level":30,"time":1777457491497,"pid":163688,"hostname":"silver-oak-os-prod","msg":"Shutting down..."}
+2026-04-29T10:11:31: {"level":30,"time":1777457491814,"pid":171549,"hostname":"silver-oak-os-prod","count":1,"allowlisted":false,"msg":"Registered 1 skill commands with Telegram"}
+2026-04-29T10:11:32: {"level":30,"time":1777457492084,"pid":171549,"hostname":"silver-oak-os-prod","username":"sok_ops_bot","msg":"ClaudeClaw is running"}
+2026-04-29T10:11:32: 
+  ClaudeClaw online: @sok_ops_bot
+2026-04-29T10:11:32: 
+2026-04-29T10:11:36: {"level":30,"time":1777457496515,"pid":171549,"hostname":"silver-oak-os-prod","port":7860,"ws_url":"ws://localhost:7860","pid":171562,"msg":"War Room server started"}
+2026-04-29T10:11:41: {"level":30,"time":1777457501815,"pid":171549,"hostname":"silver-oak-os-prod","user":"karim","len":12,"msg":"alex.request"}
+2026-04-29T10:11:41: {"level":30,"time":1777457501816,"pid":171549,"hostname":"silver-oak-os-prod","intent":"simple_question","confidence":0.75,"msg":"alex.intent"}
+2026-04-29T10:11:52: {"level":30,"time":1777457512713,"pid":171549,"hostname":"silver-oak-os-prod","cost":0,"intent":"simple_question","mode":"mode_2_api","msg":"alex.direct_reply"}
+2026-04-29T10:11:58: {"level":30,"time":1777457518955,"pid":171549,"hostname":"silver-oak-os-prod","user":"karim","len":12,"msg":"alex.request"}
+2026-04-29T10:11:58: {"level":30,"time":1777457518955,"pid":171549,"hostname":"silver-oak-os-prod","intent":"simple_question","confidence":0.75,"msg":"alex.intent"}
+2026-04-29T10:12:09: {"level":30,"time":1777457529567,"pid":171549,"hostname":"silver-oak-os-prod","cost":0,"intent":"simple_question","mode":"mode_2_api","msg":"alex.direct_reply"}
+2026-04-29T10:12:22: {"level":30,"time":1777457542577,"pid":171549,"hostname":"silver-oak-os-prod","user":"karim","len":42,"msg":"alex.request"}
+2026-04-29T10:12:27: {"level":30,"time":1777457547578,"pid":171549,"hostname":"silver-oak-os-prod","intent":"simple_question","confidence":0.5,"msg":"alex.intent"}
+2026-04-29T10:12:39: {"level":30,"time":1777457559235,"pid":171549,"hostname":"silver-oak-os-prod","cost":0,"intent":"simple_question","mode":"mode_2_api","msg":"alex.direct_reply"}
+2026-04-29T10:14:37: {"level":30,"time":1777457677631,"pid":173547,"hostname":"silver-oak-os-prod","source":"/app/silver-oak-os/agents/main/CLAUDE.md","msg":"Loaded CLAUDE.md from CLAUDECLAW_CONFIG"}
+2026-04-29T10:14:37: 
+ ██████╗██╗      █████╗ ██╗   ██╗██████╗ ███████╗
+██╔════╝██║     ██╔══██╗██║   ██║██╔══██╗██╔════╝
+██║     ██║     ███████║██║   ██║██║  ██║█████╗
+██║     ██║     ██╔══██║██║   ██║██║  ██║██╔══╝
+╚██████╗███████╗██║  ██║╚██████╔╝██████╔╝███████╗
+ ╚═════╝╚══════╝╚═╝  ╚═╝ ╚═════╝ ╚═════╝╚══════╝
+
+ ██████╗██╗      █████╗ ██╗    ██╗
+██╔════╝██║     ██╔══██╗██║    ██║
+██║     ██║     ███████║██║ █╗ ██║
+██║     ██║     ██╔══██║██║███╗██║
+╚██████╗███████╗██║  ██║╚███╔███╔╝
+ ╚═════╝╚══════╝╚═╝  ╚═╝ ╚══╝╚══╝
+
+2026-04-29T10:14:37: {"level":30,"time":1777457677636,"pid":173547,"hostname":"silver-oak-os-prod","msg":"Database ready"}
+2026-04-29T10:14:37: {"level":30,"time":1777457677637,"pid":173547,"hostname":"silver-oak-os-prod","msg":"Security: PIN lock enabled, bot starts locked"}
+2026-04-29T10:14:37: {"level":30,"time":1777457677637,"pid":173547,"hostname":"silver-oak-os-prod","minutes":30,"msg":"Security: idle auto-lock enabled"}
+2026-04-29T10:14:37: {"level":30,"time":1777457677637,"pid":173547,"hostname":"silver-oak-os-prod","msg":"Security: emergency kill phrase configured"}
+2026-04-29T10:14:37: {"level":40,"time":1777457677643,"pid":173547,"hostname":"silver-oak-os-prod","agentId":"maestro","err":{"type":"YAMLException$1","message":"bad indentation of a mapping entry (2:117)\n\n 1 |  ... \n 2 |  ... p.silveroak.one). Strangler Fig: workers run on Claudette (178. ...\n-----------------------------------------^\n 3 |  ... \n 4 |  ... ","stack":"YAMLException: bad indentation of a mapping entry (2:117)\n\n 1 |  ... \n 2 |  ... p.silveroak.one). Strangler Fig: workers run on Claudette (178. ...\n-----------------------------------------^\n 3 |  ... \n 4 |  ... \n    at generateError (file:///app/silver-oak-os/node_modules/js-yaml/dist/js-yaml.mjs:1289:10)\n    at throwError (file:///app/silver-oak-os/node_modules/js-yaml/dist/js-yaml.mjs:1293:9)\n    at readBlockMapping (file:///app/silver-oak-os/node_modules/js-yaml/dist/js-yaml.mjs:2278:7)\n    at composeNode (file:///app/silver-oak-os/node_modules/js-yaml/dist/js-yaml.mjs:2537:12)\n    at readDocument (file:///app/silver-oak-os/node_modules/js-yaml/dist/js-yaml.mjs:2721:3)\n    at loadDocuments (file:///app/silver-oak-os/node_modules/js-yaml/dist/js-yaml.mjs:2784:5)\n    at Object.load$1 [as load] (file:///app/silver-oak-os/node_modules/js-yaml/dist/js-yaml.mjs:2810:19)\n    at loadAgentConfig (file:///app/silver-oak-os/src/agent-config.ts:75:20)\n    at initOrchestrator (file:///app/silver-oak-os/src/orchestrator.ts:63:22)\n    at main (file:///app/silver-oak-os/src/index.ts:162:3)\n    at file:///app/silver-oak-os/src/index.ts:432:1\n    at ModuleJob.run (node:internal/modules/esm/module_job:343:25)\n    at processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:665:26)","name":"YAMLException","reason":"bad indentation of a mapping entry","mark":{"name":null,"buffer":"name: Maestro\ndescription: CTO interne Silver Oak OS --- orchestrates 19 workers via MCP Bridge (mcp.silveroak.one). Strangler Fig: workers run on Claudette (178.104.24.23).\n\ntelegram_bot_token_env: MAESTRO_TELEGRAM_TOKEN\n\nmodel: claude-sonnet-4-6\n\nskills_allowlist:\n  - mcp-dispatch\n\nmeet_voice_id: \"nPczCjzI2devNBz1zQrb\"\nmeet_bot_name: \"Maestro\"\n\nmax_workers: 19\nbudget_cap_usd: 3.0\narchitecture: strangler-fig\nworkers_host: claudette-178.104.24.23\n","position":130,"line":1,"column":116,"snippet":" 1 |  ... \n 2 |  ... p.silveroak.one). Strangler Fig: workers run on Claudette (178. ...\n-----------------------------------------^\n 3 |  ... \n 4 |  ... "}},"msg":"Skipping agent — config load failed"}
+2026-04-29T10:14:37: {"level":30,"time":1777457677664,"pid":173547,"hostname":"silver-oak-os-prod","agents":["comms","content","main","ops","research"],"msg":"Orchestrator initialized"}
+2026-04-29T10:14:37: {"level":30,"time":1777457677666,"pid":173547,"hostname":"silver-oak-os-prod","msg":"Memory consolidation enabled (every 30 min)"}
+2026-04-29T10:14:37: {"level":30,"time":1777457677691,"pid":173547,"hostname":"silver-oak-os-prod","msg":"War Room WebSocket proxy active at /ws/warroom"}
+2026-04-29T10:14:37: {"level":30,"time":1777457677854,"pid":173547,"hostname":"silver-oak-os-prod","agentId":"main","msg":"Scheduler started (scheduled: 60s, mission: 2-30s adaptive)"}
+2026-04-29T10:14:37: {"level":30,"time":1777457677855,"pid":173547,"hostname":"silver-oak-os-prod","msg":"OAuth health check disabled (set OAUTH_HEALTH_ENABLED=true in .env to enable)"}
+2026-04-29T10:14:37: {"level":30,"time":1777457677855,"pid":173547,"hostname":"silver-oak-os-prod","agentId":"main","messenger":"telegram","msg":"Starting ClaudeClaw..."}
+2026-04-29T10:14:37: {"level":30,"time":1777457677870,"pid":173547,"hostname":"silver-oak-os-prod","port":3141,"msg":"Dashboard server running"}
+2026-04-29T10:14:37: {"level":30,"time":1777457677893,"pid":171549,"hostname":"silver-oak-os-prod","msg":"Shutting down..."}
+2026-04-29T10:14:38: {"level":30,"time":1777457678212,"pid":173547,"hostname":"silver-oak-os-prod","count":1,"allowlisted":false,"msg":"Registered 1 skill commands with Telegram"}
+2026-04-29T10:14:38: {"level":30,"time":1777457678471,"pid":173547,"hostname":"silver-oak-os-prod","username":"sok_ops_bot","msg":"ClaudeClaw is running"}
+2026-04-29T10:14:38: 
+  ClaudeClaw online: @sok_ops_bot
+2026-04-29T10:14:38: 
+2026-04-29T10:14:43: {"level":30,"time":1777457683057,"pid":173547,"hostname":"silver-oak-os-prod","port":7860,"ws_url":"ws://localhost:7860","pid":173560,"msg":"War Room server started"}
+2026-04-29T10:14:53: {"level":30,"time":1777457693228,"pid":173547,"hostname":"silver-oak-os-prod","user":"karim","len":7,"msg":"alex.request"}
+2026-04-29T10:14:53: {"level":30,"time":1777457693230,"pid":173547,"hostname":"silver-oak-os-prod","intent":"simple_question","confidence":0.95,"msg":"alex.intent"}
+2026-04-29T10:15:03: {"level":30,"time":1777457703693,"pid":173547,"hostname":"silver-oak-os-prod","cost":0,"intent":"simple_question","mode":"mode_2_api","msg":"alex.direct_reply"}
+2026-04-29T10:24:28: {"level":30,"time":1777458268978,"pid":173547,"hostname":"silver-oak-os-prod","user":"karim","len":7,"msg":"alex.request"}
+2026-04-29T10:24:28: {"level":30,"time":1777458268978,"pid":173547,"hostname":"silver-oak-os-prod","intent":"simple_question","confidence":0.95,"msg":"alex.intent"}
+2026-04-29T10:24:38: {"level":30,"time":1777458278778,"pid":173547,"hostname":"silver-oak-os-prod","cost":0,"intent":"simple_question","mode":"mode_2_api","msg":"alex.direct_reply"}
+2026-04-29T10:31:21: {"level":30,"time":1777458681675,"pid":173547,"hostname":"silver-oak-os-prod","user":"karim","len":13,"msg":"alex.request"}
+2026-04-29T10:31:21: {"level":30,"time":1777458681676,"pid":173547,"hostname":"silver-oak-os-prod","intent":"simple_question","confidence":0.75,"msg":"alex.intent"}
+2026-04-29T10:31:31: {"level":30,"time":1777458691977,"pid":173547,"hostname":"silver-oak-os-prod","cost":0,"intent":"simple_question","mode":"mode_2_api","msg":"alex.direct_reply"}
+2026-04-29T10:31:44: {"level":30,"time":1777458704851,"pid":173547,"hostname":"silver-oak-os-prod","user":"karim","len":108,"msg":"alex.request"}
+2026-04-29T10:31:49: {"level":30,"time":1777458709854,"pid":173547,"hostname":"silver-oak-os-prod","intent":"simple_question","confidence":0.5,"msg":"alex.intent"}
+2026-04-29T10:32:08: {"level":30,"time":1777458728630,"pid":173547,"hostname":"silver-oak-os-prod","cost":0,"intent":"simple_question","mode":"mode_2_api","msg":"alex.direct_reply"}
+2026-04-29T10:36:32: {"level":30,"time":1777458992197,"pid":173547,"hostname":"silver-oak-os-prod","user":"karim","len":7,"msg":"alex.request"}
+2026-04-29T10:36:32: {"level":30,"time":1777458992197,"pid":173547,"hostname":"silver-oak-os-prod","intent":"simple_question","confidence":0.95,"msg":"alex.intent"}
+2026-04-29T10:36:42: {"level":30,"time":1777459002815,"pid":173547,"hostname":"silver-oak-os-prod","cost":0,"intent":"simple_question","mode":"mode_2_api","msg":"alex.direct_reply"}
+2026-04-29T10:36:47: {"level":30,"time":1777459007437,"pid":173547,"hostname":"silver-oak-os-prod","user":"karim","len":49,"msg":"alex.request"}
+2026-04-29T10:36:52: {"level":30,"time":1777459012437,"pid":173547,"hostname":"silver-oak-os-prod","intent":"simple_question","confidence":0.5,"msg":"alex.intent"}
+2026-04-29T10:37:10: {"level":30,"time":1777459030787,"pid":173547,"hostname":"silver-oak-os-prod","cost":0,"intent":"simple_question","mode":"mode_2_api","msg":"alex.direct_reply"}
+2026-04-29T10:37:14: {"level":30,"time":1777459034965,"pid":173547,"hostname":"silver-oak-os-prod","user":"karim","len":45,"msg":"alex.request"}
+2026-04-29T10:37:19: {"level":30,"time":1777459039965,"pid":173547,"hostname":"silver-oak-os-prod","intent":"simple_question","confidence":0.5,"msg":"alex.intent"}
+2026-04-29T10:37:36: {"level":30,"time":1777459056199,"pid":173547,"hostname":"silver-oak-os-prod","cost":0,"intent":"simple_question","mode":"mode_2_api","msg":"alex.direct_reply"}
+2026-04-29T10:37:41: {"level":30,"time":1777459061230,"pid":173547,"hostname":"silver-oak-os-prod","user":"karim","len":36,"msg":"alex.request"}
+2026-04-29T10:37:46: {"level":30,"time":1777459066230,"pid":173547,"hostname":"silver-oak-os-prod","intent":"simple_question","confidence":0.5,"msg":"alex.intent"}
+2026-04-29T10:38:03: {"level":30,"time":1777459083382,"pid":173547,"hostname":"silver-oak-os-prod","cost":0,"intent":"simple_question","mode":"mode_2_api","msg":"alex.direct_reply"}
+2026-04-29T10:38:07: {"level":30,"time":1777459087275,"pid":173547,"hostname":"silver-oak-os-prod","user":"karim","len":29,"msg":"alex.request"}
+2026-04-29T10:38:07: {"level":30,"time":1777459087276,"pid":173547,"hostname":"silver-oak-os-prod","intent":"simple_question","confidence":0.75,"msg":"alex.intent"}
+2026-04-29T10:38:24: {"level":30,"time":1777459104859,"pid":173547,"hostname":"silver-oak-os-prod","cost":0,"intent":"simple_question","mode":"mode_2_api","msg":"alex.direct_reply"}
+2026-04-29T10:38:28: {"level":30,"time":1777459108654,"pid":173547,"hostname":"silver-oak-os-prod","user":"karim","len":12,"msg":"alex.request"}
+2026-04-29T10:38:28: {"level":30,"time":1777459108654,"pid":173547,"hostname":"silver-oak-os-prod","intent":"simple_question","confidence":0.75,"msg":"alex.intent"}
+2026-04-29T10:38:41: {"level":30,"time":1777459121507,"pid":173547,"hostname":"silver-oak-os-prod","cost":0,"intent":"simple_question","mode":"mode_2_api","msg":"alex.direct_reply"}
+2026-04-29T10:38:45: {"level":30,"time":1777459125664,"pid":173547,"hostname":"silver-oak-os-prod","user":"karim","len":35,"msg":"alex.request"}
+2026-04-29T10:38:50: {"level":30,"time":1777459130665,"pid":173547,"hostname":"silver-oak-os-prod","intent":"simple_question","confidence":0.5,"msg":"alex.intent"}
+2026-04-29T10:39:04: {"level":30,"time":1777459144828,"pid":173547,"hostname":"silver-oak-os-prod","cost":0,"intent":"simple_question","mode":"mode_2_api","msg":"alex.direct_reply"}
+2026-04-29T10:50:29: {"level":30,"time":1777459829270,"pid":173547,"hostname":"silver-oak-os-prod","msg":"Shutting down..."}
+You have triggered an unhandledRejection, you may have forgotten to catch a Promise rejection:
+HttpError: Network request for 'getUpdates' failed!
+    at /app/silver-oak-os/node_modules/grammy/out/core/error.js:85:15
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at ApiClient.call (/app/silver-oak-os/node_modules/grammy/out/core/client.js:54:29)
+    at ApiClient.callApi (/app/silver-oak-os/node_modules/grammy/out/core/client.js:93:22)
+    at Bot.stop (/app/silver-oak-os/node_modules/grammy/out/bot.js:343:13)
+    at shutdown (file:///app/silver-oak-os/src/index.ts:379:14)
+2026-04-29T10:50:53: {"level":30,"time":1777459853595,"pid":187098,"hostname":"silver-oak-os-prod","source":"/app/silver-oak-os/agents/main/CLAUDE.md","msg":"Loaded CLAUDE.md from CLAUDECLAW_CONFIG"}
+2026-04-29T10:50:55: {"level":30,"time":1777459855617,"pid":173547,"hostname":"silver-oak-os-prod","msg":"Shutting down..."}
+2026-04-29T10:50:59: {"level":30,"time":1777459859648,"pid":187114,"hostname":"silver-oak-os-prod","source":"/app/silver-oak-os/agents/main/CLAUDE.md","msg":"Loaded CLAUDE.md from CLAUDECLAW_CONFIG"}
+2026-04-29T10:50:59: 
+ ██████╗██╗      █████╗ ██╗   ██╗██████╗ ███████╗
+██╔════╝██║     ██╔══██╗██║   ██║██╔══██╗██╔════╝
+██║     ██║     ███████║██║   ██║██║  ██║█████╗
+██║     ██║     ██╔══██║██║   ██║██║  ██║██╔══╝
+╚██████╗███████╗██║  ██║╚██████╔╝██████╔╝███████╗
+ ╚═════╝╚══════╝╚═╝  ╚═╝ ╚═════╝ ╚═════╝╚══════╝
+
+ ██████╗██╗      █████╗ ██╗    ██╗
+██╔════╝██║     ██╔══██╗██║    ██║
+██║     ██║     ███████║██║ █╗ ██║
+██║     ██║     ██╔══██║██║███╗██║
+╚██████╗███████╗██║  ██║╚███╔███╔╝
+ ╚═════╝╚══════╝╚═╝  ╚═╝ ╚══╝╚══╝
+
+2026-04-29T10:50:59: {"level":30,"time":1777459859653,"pid":187114,"hostname":"silver-oak-os-prod","msg":"Database ready"}
+2026-04-29T10:50:59: {"level":30,"time":1777459859654,"pid":187114,"hostname":"silver-oak-os-prod","msg":"Security: PIN lock enabled, bot starts locked"}
+2026-04-29T10:50:59: {"level":30,"time":1777459859654,"pid":187114,"hostname":"silver-oak-os-prod","minutes":30,"msg":"Security: idle auto-lock enabled"}
+2026-04-29T10:50:59: {"level":30,"time":1777459859654,"pid":187114,"hostname":"silver-oak-os-prod","msg":"Security: emergency kill phrase configured"}
+2026-04-29T10:50:59: {"level":40,"time":1777459859660,"pid":187114,"hostname":"silver-oak-os-prod","agentId":"maestro","err":{"type":"YAMLException$1","message":"bad indentation of a mapping entry (2:117)\n\n 1 |  ... \n 2 |  ... p.silveroak.one). Strangler Fig: workers run on Claudette (178. ...\n-----------------------------------------^\n 3 |  ... \n 4 |  ... ","stack":"YAMLException: bad indentation of a mapping entry (2:117)\n\n 1 |  ... \n 2 |  ... p.silveroak.one). Strangler Fig: workers run on Claudette (178. ...\n-----------------------------------------^\n 3 |  ... \n 4 |  ... \n    at generateError (file:///app/silver-oak-os/node_modules/js-yaml/dist/js-yaml.mjs:1289:10)\n    at throwError (file:///app/silver-oak-os/node_modules/js-yaml/dist/js-yaml.mjs:1293:9)\n    at readBlockMapping (file:///app/silver-oak-os/node_modules/js-yaml/dist/js-yaml.mjs:2278:7)\n    at composeNode (file:///app/silver-oak-os/node_modules/js-yaml/dist/js-yaml.mjs:2537:12)\n    at readDocument (file:///app/silver-oak-os/node_modules/js-yaml/dist/js-yaml.mjs:2721:3)\n    at loadDocuments (file:///app/silver-oak-os/node_modules/js-yaml/dist/js-yaml.mjs:2784:5)\n    at Object.load$1 [as load] (file:///app/silver-oak-os/node_modules/js-yaml/dist/js-yaml.mjs:2810:19)\n    at loadAgentConfig (file:///app/silver-oak-os/src/agent-config.ts:75:20)\n    at initOrchestrator (file:///app/silver-oak-os/src/orchestrator.ts:63:22)\n    at main (file:///app/silver-oak-os/src/index.ts:162:3)\n    at file:///app/silver-oak-os/src/index.ts:432:1\n    at ModuleJob.run (node:internal/modules/esm/module_job:343:25)\n    at processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:665:26)","name":"YAMLException","reason":"bad indentation of a mapping entry","mark":{"name":null,"buffer":"name: Maestro\ndescription: CTO interne Silver Oak OS --- orchestrates 19 workers via MCP Bridge (mcp.silveroak.one). Strangler Fig: workers run on Claudette (178.104.24.23).\n\ntelegram_bot_token_env: MAESTRO_TELEGRAM_TOKEN\n\nmodel: claude-sonnet-4-6\n\nskills_allowlist:\n  - mcp-dispatch\n\nmeet_voice_id: \"nPczCjzI2devNBz1zQrb\"\nmeet_bot_name: \"Maestro\"\n\nmax_workers: 19\nbudget_cap_usd: 3.0\narchitecture: strangler-fig\nworkers_host: claudette-178.104.24.23\n","position":130,"line":1,"column":116,"snippet":" 1 |  ... \n 2 |  ... p.silveroak.one). Strangler Fig: workers run on Claudette (178. ...\n-----------------------------------------^\n 3 |  ... \n 4 |  ... "}},"msg":"Skipping agent — config load failed"}
+2026-04-29T10:50:59: {"level":30,"time":1777459859681,"pid":187114,"hostname":"silver-oak-os-prod","agents":["comms","content","main","ops","research"],"msg":"Orchestrator initialized"}
+2026-04-29T10:50:59: {"level":30,"time":1777459859683,"pid":187114,"hostname":"silver-oak-os-prod","msg":"Memory consolidation enabled (every 30 min)"}
+2026-04-29T10:50:59: {"level":30,"time":1777459859709,"pid":187114,"hostname":"silver-oak-os-prod","msg":"War Room WebSocket proxy active at /ws/warroom"}
+2026-04-29T10:50:59: {"level":30,"time":1777459859868,"pid":187114,"hostname":"silver-oak-os-prod","agentId":"main","msg":"Scheduler started (scheduled: 60s, mission: 2-30s adaptive)"}
+2026-04-29T10:50:59: {"level":30,"time":1777459859869,"pid":187114,"hostname":"silver-oak-os-prod","msg":"OAuth health check disabled (set OAUTH_HEALTH_ENABLED=true in .env to enable)"}
+2026-04-29T10:50:59: {"level":30,"time":1777459859869,"pid":187114,"hostname":"silver-oak-os-prod","agentId":"main","messenger":"telegram","msg":"Starting ClaudeClaw..."}
+2026-04-29T10:50:59: {"level":30,"time":1777459859883,"pid":187114,"hostname":"silver-oak-os-prod","port":3141,"msg":"Dashboard server running"}
+2026-04-29T10:51:00: {"level":30,"time":1777459860181,"pid":187114,"hostname":"silver-oak-os-prod","count":1,"allowlisted":false,"msg":"Registered 1 skill commands with Telegram"}
+2026-04-29T10:51:00: {"level":30,"time":1777459860222,"pid":187114,"hostname":"silver-oak-os-prod","username":"sok_ops_bot","msg":"ClaudeClaw is running"}
+2026-04-29T10:51:00: 
+  ClaudeClaw online: @sok_ops_bot
+2026-04-29T10:51:00: 
+2026-04-29T10:51:05: {"level":30,"time":1777459865042,"pid":187114,"hostname":"silver-oak-os-prod","port":7860,"ws_url":"ws://localhost:7860","pid":187218,"msg":"War Room server started"}
+2026-04-29T10:51:07: {"level":30,"time":1777459867697,"pid":187114,"hostname":"silver-oak-os-prod","user":"karim","len":35,"msg":"alex.request"}
+2026-04-29T10:51:12: {"level":30,"time":1777459872700,"pid":187114,"hostname":"silver-oak-os-prod","intent":"simple_question","confidence":0.5,"msg":"alex.intent"}
+2026-04-29T10:51:36: {"level":30,"time":1777459896649,"pid":187114,"hostname":"silver-oak-os-prod","cost":0,"intent":"simple_question","mode":"mode_2_api","msg":"alex.direct_reply"}
+2026-04-29T13:07:46: {"level":30,"time":1777468066877,"pid":187114,"hostname":"silver-oak-os-prod","messageLen":4,"source":"dashboard","msg":"Processing dashboard message"}
+2026-04-29T13:07:47: {"level":30,"time":1777468067247,"pid":187114,"hostname":"silver-oak-os-prod","sessionId":"b4c401d2-6949-4f02-8816-cbbfe03ddfc8","messageLen":403,"mcpServers":[],"msg":"Starting agent query"}
+2026-04-29T13:07:52: {"level":30,"time":1777468072533,"pid":187114,"hostname":"silver-oak-os-prod","newSessionId":"b4c401d2-6949-4f02-8816-cbbfe03ddfc8","msg":"Session initialized"}
+2026-04-29T13:07:57: {"level":30,"time":1777468077847,"pid":187114,"hostname":"silver-oak-os-prod","inputTokens":3,"cacheReadTokens":0,"lastCallCacheRead":0,"lastCallInputTokens":3,"costUsd":0.20787124999999998,"didCompact":false,"msg":"Turn usage"}
+2026-04-29T13:07:57: {"level":30,"time":1777468077847,"pid":187114,"hostname":"silver-oak-os-prod","hasResult":true,"subtype":"success","msg":"Agent result received"}
+2026-04-29T13:08:02: {"level":30,"time":1777468082634,"pid":187114,"hostname":"silver-oak-os-prod","messageLen":15,"source":"dashboard","msg":"Processing dashboard message"}
+2026-04-29T13:08:02: {"level":30,"time":1777468082906,"pid":187114,"hostname":"silver-oak-os-prod","sessionId":"b4c401d2-6949-4f02-8816-cbbfe03ddfc8","messageLen":414,"mcpServers":[],"msg":"Starting agent query"}
+2026-04-29T13:08:08: {"level":30,"time":1777468088411,"pid":187114,"hostname":"silver-oak-os-prod","newSessionId":"b4c401d2-6949-4f02-8816-cbbfe03ddfc8","msg":"Session initialized"}
+2026-04-29T13:08:10: {"level":30,"time":1777468090977,"pid":187114,"hostname":"silver-oak-os-prod","inputTokens":3,"cacheReadTokens":0,"lastCallCacheRead":0,"lastCallInputTokens":3,"costUsd":0.20809625,"didCompact":false,"msg":"Turn usage"}
+2026-04-29T13:08:10: {"level":30,"time":1777468090977,"pid":187114,"hostname":"silver-oak-os-prod","hasResult":true,"subtype":"success","msg":"Agent result received"}
+2026-04-29T13:23:20: {"level":30,"time":1777469000164,"pid":187114,"hostname":"silver-oak-os-prod","user":"karim","len":13,"msg":"alex.request"}
+2026-04-29T13:23:25: {"level":30,"time":1777469005167,"pid":187114,"hostname":"silver-oak-os-prod","intent":"simple_question","confidence":0.5,"msg":"alex.intent"}
+2026-04-29T13:23:40: {"level":30,"time":1777469020545,"pid":187114,"hostname":"silver-oak-os-prod","cost":0,"intent":"simple_question","mode":"mode_2_api","msg":"alex.direct_reply"}
+2026-04-29T13:23:40: {"level":30,"time":1777469020559,"pid":187114,"hostname":"silver-oak-os-prod","user":"karim","len":23,"msg":"alex.request"}
+2026-04-29T13:23:40: {"level":30,"time":1777469020560,"pid":187114,"hostname":"silver-oak-os-prod","intent":"simple_question","confidence":0.75,"msg":"alex.intent"}
+2026-04-29T13:23:55: {"level":30,"time":1777469035143,"pid":187114,"hostname":"silver-oak-os-prod","cost":0,"intent":"simple_question","mode":"mode_2_api","msg":"alex.direct_reply"}
+2026-04-29T13:23:58: {"level":30,"time":1777469038602,"pid":187114,"hostname":"silver-oak-os-prod","user":"karim","len":65,"msg":"alex.request"}
+2026-04-29T13:24:03: {"level":30,"time":1777469043601,"pid":187114,"hostname":"silver-oak-os-prod","intent":"simple_question","confidence":0.5,"msg":"alex.intent"}
+2026-04-29T13:24:14: {"level":30,"time":1777469054066,"pid":187114,"hostname":"silver-oak-os-prod","cost":0,"intent":"simple_question","mode":"mode_2_api","msg":"alex.direct_reply"}
+2026-04-29T13:26:56: {"level":30,"time":1777469216048,"pid":187114,"hostname":"silver-oak-os-prod","user":"karim","len":846,"msg":"alex.request"}
+2026-04-29T13:27:01: {"level":30,"time":1777469221049,"pid":187114,"hostname":"silver-oak-os-prod","intent":"simple_question","confidence":0.5,"msg":"alex.intent"}
+2026-04-29T13:27:32: {"level":30,"time":1777469252341,"pid":187114,"hostname":"silver-oak-os-prod","cost":0,"intent":"simple_question","mode":"mode_2_api","msg":"alex.direct_reply"}
+2026-04-29T13:35:47: {"level":30,"time":1777469747008,"pid":187114,"hostname":"silver-oak-os-prod","messageLen":15,"source":"dashboard","msg":"Processing dashboard message"}
+2026-04-29T13:35:47: {"level":30,"time":1777469747357,"pid":187114,"hostname":"silver-oak-os-prod","sessionId":"b4c401d2-6949-4f02-8816-cbbfe03ddfc8","messageLen":414,"mcpServers":[],"msg":"Starting agent query"}
+2026-04-29T13:35:53: {"level":30,"time":1777469753224,"pid":187114,"hostname":"silver-oak-os-prod","newSessionId":"b4c401d2-6949-4f02-8816-cbbfe03ddfc8","msg":"Session initialized"}
+2026-04-29T13:35:57: {"level":30,"time":1777469757123,"pid":187114,"hostname":"silver-oak-os-prod","inputTokens":3,"cacheReadTokens":0,"lastCallCacheRead":0,"lastCallInputTokens":3,"costUsd":0.21076499999999998,"didCompact":false,"msg":"Turn usage"}
+2026-04-29T13:35:57: {"level":30,"time":1777469757123,"pid":187114,"hostname":"silver-oak-os-prod","hasResult":true,"subtype":"success","msg":"Agent result received"}
+2026-04-29T16:09:43: {"level":30,"time":1777478983919,"pid":225662,"hostname":"silver-oak-os-prod","source":"/app/silver-oak-os/agents/main/CLAUDE.md","msg":"Loaded CLAUDE.md from CLAUDECLAW_CONFIG"}
+2026-04-29T16:09:43: {"level":30,"time":1777478983923,"pid":187114,"hostname":"silver-oak-os-prod","msg":"Shutting down..."}
+2026-04-29T16:09:43: 
+ ██████╗██╗      █████╗ ██╗   ██╗██████╗ ███████╗
+██╔════╝██║     ██╔══██╗██║   ██║██╔══██╗██╔════╝
+██║     ██║     ███████║██║   ██║██║  ██║█████╗
+██║     ██║     ██╔══██║██║   ██║██║  ██║██╔══╝
+╚██████╗███████╗██║  ██║╚██████╔╝██████╔╝███████╗
+ ╚═════╝╚══════╝╚═╝  ╚═╝ ╚═════╝ ╚═════╝╚══════╝
+
+ ██████╗██╗      █████╗ ██╗    ██╗
+██╔════╝██║     ██╔══██╗██║    ██║
+██║     ██║     ███████║██║ █╗ ██║
+██║     ██║     ██╔══██║██║███╗██║
+╚██████╗███████╗██║  ██║╚███╔███╔╝
+ ╚═════╝╚══════╝╚═╝  ╚═╝ ╚══╝╚══╝
+
+2026-04-29T16:09:44: {"level":30,"time":1777478984927,"pid":225662,"hostname":"silver-oak-os-prod","msg":"Database ready"}
+2026-04-29T16:09:44: {"level":30,"time":1777478984928,"pid":225662,"hostname":"silver-oak-os-prod","msg":"Security: PIN lock enabled, bot starts locked"}
+2026-04-29T16:09:44: {"level":30,"time":1777478984928,"pid":225662,"hostname":"silver-oak-os-prod","minutes":30,"msg":"Security: idle auto-lock enabled"}
+2026-04-29T16:09:44: {"level":30,"time":1777478984929,"pid":225662,"hostname":"silver-oak-os-prod","msg":"Security: emergency kill phrase configured"}
+2026-04-29T16:09:44: {"level":40,"time":1777478984935,"pid":225662,"hostname":"silver-oak-os-prod","agentId":"maestro","err":{"type":"YAMLException$1","message":"bad indentation of a mapping entry (2:117)\n\n 1 |  ... \n 2 |  ... p.silveroak.one). Strangler Fig: workers run on Claudette (178. ...\n-----------------------------------------^\n 3 |  ... \n 4 |  ... ","stack":"YAMLException: bad indentation of a mapping entry (2:117)\n\n 1 |  ... \n 2 |  ... p.silveroak.one). Strangler Fig: workers run on Claudette (178. ...\n-----------------------------------------^\n 3 |  ... \n 4 |  ... \n    at generateError (file:///app/silver-oak-os/node_modules/js-yaml/dist/js-yaml.mjs:1289:10)\n    at throwError (file:///app/silver-oak-os/node_modules/js-yaml/dist/js-yaml.mjs:1293:9)\n    at readBlockMapping (file:///app/silver-oak-os/node_modules/js-yaml/dist/js-yaml.mjs:2278:7)\n    at composeNode (file:///app/silver-oak-os/node_modules/js-yaml/dist/js-yaml.mjs:2537:12)\n    at readDocument (file:///app/silver-oak-os/node_modules/js-yaml/dist/js-yaml.mjs:2721:3)\n    at loadDocuments (file:///app/silver-oak-os/node_modules/js-yaml/dist/js-yaml.mjs:2784:5)\n    at Object.load$1 [as load] (file:///app/silver-oak-os/node_modules/js-yaml/dist/js-yaml.mjs:2810:19)\n    at loadAgentConfig (file:///app/silver-oak-os/src/agent-config.ts:75:20)\n    at initOrchestrator (file:///app/silver-oak-os/src/orchestrator.ts:63:22)\n    at main (file:///app/silver-oak-os/src/index.ts:162:3)\n    at file:///app/silver-oak-os/src/index.ts:432:1\n    at ModuleJob.run (node:internal/modules/esm/module_job:343:25)\n    at processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:665:26)","name":"YAMLException","reason":"bad indentation of a mapping entry","mark":{"name":null,"buffer":"name: Maestro\ndescription: CTO interne Silver Oak OS --- orchestrates 19 workers via MCP Bridge (mcp.silveroak.one). Strangler Fig: workers run on Claudette (178.104.24.23).\n\ntelegram_bot_token_env: MAESTRO_TELEGRAM_TOKEN\n\nmodel: claude-sonnet-4-6\n\nskills_allowlist:\n  - mcp-dispatch\n\nmeet_voice_id: \"nPczCjzI2devNBz1zQrb\"\nmeet_bot_name: \"Maestro\"\n\nmax_workers: 19\nbudget_cap_usd: 3.0\narchitecture: strangler-fig\nworkers_host: claudette-178.104.24.23\n","position":130,"line":1,"column":116,"snippet":" 1 |  ... \n 2 |  ... p.silveroak.one). Strangler Fig: workers run on Claudette (178. ...\n-----------------------------------------^\n 3 |  ... \n 4 |  ... "}},"msg":"Skipping agent — config load failed"}
+2026-04-29T16:09:44: {"level":30,"time":1777478984956,"pid":225662,"hostname":"silver-oak-os-prod","agents":["comms","content","main","ops","research"],"msg":"Orchestrator initialized"}
+2026-04-29T16:09:44: {"level":30,"time":1777478984958,"pid":225662,"hostname":"silver-oak-os-prod","msg":"Memory consolidation enabled (every 30 min)"}
+2026-04-29T16:09:44: {"level":30,"time":1777478984986,"pid":225662,"hostname":"silver-oak-os-prod","msg":"War Room WebSocket proxy active at /ws/warroom"}
+2026-04-29T16:09:45: {"level":30,"time":1777478985144,"pid":225662,"hostname":"silver-oak-os-prod","agentId":"main","msg":"Scheduler started (scheduled: 60s, mission: 2-30s adaptive)"}
+2026-04-29T16:09:45: {"level":30,"time":1777478985144,"pid":225662,"hostname":"silver-oak-os-prod","msg":"OAuth health check disabled (set OAUTH_HEALTH_ENABLED=true in .env to enable)"}
+2026-04-29T16:09:45: {"level":30,"time":1777478985145,"pid":225662,"hostname":"silver-oak-os-prod","agentId":"main","messenger":"telegram","msg":"Starting ClaudeClaw..."}
+2026-04-29T16:09:45: {"level":30,"time":1777478985160,"pid":225662,"hostname":"silver-oak-os-prod","port":3141,"msg":"Dashboard server running"}
+2026-04-29T16:09:45: {"level":30,"time":1777478985174,"pid":187114,"hostname":"silver-oak-os-prod","msg":"Shutting down..."}
+2026-04-29T16:09:45: {"level":30,"time":1777478985246,"pid":225662,"hostname":"silver-oak-os-prod","count":1,"allowlisted":false,"msg":"Registered 1 skill commands with Telegram"}
+2026-04-29T16:09:45: {"level":30,"time":1777478985490,"pid":225662,"hostname":"silver-oak-os-prod","username":"sok_ops_bot","msg":"ClaudeClaw is running"}
+2026-04-29T16:09:45: 
+  ClaudeClaw online: @sok_ops_bot
+2026-04-29T16:09:45: 
+2026-04-29T16:09:50: {"level":30,"time":1777478990509,"pid":225662,"hostname":"silver-oak-os-prod","port":7860,"ws_url":"ws://localhost:7860","pid":225676,"msg":"War Room server started"}
+2026-04-29T16:10:06: {"level":30,"time":1777479006506,"pid":225662,"hostname":"silver-oak-os-prod","user":"karim","len":43,"msg":"alex.request"}
+2026-04-29T16:10:11: {"level":30,"time":1777479011507,"pid":225662,"hostname":"silver-oak-os-prod","intent":"simple_question","confidence":0.5,"msg":"alex.intent"}
+2026-04-29T16:10:32: {"level":30,"time":1777479032064,"pid":225662,"hostname":"silver-oak-os-prod","cost":0,"intent":"simple_question","mode":"mode_2_api","msg":"alex.direct_reply"}
+2026-04-29T16:10:32: {"level":30,"time":1777479032089,"pid":225662,"hostname":"silver-oak-os-prod","user":"karim","len":56,"msg":"alex.request"}
+2026-04-29T16:10:37: {"level":30,"time":1777479037091,"pid":225662,"hostname":"silver-oak-os-prod","intent":"simple_question","confidence":0.5,"msg":"alex.intent"}
+2026-04-29T16:10:37: {"level":30,"time":1777479037092,"pid":225662,"hostname":"silver-oak-os-prod","agentId":"comms","intent":"comms_task","msg":"Leo, redige un post LinkedIn sur les agents IA autonomes","msg":"[ALEX] Domain routing to employee agent"}
+2026-04-29T16:10:37: {"level":30,"time":1777479037432,"pid":225662,"hostname":"silver-oak-os-prod","sessionId":"new","messageLen":12227,"mcpServers":[],"msg":"Starting agent query"}
+2026-04-29T16:10:42: {"level":30,"time":1777479042972,"pid":225662,"hostname":"silver-oak-os-prod","newSessionId":"57a9fa89-0fa4-4f6f-b6c2-1c544708a431","msg":"Session initialized"}
+2026-04-29T16:10:55: {"level":30,"time":1777479055394,"pid":225662,"hostname":"silver-oak-os-prod","inputTokens":3,"cacheReadTokens":0,"lastCallCacheRead":0,"lastCallInputTokens":3,"costUsd":0.22894625000000002,"didCompact":false,"msg":"Turn usage"}
+2026-04-29T16:10:55: {"level":30,"time":1777479055395,"pid":225662,"hostname":"silver-oak-os-prod","hasResult":true,"subtype":"success","msg":"Agent result received"}
+2026-04-29T16:10:56: {"level":30,"time":1777479056125,"pid":225662,"hostname":"silver-oak-os-prod","user":"karim","len":42,"msg":"alex.request"}
+2026-04-29T16:11:01: {"level":30,"time":1777479061125,"pid":225662,"hostname":"silver-oak-os-prod","intent":"simple_question","confidence":0.5,"msg":"alex.intent"}
+2026-04-29T16:11:01: {"level":30,"time":1777479061127,"pid":225662,"hostname":"silver-oak-os-prod","agentId":"ops","intent":"ops_task","msg":"Marco, quels sont mes rendez-vous demain ?","msg":"[ALEX] Domain routing to employee agent"}
+2026-04-29T16:11:01: {"level":30,"time":1777479061428,"pid":225662,"hostname":"silver-oak-os-prod","sessionId":"new","messageLen":12534,"mcpServers":[],"msg":"Starting agent query"}
+2026-04-29T16:11:07: {"level":30,"time":1777479067328,"pid":225662,"hostname":"silver-oak-os-prod","newSessionId":"539309be-3646-4f48-8f1d-86a466ca94fd","msg":"Session initialized"}
+2026-04-29T16:11:21: {"level":30,"time":1777479081997,"pid":225662,"hostname":"silver-oak-os-prod","inputTokens":5,"cacheReadTokens":71236,"lastCallCacheRead":36384,"lastCallInputTokens":1,"costUsd":0.291268,"didCompact":false,"msg":"Turn usage"}
+2026-04-29T16:11:21: {"level":30,"time":1777479081997,"pid":225662,"hostname":"silver-oak-os-prod","hasResult":true,"subtype":"success","msg":"Agent result received"}
+2026-04-29T16:11:23: {"level":30,"time":1777479083142,"pid":225662,"hostname":"silver-oak-os-prod","user":"karim","len":67,"msg":"alex.request"}
+2026-04-29T16:11:28: {"level":30,"time":1777479088143,"pid":225662,"hostname":"silver-oak-os-prod","intent":"simple_question","confidence":0.5,"msg":"alex.intent"}
+2026-04-29T16:11:28: {"level":30,"time":1777479088144,"pid":225662,"hostname":"silver-oak-os-prod","agentId":"research","intent":"research_task","msg":"Nina, fais une veille sur les concurrents IA multi-agents en","msg":"[ALEX] Domain routing to employee agent"}
+2026-04-29T16:11:28: {"level":30,"time":1777479088439,"pid":225662,"hostname":"silver-oak-os-prod","sessionId":"new","messageLen":12424,"mcpServers":[],"msg":"Starting agent query"}
+2026-04-29T16:11:33: {"level":30,"time":1777479093979,"pid":225662,"hostname":"silver-oak-os-prod","newSessionId":"d0e9f277-8e4a-48b1-8c7b-925b63564424","msg":"Session initialized"}
+2026-04-29T16:11:53: {"level":30,"time":1777479113272,"pid":225662,"hostname":"silver-oak-os-prod","user":"karim","len":47,"msg":"alex.request"}
+2026-04-29T16:11:53: {"level":30,"time":1777479113272,"pid":225662,"hostname":"silver-oak-os-prod","intent":"technical_task","confidence":0.85,"msg":"alex.intent"}
+2026-04-29T16:11:53: {"level":30,"time":1777479113272,"pid":225662,"hostname":"silver-oak-os-prod","task":"Deploy the new API endpoint for the auth module","user":"karim","msg":"[ALEX] Delegating to Maestro for tech task"}
+2026-04-29T16:11:53: {"level":30,"time":1777479113273,"pid":225662,"hostname":"silver-oak-os-prod","taskId":"maestro_1777479113273_pqyr1h","len":47,"context":{"userId":"karim"},"msg":"[MAESTRO_ORCH] received task"}
+2026-04-29T16:11:53: {"level":30,"time":1777479113273,"pid":225662,"hostname":"silver-oak-os-prod","user":"maestro-orchestrator","len":47,"msg":"task_breaker.start"}
+2026-04-29T16:12:04: {"level":30,"time":1777479124292,"pid":225662,"hostname":"silver-oak-os-prod","count":7,"cost":0.00025158,"msg":"task_breaker.success"}
+2026-04-29T16:12:04: {"level":30,"time":1777479124293,"pid":225662,"hostname":"silver-oak-os-prod","count":7,"msg":"[MAESTRO_ORCH] task split into subtasks"}
+2026-04-29T16:12:04: {"level":30,"time":1777479124293,"pid":225662,"hostname":"silver-oak-os-prod","mode":"mode_2_api","confidence":0.9,"reason":"short task -> mode_2","msg":"[MAESTRO_ORCH] mode selected"}
+2026-04-29T16:12:04: {"level":30,"time":1777479124294,"pid":225662,"hostname":"silver-oak-os-prod","task":"Deploy the new API endpoint for the auth module","provider":"deepseek","user":"karim","mode":"mode_2_api","msg":"maestro.dispatch.start"}
+2026-04-29T16:12:07: {"level":30,"time":1777479127505,"pid":225662,"hostname":"silver-oak-os-prod","provider":"deepseek","cost":0.00007910000000000001,"latency":3210,"msg":"maestro.dispatch.mode2.success"}
+2026-04-29T16:12:07: {"level":30,"time":1777479127505,"pid":225662,"hostname":"silver-oak-os-prod","success":true,"provider":"deepseek","mode":"mode_2_api","msg":"[MAESTRO_ORCH] dispatch result"}
+2026-04-29T16:12:07: [16:12:07] [32minfo[39m: [32mllm_judge.start[39m {"task_type":"technical","task_length":47,"output_length":794}
+2026-04-29T16:12:12: [16:12:12] [32minfo[39m: [32mllm_judge.success[39m {"grade":"C","is_completed":true,"cost":0.00004537499999999999}
+2026-04-29T16:12:12: [AGENT_RUN] | maestro | maestro_1777479113273_pqyr1h | mode_2 | OK | 19073ms | provider=deepseek | judge=0.6
+2026-04-29T16:12:12: {"level":30,"time":1777479132347,"pid":225662,"hostname":"silver-oak-os-prod","success":true,"mode":"mode_2_api","taskId":"maestro_1777479113273_pqyr1h","msg":"alex.delegated_to_maestro"}
+2026-04-29T16:12:36: {"level":30,"time":1777479156716,"pid":225662,"hostname":"silver-oak-os-prod","inputTokens":5,"cacheReadTokens":72985,"lastCallCacheRead":38189,"lastCallInputTokens":1,"costUsd":0.35798625000000006,"didCompact":false,"msg":"Turn usage"}
+2026-04-29T16:12:36: {"level":30,"time":1777479156717,"pid":225662,"hostname":"silver-oak-os-prod","hasResult":true,"subtype":"success","msg":"Agent result received"}
+2026-04-29T16:13:23: {"level":30,"time":1777479203051,"pid":225662,"hostname":"silver-oak-os-prod","user":"karim","len":43,"msg":"alex.request"}
+2026-04-29T16:13:23: {"level":30,"time":1777479203051,"pid":225662,"hostname":"silver-oak-os-prod","intent":"simple_question","confidence":0.5,"msg":"alex.intent"}
+2026-04-29T16:13:52: {"level":30,"time":1777479232194,"pid":225662,"hostname":"silver-oak-os-prod","cost":0,"intent":"simple_question","mode":"mode_2_api","msg":"alex.direct_reply"}
+2026-04-29T16:13:52: {"level":30,"time":1777479232217,"pid":225662,"hostname":"silver-oak-os-prod","user":"karim","len":56,"msg":"alex.request"}
+2026-04-29T16:13:52: {"level":30,"time":1777479232217,"pid":225662,"hostname":"silver-oak-os-prod","intent":"simple_question","confidence":0.5,"msg":"alex.intent"}
+2026-04-29T16:13:52: {"level":30,"time":1777479232217,"pid":225662,"hostname":"silver-oak-os-prod","agentId":"comms","intent":"comms_task","msg":"Leo, redige un post LinkedIn sur les agents IA autonomes","msg":"[ALEX] Domain routing to employee agent"}
+2026-04-29T16:13:52: {"level":30,"time":1777479232531,"pid":225662,"hostname":"silver-oak-os-prod","sessionId":"new","messageLen":12227,"mcpServers":[],"msg":"Starting agent query"}
+2026-04-29T16:13:58: {"level":30,"time":1777479238048,"pid":225662,"hostname":"silver-oak-os-prod","newSessionId":"83f4f716-6e1e-40a5-b47a-9f458098c53c","msg":"Session initialized"}
+2026-04-29T16:14:12: {"level":30,"time":1777479252293,"pid":225662,"hostname":"silver-oak-os-prod","inputTokens":3,"cacheReadTokens":0,"lastCallCacheRead":0,"lastCallInputTokens":3,"costUsd":0.23112125000000003,"didCompact":false,"msg":"Turn usage"}
+2026-04-29T16:14:12: {"level":30,"time":1777479252293,"pid":225662,"hostname":"silver-oak-os-prod","hasResult":true,"subtype":"success","msg":"Agent result received"}

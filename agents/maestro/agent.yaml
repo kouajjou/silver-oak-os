@@ -1,17 +1,26 @@
 id: maestro
 name: Maestro
-description: "CTO interne Silver Oak OS. Mode 1: orchestre 4 tmux sessions Pro Max forfait $0 LOCAL Factory. Mode 2: orchestre 5 API concurrents (DeepSeek/Gemini/OpenAI/Grok/Mistral, JAMAIS Anthropic). Reproduit pattern delegateToAgent de Mark Kashef. Strangler Fig, NO Claudette dependency."
+description: "CTO interne Silver Oak OS. Mode 1: orchestre 5 tmux sessions Pro Max forfait $0 LOCAL Factory (claude-code, claude-backend, claude-frontend, opus, claude-browser). Mode 2: orchestre 5 API concurrents (DeepSeek/Gemini/OpenAI/Grok/Mistral, JAMAIS Anthropic). Mode 3: claude-browser specialise frontend testing comme un humain (Playwright + axe + Lighthouse). Reproduit pattern delegateToAgent de Mark Kashef. Strangler Fig, NO Claudette dependency."
 telegram_bot_token_env: MAESTRO_TELEGRAM_TOKEN
 model: claude-sonnet-4-6
 skills_allowlist:
   - mcp-dispatch
+  - frontend-tester
 meet_voice_id: "nPczCjzI2devNBz1zQrb"
 meet_bot_name: "Maestro"
+
+# ─────────────────────────────────────────────────────────────────────
+# Mode 1 — 4 workers tmux Pro Max ($0/h forfait Karim)
+# ─────────────────────────────────────────────────────────────────────
 mode_1_workers:
   - claude-code     # Sonnet 4.6 - architecture, review, ultrathink
   - claude-backend  # Sonnet 4.6 - backend, @api-backend
   - claude-frontend # Sonnet 4.6 - frontend, @frontend-ui
   - opus            # Opus 4.6 - décisions critiques (USINE_OPUS_ALLOWED)
+
+# ─────────────────────────────────────────────────────────────────────
+# Mode 2 — 5 APIs LLM concurrentes (jamais Anthropic)
+# ─────────────────────────────────────────────────────────────────────
 mode_2_apis:
   - deepseek-r1
   - gemini-pro
@@ -20,6 +29,46 @@ mode_2_apis:
   - mistral-large
 mode_2_forbidden:
   - anthropic-api  # JAMAIS - quota Pro Max only via Mode 1
+
+# ─────────────────────────────────────────────────────────────────────
+# Mode 3 — Frontend Special (added 2026-04-30 PhD)
+# Session tmux dédiée pour tester le frontend comme un humain
+# Cible : tout ce qui est en relation avec l'utilisateur final (Karim)
+#   - Application Next.js (port 3010)
+#   - Dashboard HTML (port 3141)
+#   - War Room (port 7860)
+#   - Pages agents dynamiques
+# ─────────────────────────────────────────────────────────────────────
+mode_3_workers:
+  - claude-browser  # Sonnet 4.6 - frontend TESTING (Playwright, axe, Lighthouse)
+mode_3_skill: frontend-tester
+mode_3_tools:
+  - browser_test           # Wrapper Playwright + screenshot + assertions
+  - read_browser_test_result  # Lecture résultats JSON par test_id
+mode_3_routing:
+  # Maestro doit déléguer à claude-browser quand il détecte ces keywords
+  - "test"
+  - "tester"
+  - "vérifie l'UI"
+  - "screenshot"
+  - "audit a11y"
+  - "audit accessibilité"
+  - "audit performance"
+  - "audit lighthouse"
+  - "page X marche"
+  - "bouton X marche"
+  - "le frontend"
+  - "browse"
+  - "navigate"
+mode_3_examples:
+  - "Vérifie que la homepage charge sur localhost:3010"
+  - "Test le flow login sur localhost:3010/login"
+  - "Screenshot la page agent maestro"
+  - "Audit a11y de la War Room"
+
+# ─────────────────────────────────────────────────────────────────────
+# Config commune
+# ─────────────────────────────────────────────────────────────────────
 budget_cap_usd: 3.0
 architecture: strangler-fig
 workers_host: factory-local  # 178.104.255.59 - PAS Claudette
