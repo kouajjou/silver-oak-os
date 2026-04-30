@@ -190,7 +190,10 @@ export default function AgentPage() {
   }
 
   return (
-    <div className="flex flex-col h-screen bg-so-bg safe-top safe-bottom">
+    <main className="flex flex-col h-screen bg-so-bg safe-top safe-bottom" aria-label={`Conversation avec ${agent.name}`}>
+      {/* PhD a11y fix 2026-04-30: <h1> visually hidden but read by screen readers */}
+      <h1 className="sr-only">{agent.name} — {agent.role}</h1>
+
       {/* Header */}
       <header className="flex-shrink-0 bg-so-navy/95 backdrop-blur-sm border-b border-so-border px-4 py-3 safe-top">
         <div className="max-w-2xl mx-auto flex items-center gap-3">
@@ -330,7 +333,7 @@ export default function AgentPage() {
           </div>
         </div>
       </footer>
-    </div>
+    </main>
   );
 }
 

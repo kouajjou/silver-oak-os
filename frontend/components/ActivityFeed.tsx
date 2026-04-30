@@ -61,18 +61,18 @@ export default function ActivityFeed() {
 
   if (items.length === 0) {
     return (
-      <div className="border border-slate-200 rounded-lg p-3 bg-slate-50/60">
-        <div className="text-[10px] uppercase tracking-widest text-slate-500 font-medium mb-1">
+      <div className="border border-so-border rounded-lg p-3 bg-so-card/40">
+        <div className="text-[10px] uppercase tracking-widest text-so-text/80 font-medium mb-1">
           Activité récente
         </div>
-        <p className="text-xs text-slate-400 italic">Aucune activité en cours</p>
+        <p className="text-xs text-so-muted italic">Aucune activité en cours</p>
       </div>
     );
   }
 
   return (
-    <div className="border border-slate-200 rounded-lg p-3 bg-slate-50/60">
-      <div className="text-[10px] uppercase tracking-widest text-slate-500 font-medium mb-2">
+    <div className="border border-so-border rounded-lg p-3 bg-so-card/40">
+      <div className="text-[10px] uppercase tracking-widest text-so-text/80 font-medium mb-2">
         Activité récente
       </div>
       <div className="space-y-2">
@@ -82,25 +82,25 @@ export default function ActivityFeed() {
               {STATUS_ICON[d.status] ?? '•'}
             </span>
             <div className="flex-1 min-w-0">
-              <span className="font-medium text-slate-800">{agentLabel(d.from_agent)}</span>
-              <span className="text-slate-400"> a délégué à </span>
+              <span className="font-medium text-so-text font-medium">{agentLabel(d.from_agent)}</span>
+              <span className="text-so-muted"> a délégué à </span>
               <span className="font-medium text-amber-700">{agentLabel(d.to_agent)}</span>
               {d.prompt && (
-                <p className="text-slate-500 truncate mt-0.5">{d.prompt.slice(0, 60)}{d.prompt.length > 60 ? '…' : ''}</p>
+                <p className="text-so-text/80 truncate mt-0.5">{d.prompt.slice(0, 60)}{d.prompt.length > 60 ? '…' : ''}</p>
               )}
             </div>
-            <span className="text-[10px] text-slate-400 flex-shrink-0 mt-0.5">
+            <span className="text-[10px] text-so-muted flex-shrink-0 mt-0.5">
               {timeAgo(d.created_at)}
             </span>
           </div>
         ))}
       </div>
       {(hasPrev || hasMore) && (
-        <div className="flex gap-2 mt-2 pt-2 border-t border-slate-200">
+        <div className="flex gap-2 mt-2 pt-2 border-t border-so-border">
           {hasPrev && (
             <button
               onClick={() => setCursor((c) => Math.max(0, c - PAGE_SIZE))}
-              className="text-[10px] text-slate-500 hover:text-slate-700 transition-colors"
+              className="text-[10px] text-so-text/80 hover:text-so-text transition-colors"
             >
               ← Précédent
             </button>
@@ -108,7 +108,7 @@ export default function ActivityFeed() {
           {hasMore && (
             <button
               onClick={() => setCursor((c) => c + PAGE_SIZE)}
-              className="text-[10px] text-slate-500 hover:text-slate-700 transition-colors ml-auto"
+              className="text-[10px] text-so-text/80 hover:text-so-text transition-colors ml-auto"
             >
               Suivant →
             </button>
