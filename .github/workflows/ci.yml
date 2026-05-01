@@ -1,0 +1,59 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  build-test:
+    name: Build & Test (Node ${{ matrix.node }})
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        node: [22.x]
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+          cache: npm
+
+      - name: Install dependencies (root)
+        run: npm ci --no-audit --no-fund
+
+      - name: Install dependencies (frontend)
+        working-directory: frontend
+        run: npm ci --no-audit --no-fund
+
+      - name: Type check (root)
+        run: npx tsc --noEmit
+
+      - name: Type check (frontend)
+        working-directory: frontend
+        run: npx tsc --noEmit
+        continue-on-error: true   # frontend may have looser config; track but don't block
+
+      - name: Run tests
+        run: npm test -- --reporter=default
+        env:
+          NODE_ENV: test
+
+      - name: Security audit (high & critical only)
+        run: npm audit --audit-level=high
+        continue-on-error: true   # Report-only — don't block on transitive vulns
+
+      - name: Print test summary
+        if: always()
+        run: |
+          echo "::notice title=CI Summary::Build + tests completed for Node ${{ matrix.node }}"

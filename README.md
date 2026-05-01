@@ -1,5 +1,7 @@
 # ClaudeClaw OS
 
+[![CI](https://github.com/kouajjou/silver-oak-os/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/kouajjou/silver-oak-os/actions/workflows/ci.yml)
+
 ```
  ██████╗██╗      █████╗ ██╗   ██╗██████╗ ███████╗
 ██╔════╝██║     ██╔══██╗██║   ██║██╔══██╗██╔════╝
