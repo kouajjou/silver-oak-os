@@ -702,26 +702,9 @@ export function getWarRoomHtml(token, chatId, warroomPort) {
   <div class="table-wrap">
     <div class="table-surface"></div>
     <div class="table-rim"></div>
-    <div class="stage-avatar" data-agent="main" style="--seat-x:0px;--seat-y:-150px">
-      <img src="/warroom-avatar/main?token=${safeToken}" alt="Main agent">
-      <div class="stage-nameplate">MAIN</div>
-    </div>
-    <div class="stage-avatar" data-agent="research" style="--seat-x:-250px;--seat-y:-40px">
-      <img src="/warroom-avatar/research?token=${safeToken}" alt="Research">
-      <div class="stage-nameplate">RESEARCH</div>
-    </div>
-    <div class="stage-avatar" data-agent="comms" style="--seat-x:250px;--seat-y:-40px">
-      <img src="/warroom-avatar/comms?token=${safeToken}" alt="Comms">
-      <div class="stage-nameplate">COMMS</div>
-    </div>
-    <div class="stage-avatar" data-agent="content" style="--seat-x:-165px;--seat-y:135px">
-      <img src="/warroom-avatar/content?token=${safeToken}" alt="Content">
-      <div class="stage-nameplate">CONTENT</div>
-    </div>
-    <div class="stage-avatar" data-agent="ops" style="--seat-x:165px;--seat-y:135px">
-      <img src="/warroom-avatar/ops?token=${safeToken}" alt="Ops">
-      <div class="stage-nameplate">OPS</div>
-    </div>
+    <!-- PhD fix 2026-05-01: Stage avatars now generated dynamically from /api/warroom/agents
+         (was hardcoded 5 seats — Maestro absent, IDs shown instead of names) -->
+    <div id="stage-avatars-container"></div>
   </div>
 </div>
 
@@ -845,14 +828,21 @@ function enterWarRoom() {
   }, 1300);
 
   // Stage 3: seat the agents around the table, staggered
-  var seatDelays = [1900, 2150, 2400, 2650, 2900];
+  // PhD fix 2026-05-01: Wait until stage avatars are populated, then seat them
+  // with computed delays (250ms gap between each seat)
   var stageAvatars = null;
-  setTimeout(function() {
+  var checkAndSeat = function(retries) {
     stageAvatars = document.querySelectorAll('.stage-avatar');
+    if (stageAvatars.length === 0 && retries > 0) {
+      // Avatars not yet created by loadAgentCards — wait
+      setTimeout(function() { checkAndSeat(retries - 1); }, 100);
+      return;
+    }
     stageAvatars.forEach(function(av, i) {
-      setTimeout(function() { av.classList.add('seated'); }, seatDelays[i] - 1900);
+      setTimeout(function() { av.classList.add('seated'); }, i * 250);
     });
-  }, 1900);
+  };
+  setTimeout(function() { checkAndSeat(20); }, 1900);
 
   // Remove the intro overlay from the DOM once it's finished fading
   setTimeout(function() {
@@ -1276,7 +1266,9 @@ function _renderPin() {
   });
 }
 
-var AGENT_LABELS = { main: 'Main', research: 'Research', comms: 'Comms', content: 'Content', ops: 'Ops' };
+// PhD fix 2026-05-01: AGENT_LABELS empty - populated dynamically from /api/warroom/agents
+// Fallback to ID if API hasn't loaded yet (graceful degradation)
+var AGENT_LABELS = {};
 
 // Switching-in-progress guard so a rapid double-click doesn't spawn two
 // reconnect cycles.
@@ -1433,13 +1425,50 @@ async function togglePin(agentId) {
   }
 }
 
+// PhD fix 2026-05-01: Generate stage avatars dynamically (was hardcoded 5 in HTML)
+// Computes seat positions in an oval around the table for N agents.
+function populateStageAvatars(agents) {
+  var container = document.getElementById('stage-avatars-container');
+  if (!container || !agents || agents.length === 0) return;
+
+  container.innerHTML = '';
+
+  // Oval: width 500px, height 270px around table
+  // Top seat at -150y, bottom at +135y, sides span -250x to +250x
+  // Place agents EVENLY around the oval starting from top
+  var n = agents.length;
+
+  agents.forEach(function(agent, i) {
+    // Angle: 0 = top of oval, going clockwise
+    var angle = (i / n) * 2 * Math.PI - Math.PI / 2; // start at top (-PI/2)
+    var seatX = Math.round(Math.cos(angle) * 250);   // horizontal radius
+    var seatY = Math.round(Math.sin(angle) * 145);   // vertical radius (smaller for oval)
+
+    var name = (agent.name || agent.id).toUpperCase();
+    var avatar = document.createElement('div');
+    avatar.className = 'stage-avatar';
+    avatar.setAttribute('data-agent', agent.id);
+    avatar.style.setProperty('--seat-x', seatX + 'px');
+    avatar.style.setProperty('--seat-y', seatY + 'px');
+    avatar.innerHTML =
+      '<img src="/warroom-avatar/' + encodeURIComponent(agent.id) +
+        '?token=' + encodeURIComponent(TOKEN) +
+        '" alt="' + name + '" onerror="this.style.display=\\'none\\'">' +
+      '<div class="stage-nameplate">' + name + '</div>';
+
+    container.appendChild(avatar);
+  });
+}
+
 // Role labels for known agents (cosmetic only, custom agents get their description)
+// PhD fix 2026-05-01: Maestro added (was missing — user couldn't see Maestro in stage)
 var AGENT_ROLES = {
   main: 'The Hand of the King',
   research: 'Grand Maester',
   comms: 'Master of Whisperers',
   content: 'The Royal Bard',
   ops: 'Master of War',
+  maestro: 'The Conductor',
 };
 var AGENT_LABELS = AGENT_LABELS || {};
 
@@ -1452,10 +1481,14 @@ var AGENT_LABELS = AGENT_LABELS || {};
       var container = document.getElementById('agent-cards-container');
       if (!container) return;
       container.innerHTML = '';
+
+      // PhD fix 2026-05-01: populate stage avatars dynamically (was hardcoded 5 in HTML)
+      populateStageAvatars(data.agents);
+
       data.agents.forEach(function(agent) {
         var role = AGENT_ROLES[agent.id] || agent.description || 'Specialist';
         AGENT_LABELS[agent.id] = agent.name || agent.id;
-        // Update stage nameplate if the intro animation is still visible
+        // Update stage nameplate (already set by populateStageAvatars but kept for safety)
         var stageEl = document.querySelector('.stage-avatar[data-agent="' + agent.id + '"] .stage-nameplate');
         if (stageEl) stageEl.textContent = (agent.name || agent.id).toUpperCase();
         var card = document.createElement('div');
