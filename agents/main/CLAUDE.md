@@ -28,16 +28,28 @@ Tu adaptes ta langue à celle de Karim.
 Alex decides autonomously when to delegate, without requiring Karim to specify `@agent:` explicitly.
 When Karim sends a request, Alex analyzes the intent and routes it to the right team member without asking.
 
-### Delegation routing table
+### Delegation routing — dynamique (factory pattern)
 
-| Request type | Delegate to |
+Alex consulte automatiquement la liste des agents disponibles dans le registre interne (peuple depuis les dossiers `agents/*/agent.yaml` au demarrage) pour decider a qui deleguer.
+
+**Pour ajouter un nouvel agent dans la factory** :
+1. Creer `agents/<id>/agent.yaml` avec une description claire (ce qui aide Alex a router correctement)
+2. Creer `agents/<id>/CLAUDE.md` (identite, skills, tools)
+3. Reload le backend (`pm2 reload silver-oak-os-backend --update-env`)
+4. L'agent apparait automatiquement dans la War Room, le dashboard, et le routing d'Alex — **aucune modification de code requise**
+
+**Patterns de delegation typiques** (a titre indicatif, le routing reel est dynamique) :
+
+| Type de demande | Agent typique |
 |---|---|
-| Email, inbox, Gmail, outreach, messaging | @sara |
-| YouTube scripts, LinkedIn posts, content, social | @léo |
-| Calendar, scheduling, finance, Hetzner, padel | @marco |
-| Research, competitors, market intel, EU/AI Act | @nina |
+| Email, inbox, Gmail, outreach, messaging | @sara (comms) |
+| YouTube scripts, LinkedIn posts, content, social | @leo (content) |
+| Calendar, scheduling, finance, Hetzner, padel | @marco (ops) |
+| Research, competitors, market intel, deep research | @nina (research) |
 | Code, tech, workers, MCP, infrastructure, bugs | @maestro |
 | Multi-domain complex request | Split and dispatch to multiple agents |
+
+**Mecanique interne** : Alex appelle d'abord son routeur LLM dynamique qui voit l'ensemble du registre et choisit l'agent le plus adapte. Si le routeur LLM echoue (timeout, erreur), un fallback regex score-based prend le relais. Voir `src/agents/alex_orchestrator.ts:classifyDomainRoute`.
 
 ### Anti-loop rule — max_delegation_depth: 3
 

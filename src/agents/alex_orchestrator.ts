@@ -64,7 +64,7 @@ import { judge as llmJudge } from '../services/llm_judge.js';
 import { createRun, updateRun, endRun, createTask, updateTask } from '../services/session_state.js';
 import { readEnvFile } from '../env.js';
 import { dispatchToTmuxSession } from '../services/cli_tmux_dispatcher.js';
-import { delegateToAgent } from '../orchestrator.js';
+import { delegateToAgent, getAvailableAgents } from '../orchestrator.js';
 
 // ── Constants ─────────────────────────────────────────────────────────────
 
@@ -201,21 +201,20 @@ const DOMAIN_ROUTES: Array<{ intent: DomainIntent; agentId: string; patterns: Re
     intent: 'research_task',
     agentId: 'research',
     patterns: [
-      /\b(recherche|research|analys[ae]|veille|concurren|brief|intel|rapport|AI Act|RGPD|benchmark|compare|comparatif)\b/i,
+      /\b(recherche|cherch[ae]|trouve|research|analys[ae]|veille|concurren|brief|intel|rapport|AI Act|RGPD|benchmark|compare|comparatif|news)\b/i,
     ],
   },
 ];
 
-function classifyDomainRoute(message: string): { intent: DomainIntent; agentId: string } | null {
+// Regex fallback (used when dynamic LLM routing fails or returns 'none')
+export function classifyDomainRouteRegex(message: string): { intent: DomainIntent; agentId: string } | null {
   // PhD fix 2026-04-30: replaces first-match-wins with score-based selection.
-  // Old bug: "Redige un post LinkedIn" matched comms FIRST (redige) before testing content (linkedin).
-  // New: score each route by total keyword matches, return highest score.
+  // Score each route by total keyword matches, return highest score.
   let bestRoute: { intent: DomainIntent; agentId: string; score: number } | null = null;
 
   for (const entry of DOMAIN_ROUTES) {
     let score = 0;
     for (const pattern of entry.patterns) {
-      // Use global flag to count all matches (not just first)
       const globalPattern = new RegExp(pattern.source, pattern.flags.includes('g') ? pattern.flags : pattern.flags + 'g');
       const matches = message.match(globalPattern);
       if (matches) score += matches.length;
@@ -226,6 +225,88 @@ function classifyDomainRoute(message: string): { intent: DomainIntent; agentId: 
   }
 
   return bestRoute ? { intent: bestRoute.intent, agentId: bestRoute.agentId } : null;
+}
+
+// Dynamic LLM-based routing — reads agentRegistry, picks the most relevant agent.
+// Falls back to regex if Pro Max fails, times out, or returns 'none'.
+const DYNAMIC_ROUTING_TIMEOUT_MS = 8_000;
+const KNOWN_DOMAIN_INTENTS: Record<string, DomainIntent> = {
+  comms: 'comms_task',
+  content: 'content_task',
+  ops: 'ops_task',
+  research: 'research_task',
+};
+
+async function classifyDomainRouteDynamic(message: string): Promise<{ intent: DomainIntent; agentId: string } | null> {
+  let agents: { id: string; name: string; description: string }[];
+  try {
+    agents = getAvailableAgents();
+  } catch (err) {
+    logger.warn({ err }, '[ALEX] getAvailableAgents threw — falling back to regex');
+    return null;
+  }
+
+  // Filter out main (Alex itself, no self-delegation) and maestro (handled by classifyIntent earlier)
+  const candidates = agents.filter((a) => a.id !== 'main' && a.id !== 'maestro');
+  if (candidates.length === 0) {
+    logger.debug('[ALEX] No candidate agents in registry — falling back to regex');
+    return null;
+  }
+
+  const agentList = candidates.map((a) => `- ${a.id}: ${a.description}`).join('\n');
+  const validIds = candidates.map((a) => a.id).join(', ');
+  const prompt = `Tu es le routeur d'Alex (Chief of Staff de Karim Kouajjou).
+
+Voici les agents disponibles dans la factory Silver Oak OS :
+
+${agentList}
+
+Demande de Karim :
+"${message}"
+
+Réponds UNIQUEMENT avec l'id de l'agent le plus approprié, ou 'none' si aucun ne convient (auquel cas Alex répondra directement).
+
+IDs valides : ${validIds}, none
+
+Ta réponse (un seul mot, en minuscules) :`;
+
+  try {
+    // Pro Max forfait $0 — 8s timeout via Promise.race
+    const model = getModelForAgent('alex');
+    const resultPromise = callProMax(prompt, model);
+    const timeoutPromise = new Promise<string>((_, reject) =>
+      setTimeout(() => reject(new Error('dynamic routing timeout')), DYNAMIC_ROUTING_TIMEOUT_MS),
+    );
+    const raw = await Promise.race([resultPromise, timeoutPromise]);
+    const cleaned = String(raw).trim().toLowerCase().split(/\s|[.,;:!?\n]/)[0] ?? '';
+
+    if (!cleaned || cleaned === 'none') {
+      logger.debug({ message: message.slice(0, 60) }, '[ALEX] Dynamic routing returned none');
+      return null;
+    }
+
+    // Validate against actual registry — never trust LLM output blindly
+    const matched = candidates.find((a) => a.id === cleaned);
+    if (!matched) {
+      logger.warn({ raw, cleaned, validIds }, '[ALEX] Dynamic routing returned unknown id — falling back to regex');
+      return null;
+    }
+
+    // Map agentId to DomainIntent if known, otherwise generic 'research_task' as catch-all
+    const intent = KNOWN_DOMAIN_INTENTS[matched.id] ?? ('research_task' as DomainIntent);
+    logger.info({ agentId: matched.id, intent, source: 'dynamic_llm' }, '[ALEX] Dynamic routing success');
+    return { intent, agentId: matched.id };
+  } catch (err) {
+    logger.warn({ err: err instanceof Error ? err.message : String(err) }, '[ALEX] Dynamic routing failed — falling back to regex');
+    return null;
+  }
+}
+
+// Public entry — try dynamic first, fallback to regex.
+export async function classifyDomainRoute(message: string): Promise<{ intent: DomainIntent; agentId: string } | null> {
+  const dynamic = await classifyDomainRouteDynamic(message);
+  if (dynamic) return dynamic;
+  return classifyDomainRouteRegex(message);
 }
 
 // ── V1 — Original alexHandle (backward-compatible) ───────────────────────
@@ -306,7 +387,7 @@ export async function alexHandle(request: AlexRequest): Promise<AlexResponse> {
 
     // 3. Domain routing -- check if message targets a specific employee agent
     // Phase 5B.4: extends binary classifier with comms/content/ops/research
-    const domainRoute = classifyDomainRoute(request.message);
+    const domainRoute = await classifyDomainRoute(request.message);
     if (domainRoute) {
       logger.info(
         { agentId: domainRoute.agentId, intent: domainRoute.intent, msg: request.message.slice(0, 60) },

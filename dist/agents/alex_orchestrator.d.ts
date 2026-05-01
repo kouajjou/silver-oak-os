@@ -39,6 +39,15 @@ export interface AlexAutonomousRequest extends AlexRequest {
 export interface AlexAutonomousResponse extends AlexResponse {
     run_id?: string;
 }
+type DomainIntent = 'comms_task' | 'content_task' | 'ops_task' | 'research_task';
+export declare function classifyDomainRouteRegex(message: string): {
+    intent: DomainIntent;
+    agentId: string;
+} | null;
+export declare function classifyDomainRoute(message: string): Promise<{
+    intent: DomainIntent;
+    agentId: string;
+} | null>;
 export declare function alexHandle(request: AlexRequest): Promise<AlexResponse>;
 export declare function alexHandleAutonomous(request: AlexAutonomousRequest): Promise<AlexAutonomousResponse>;
 export default alexHandle;
