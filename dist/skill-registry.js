@@ -169,15 +169,16 @@ function scanDirectory(dir) {
  */
 export function initSkillRegistry() {
     skills.clear();
-    // Find project root by walking up from this file looking for CLAUDE.md
-    let projectRoot = path.resolve(path.dirname(new URL(import.meta.url).pathname), '..');
+    // Find project root — allow override via env var for testing
+    let projectRoot = process.env.SKILL_REGISTRY_ROOT ??
+        path.resolve(path.dirname(new URL(import.meta.url).pathname), '..');
     // Fallback: look for CLAUDE.md to confirm
     if (!fs.existsSync(path.join(projectRoot, 'CLAUDE.md'))) {
         // Already at a reasonable default, just continue
         logger.debug({ projectRoot }, 'CLAUDE.md not found at expected project root');
     }
     const projectSkillsDir = path.join(projectRoot, 'skills');
-    const globalSkillsDir = path.join(os.homedir(), '.claude', 'skills');
+    const globalSkillsDir = path.join(process.env.HOME ?? os.homedir(), '.claude', 'skills');
     // Scan project skills first (they take priority)
     scanDirectory(projectSkillsDir);
     scanDirectory(globalSkillsDir);

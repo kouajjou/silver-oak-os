@@ -17,6 +17,7 @@ function writeSkill(baseDir, skillName, content) {
 let tempRoot;
 let tempGlobal;
 let origHome;
+let origRegistryRoot;
 beforeEach(() => {
     tempRoot = createTempSkillDir();
     tempGlobal = createTempSkillDir();
@@ -29,9 +30,18 @@ beforeEach(() => {
     fs.mkdirSync(globalSkillsDir, { recursive: true });
     // Override HOME so global skills scan finds our temp dir
     process.env.HOME = tempGlobal;
+    // Override project root so project skills scan finds our temp dir
+    origRegistryRoot = process.env.SKILL_REGISTRY_ROOT;
+    process.env.SKILL_REGISTRY_ROOT = tempRoot;
 });
 afterEach(() => {
     process.env.HOME = origHome;
+    if (origRegistryRoot === undefined) {
+        delete process.env.SKILL_REGISTRY_ROOT;
+    }
+    else {
+        process.env.SKILL_REGISTRY_ROOT = origRegistryRoot;
+    }
     fs.rmSync(tempRoot, { recursive: true, force: true });
     fs.rmSync(tempGlobal, { recursive: true, force: true });
 });
