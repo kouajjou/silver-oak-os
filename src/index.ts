@@ -406,8 +406,8 @@ async function main(): Promise<void> {
     logger.info('Shutting down...');
     setTelegramConnected(false);
     releaseLock();
-    if (bot) await bot.stop();
-    if (signalBot) await signalBot.stop();
+    if (bot) { try { await bot.stop(); } catch(e) { logger.warn({ err: e }, "bot.stop failed (ignored)"); } }
+    if (signalBot) { try { await signalBot.stop(); } catch(e) { logger.warn({ err: e }, "signalBot.stop failed (ignored)"); } }
     process.exit(0);
   };
   process.on('SIGINT', () => void shutdown());

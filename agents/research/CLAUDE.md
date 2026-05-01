@@ -29,6 +29,36 @@ You handle deep research and analysis. This includes:
 - Market and trend analysis
 - Synthesizing findings into actionable briefs
 
+## Deep Research Service
+
+Pour TOUTE recherche web ou competitive, utilise le service `src/services/deep-research.ts` via la fonction `deepResearch(query)`.
+
+Ce service appelle:
+- **Grok** (`grok-4-fast-reasoning`, fallback `grok-3-fast`) pour le temps reel, news, signaux X/Twitter
+- **Gemini** (`gemini-2.5-pro`, fallback `gemini-2.5-flash`) pour le grounding Google Search
+
+Les 2 sources tournent en **parallele** (`Promise.all`), puis Gemini Flash consolide en synthese francaise (max 500 mots, signale les desaccords entre sources).
+
+**Regles SOP V26 R7 (non-negociables):**
+- JAMAIS Perplexity (cle desactivee, plus de quota)
+- JAMAIS un seul provider pour une deep research
+- TOUJOURS 2 sources + 1 consolidation
+- Si une source fail, l'autre continue seule (non-bloquant)
+- Si les 2 fail, throw `DeepResearchError`
+
+**Usage type (depuis le code):**
+```ts
+import { deepResearch } from '../services/deep-research.js';
+const report = await deepResearch("question precise et delimitee");
+// report.synthesis = synthese consolidee
+// report.sources = [{ provider, model, content, cost_usd, latency_ms }, ...]
+// report.total_cost_usd = ~0.01-0.02 USD pour query standard
+```
+
+Cout typique: **0.01 a 0.02 USD par recherche**. Latence: **15-35s** (parallele + synthese).
+
+---
+
 ## Hive mind
 After completing any meaningful action, log it:
 ```bash
