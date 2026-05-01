@@ -16,6 +16,10 @@ export interface BudgetStatus {
 }
 /**
  * Record an LLM cost event for an agent.
+ *
+ * PhD fix 2026-05-01: Validates agent_id before insert. Invalid IDs
+ * (test artefacts, blocked patterns) are logged but NOT recorded.
+ * Set BUDGET_TRACKER_STRICT=true to throw instead of silent skip.
  */
 export declare function trackCost(entry: CostEntry): void;
 /**

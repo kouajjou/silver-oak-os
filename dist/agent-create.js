@@ -366,15 +366,37 @@ function activateLaunchd(agentId) {
 }
 function activateSystemd(agentId) {
     const serviceName = `com.claudeclaw.agent-${agentId}`;
+    // PhD fix 2026-05-01: set XDG_RUNTIME_DIR + DBUS so systemctl --user works
+    // when process runs without a login session (PM2-launched, no XDG_RUNTIME_DIR by default)
+    // Requires: loginctl enable-linger claudeclaw (already done)
+    const uid = process.getuid?.() ?? 1000;
+    const sysEnv = {
+        ...process.env,
+        XDG_RUNTIME_DIR: process.env.XDG_RUNTIME_DIR || `/run/user/${uid}`,
+        DBUS_SESSION_BUS_ADDRESS: process.env.DBUS_SESSION_BUS_ADDRESS || `unix:path=/run/user/${uid}/bus`,
+    };
+    // PhD fix 2026-05-01: regenerate unit file if missing (for existing agents)
+    const unitPath = path.join(os.homedir(), '.config', 'systemd', 'user', `${serviceName}.service`);
+    if (!fs.existsSync(unitPath)) {
+        try {
+            generateSystemdUnit(agentId);
+        }
+        catch (err) {
+            return { ok: false, error: `Failed to generate unit file: ${err instanceof Error ? err.message : String(err)}` };
+        }
+    }
     try {
-        execSync(`systemctl --user daemon-reload`, { stdio: 'ignore' });
-        execSync(`systemctl --user enable "${serviceName}"`, { stdio: 'ignore' });
-        execSync(`systemctl --user start "${serviceName}"`, { stdio: 'ignore' });
+        execSync(`systemctl --user daemon-reload`, { stdio: 'pipe', env: sysEnv });
+        execSync(`systemctl --user enable "${serviceName}"`, { stdio: 'pipe', env: sysEnv });
+        execSync(`systemctl --user start "${serviceName}"`, { stdio: 'pipe', env: sysEnv });
         logger.info({ agentId }, 'Agent activated (systemd)');
         return { ok: true };
     }
     catch (err) {
-        return { ok: false, error: err instanceof Error ? err.message : String(err) };
+        // Capture stderr for better error message
+        const msg = err instanceof Error ? err.message : String(err);
+        const stderr = err.stderr?.toString() ?? '';
+        return { ok: false, error: stderr ? `${msg} | ${stderr.slice(0, 200)}` : msg };
     }
 }
 export function deactivateAgent(agentId) {
@@ -395,16 +417,23 @@ export function deactivateAgent(agentId) {
         }
         else if (os.platform() === 'linux') {
             const serviceName = `com.claudeclaw.agent-${agentId}`;
+            // PhD fix 2026-05-01: set XDG_RUNTIME_DIR + DBUS for systemctl --user
+            const uid = process.getuid?.() ?? 1000;
+            const sysEnv = {
+                ...process.env,
+                XDG_RUNTIME_DIR: process.env.XDG_RUNTIME_DIR || `/run/user/${uid}`,
+                DBUS_SESSION_BUS_ADDRESS: process.env.DBUS_SESSION_BUS_ADDRESS || `unix:path=/run/user/${uid}/bus`,
+            };
             try {
-                execSync(`systemctl --user stop "${serviceName}"`, { stdio: 'ignore' });
-                execSync(`systemctl --user disable "${serviceName}"`, { stdio: 'ignore' });
+                execSync(`systemctl --user stop "${serviceName}"`, { stdio: 'ignore', env: sysEnv });
+                execSync(`systemctl --user disable "${serviceName}"`, { stdio: 'ignore', env: sysEnv });
             }
             catch { /* ok */ }
             const unitPath = path.join(os.homedir(), '.config', 'systemd', 'user', `${serviceName}.service`);
             if (fs.existsSync(unitPath))
                 fs.unlinkSync(unitPath);
             try {
-                execSync('systemctl --user daemon-reload', { stdio: 'ignore' });
+                execSync('systemctl --user daemon-reload', { stdio: 'ignore', env: sysEnv });
             }
             catch { /* ok */ }
         }
@@ -512,7 +541,14 @@ export function restartAgent(agentId) {
         }
         else if (os.platform() === 'linux') {
             const serviceName = `com.claudeclaw.agent-${agentId}`;
-            execSync(`systemctl --user restart "${serviceName}"`, { stdio: 'ignore' });
+            // PhD fix 2026-05-01: XDG_RUNTIME_DIR for systemctl --user
+            const uid = process.getuid?.() ?? 1000;
+            const sysEnv = {
+                ...process.env,
+                XDG_RUNTIME_DIR: process.env.XDG_RUNTIME_DIR || `/run/user/${uid}`,
+                DBUS_SESSION_BUS_ADDRESS: process.env.DBUS_SESSION_BUS_ADDRESS || `unix:path=/run/user/${uid}/bus`,
+            };
+            execSync(`systemctl --user restart "${serviceName}"`, { stdio: 'ignore', env: sysEnv });
             logger.info({ agentId }, 'Agent restarted (systemd)');
             return { ok: true };
         }

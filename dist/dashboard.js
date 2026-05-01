@@ -1003,6 +1003,18 @@ export function startDashboard(botApi) {
                 // when the agent isn't running or hasn't emitted state yet.
                 const connState = running ? readAgentConnState(id) : null;
                 const telegramConnected = connState?.telegram ?? false;
+                // PhD fix 2026-05-01: check if bot token is configured (non-empty in .env)
+                // If token is missing or empty, the agent can't run as standalone bot
+                // (it can still respond via main agent's delegateToAgent)
+                let tokenConfigured = false;
+                try {
+                    const envKey = config.telegram_bot_token_env;
+                    if (envKey) {
+                        const envVal = process.env[envKey];
+                        tokenConfigured = !!(envVal && envVal.length > 20);
+                    }
+                }
+                catch { /* config might not have envKey */ }
                 return {
                     id,
                     name: config.name,
@@ -1012,11 +1024,12 @@ export function startDashboard(botApi) {
                     todayTurns: stats.todayTurns,
                     todayCost: stats.todayCost,
                     telegramConnected,
+                    tokenConfigured,
                 };
             }
             catch {
                 const fallbackName = id.charAt(0).toUpperCase() + id.slice(1);
-                return { id, name: fallbackName, description: '', model: 'unknown', running: false, todayTurns: 0, todayCost: 0, telegramConnected: false };
+                return { id, name: fallbackName, description: '', model: 'unknown', running: false, todayTurns: 0, todayCost: 0, telegramConnected: false, tokenConfigured: false };
             }
         });
         // Ensure main is first and not duplicated.
@@ -1040,7 +1053,7 @@ export function startDashboard(botApi) {
             // authoritative; no need to go through the conn file for main itself.
             const mainTelegramConnected = mainRunning ? getTelegramConnected() : false;
             allAgents = [
-                { id: 'main', name: 'Main', description: getMainDescription(), model: 'claude-opus-4-6', running: mainRunning, todayTurns: mainStats.todayTurns, todayCost: mainStats.todayCost, telegramConnected: mainTelegramConnected },
+                { id: 'main', name: 'Main', description: getMainDescription(), model: 'claude-opus-4-6', running: mainRunning, todayTurns: mainStats.todayTurns, todayCost: mainStats.todayCost, telegramConnected: mainTelegramConnected, tokenConfigured: true },
                 ...agents,
             ];
         }

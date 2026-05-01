@@ -39,10 +39,70 @@ const stmtDailyTotal = db.prepare('SELECT COALESCE(SUM(cost_usd), 0) AS total FR
 const stmtMonthlyTotal = db.prepare('SELECT COALESCE(SUM(cost_usd), 0) AS total FROM agent_costs WHERE agent_id = ? AND timestamp > ?');
 const stmtGetBudget = db.prepare('SELECT daily_cap_usd, monthly_cap_usd FROM agent_budgets WHERE agent_id = ?');
 const stmtSetBudget = db.prepare('INSERT OR REPLACE INTO agent_budgets (agent_id, daily_cap_usd, monthly_cap_usd, updated_at) VALUES (?, ?, ?, unixepoch())');
+// PhD fix 2026-05-01 — Validation des agent_id pour eviter pollution dev en prod
+// Probleme decouvert : 34/43 agents en base etaient des artefacts de tests
+// (test-*, phd-*, task_breaker_*, maestro_test*, etc.) representant 95% du cout
+// Solution : whitelist patterns de prod + warning silencieux pour les autres
+const VALID_AGENT_PATTERNS = [
+    /^main$/, // bot principal
+    /^comms$/, // Sara
+    /^content$/, // Leo
+    /^maestro$/, // Maestro
+    /^ops$/, // Marco
+    /^research$/, // Nina
+    /^intent_classifier$/, // service interne (router)
+    /^llm_judge_gemini$/, // service interne (garde-fou #4)
+    /^(alex|sara|leo|marco|nina|maestro)_[a-z][a-z0-9-]+$/, // alias multi-tenant <agent>_<userId>
+];
+// Patterns explicitement bloques (artefacts de tests connus)
+const BLOCKED_AGENT_PATTERNS = [
+    /^test-/, // test-fix, test-leo, etc.
+    /^phd-/, // phd-audit, phd-deep-*
+    /^task_breaker_/, // task_breaker_test-*
+    /^maestro_test/, // maestro_test-*
+    /^maestro_factory/, // maestro_factory-*
+    /^maestro_fix/, // maestro_fix-*
+    /^alex_test/, // alex_test-*
+];
+function isValidAgentId(agentId) {
+    if (!agentId || typeof agentId !== 'string') {
+        return { valid: false, reason: 'agent_id missing or not a string' };
+    }
+    if (agentId.length > 50) {
+        return { valid: false, reason: 'agent_id too long (max 50 chars)' };
+    }
+    // Bloquer artefacts dev connus
+    for (const pattern of BLOCKED_AGENT_PATTERNS) {
+        if (pattern.test(agentId)) {
+            return { valid: false, reason: `agent_id matches blocked dev pattern: ${pattern.source}` };
+        }
+    }
+    // Verifier whitelist
+    for (const pattern of VALID_AGENT_PATTERNS) {
+        if (pattern.test(agentId)) {
+            return { valid: true };
+        }
+    }
+    return { valid: false, reason: `agent_id does not match any known pattern (allowed: main/comms/content/maestro/ops/research, intent_classifier, llm_judge_gemini, or <agent>_<userId>)` };
+}
 /**
  * Record an LLM cost event for an agent.
+ *
+ * PhD fix 2026-05-01: Validates agent_id before insert. Invalid IDs
+ * (test artefacts, blocked patterns) are logged but NOT recorded.
+ * Set BUDGET_TRACKER_STRICT=true to throw instead of silent skip.
  */
 export function trackCost(entry) {
+    const validation = isValidAgentId(entry.agent_id);
+    if (!validation.valid) {
+        const msg = `[budget-tracker] REJECTED agent_id="${entry.agent_id}" cost=$${entry.cost_usd}: ${validation.reason}`;
+        if (process.env.BUDGET_TRACKER_STRICT === 'true') {
+            throw new Error(msg);
+        }
+        // eslint-disable-next-line no-console
+        console.warn(msg);
+        return;
+    }
     stmtInsertCost.run(entry.agent_id, entry.cost_usd, entry.tokens_in ?? 0, entry.tokens_out ?? 0, entry.model ?? 'unknown');
 }
 /**

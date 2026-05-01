@@ -1827,12 +1827,18 @@ async function toggleAgentDetail(agentId) {
 
     // Agent management controls (not for main)
     if (agentId !== 'main') {
+      // PhD fix 2026-05-01: check if agent has a Telegram bot token configured
+      // If not, the agent runs ONLY embedded in main (via delegateToAgent)
+      const hasToken = agent && agent.tokenConfigured;
       html += '<div class="flex gap-2 mt-4 pt-3" style="border-top:1px solid #2a2a2a">';
       if (agent && agent.running) {
         html += '<button data-agent="' + agentId + '" data-act="stop" onclick="agentModalAction(this.dataset.agent,this.dataset.act)" style="flex:1;background:#1a1a1a;color:#f87171;border:1px solid #7f1d1d;border-radius:8px;padding:8px;font-size:12px;font-weight:600;cursor:pointer">Stop</button>';
         html += '<button data-agent="' + agentId + '" data-act="restart" onclick="agentModalAction(this.dataset.agent,this.dataset.act)" style="flex:1;background:#1a1a1a;color:#60a5fa;border:1px solid #1e3a5f;border-radius:8px;padding:8px;font-size:12px;font-weight:600;cursor:pointer">Restart</button>';
+      } else if (hasToken) {
+        html += '<button data-agent="' + agentId + '" data-act="start" onclick="agentModalAction(this.dataset.agent,this.dataset.act)" style="flex:1;background:#064e3b;color:#6ee7b7;border:1px solid #065f46;border-radius:8px;padding:8px;font-size:12px;font-weight:600;cursor:pointer">Start as standalone bot</button>';
       } else {
-        html += '<button data-agent="' + agentId + '" data-act="start" onclick="agentModalAction(this.dataset.agent,this.dataset.act)" style="flex:1;background:#064e3b;color:#6ee7b7;border:1px solid #065f46;border-radius:8px;padding:8px;font-size:12px;font-weight:600;cursor:pointer">Start</button>';
+        // No standalone bot token — show info + allow Add Token wizard
+        html += '<div style="flex:1;background:#1a1a1a;color:#9ca3af;border:1px dashed #2a2a2a;border-radius:8px;padding:8px;font-size:11px;text-align:center;line-height:1.4">Embedded agent — replies via Alex (@sok_ops_bot).<br/><span style="color:#60a5fa">No standalone bot needed.</span></div>';
       }
       html += '<button data-agent="' + agentId + '" data-act="delete" onclick="agentModalAction(this.dataset.agent,this.dataset.act)" style="background:#1a1a1a;color:#6b7280;border:1px solid #2a2a2a;border-radius:8px;padding:8px 14px;font-size:12px;cursor:pointer">Delete</button>';
       html += '</div>';
