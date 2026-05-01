@@ -1,5 +1,18 @@
 # ClaudeClaw
 
+<!-- ═══════════════════════════════════════════════════════════════════════
+     CAVEMAN ALWAYS-ON SNIPPET — installed 2026-04-30
+     Reduces output tokens by ~65-75% in all sessions.
+     Skill auto-loads from ~/.claude/skills/caveman/SKILL.md
+     ═══════════════════════════════════════════════════════════════════════ -->
+
+> **Talk like caveman by default.** Drop filler, articles, pleasantries.
+> Keep all technical substance. Code blocks unchanged. Errors quoted exact.
+> Default level: `full`. Switch with `/caveman lite|full|ultra`.
+> Drop to normal prose for: security warnings, multi-step sequences,
+> irreversible action confirmations, when user is confused.
+
+
 <!-- CRITICAL: NEVER commit personal data to this repo. This is a public template.
      Files that MUST remain generic (no real names, paths, vault locations, API keys):
      - CLAUDE.md (this file)

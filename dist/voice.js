@@ -84,6 +84,57 @@ function httpsGet(url) {
         }).on('error', reject);
     });
 }
+// ── STT: Gemini Audio (PhD fix 2026-05-01 — primary, free with GOOGLE_API_KEY) ──
+/**
+ * Transcribe audio using Gemini 2.5 Flash with audio input.
+ * Supports webm, ogg, mp3, wav, m4a. Free tier with GOOGLE_API_KEY.
+ * Auto-converts to mp3 if ffmpeg is available (better Gemini support).
+ */
+async function transcribeAudioGemini(filePath) {
+    const env = readEnvFile(['GOOGLE_API_KEY']);
+    const apiKey = env.GOOGLE_API_KEY ?? process.env.GOOGLE_API_KEY ?? '';
+    if (!apiKey) {
+        throw new Error('GOOGLE_API_KEY not set');
+    }
+    // Read audio file as base64
+    let audioBuffer = fs.readFileSync(filePath);
+    let mimeType = 'audio/webm';
+    const ext = path.extname(filePath).toLowerCase();
+    if (ext === '.mp3')
+        mimeType = 'audio/mpeg';
+    else if (ext === '.wav')
+        mimeType = 'audio/wav';
+    else if (ext === '.ogg' || ext === '.oga')
+        mimeType = 'audio/ogg';
+    else if (ext === '.m4a')
+        mimeType = 'audio/mp4';
+    else if (ext === '.webm')
+        mimeType = 'audio/webm';
+    const base64Audio = audioBuffer.toString('base64');
+    const payload = JSON.stringify({
+        contents: [{
+                parts: [
+                    { text: 'Transcribe this audio recording. Output only the transcript, no explanations or formatting. Detect language automatically.' },
+                    { inline_data: { mime_type: mimeType, data: base64Audio } }
+                ]
+            }],
+        generationConfig: { temperature: 0, maxOutputTokens: 1024 }
+    });
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: payload,
+    });
+    if (!response.ok) {
+        const err = await response.text();
+        throw new Error(`Gemini STT HTTP ${response.status}: ${err.slice(0, 300)}`);
+    }
+    const data = await response.json();
+    const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+    if (!text)
+        throw new Error('Gemini STT returned no transcript');
+    return text.trim();
+}
 // ── STT: Groq Whisper ───────────────────────────────────────────────────────
 /**
  * Download a Telegram file to a local temp path and return the path.
@@ -191,8 +242,19 @@ async function transcribeAudioLocal(filePath) {
  * Priority: Groq Whisper (cloud) → whisper-cpp (local).
  */
 export async function transcribeAudio(filePath) {
-    const env = readEnvFile(['GROQ_API_KEY', 'WHISPER_MODEL_PATH']);
-    // Try Groq first (cloud, fast)
+    // PhD fix 2026-05-01: Gemini Audio first (free with GOOGLE_API_KEY, always available)
+    const env = readEnvFile(['GOOGLE_API_KEY', 'GROQ_API_KEY', 'WHISPER_MODEL_PATH']);
+    // Priority 1: Gemini Audio (always works if GOOGLE_API_KEY set)
+    const geminiKey = env.GOOGLE_API_KEY ?? process.env.GOOGLE_API_KEY;
+    if (geminiKey) {
+        try {
+            return await transcribeAudioGemini(filePath);
+        }
+        catch (err) {
+            logger.warn({ err }, 'Gemini STT failed, trying Groq');
+        }
+    }
+    // Priority 2: Groq (faster but needs key)
     if (env.GROQ_API_KEY) {
         try {
             return await transcribeAudioGroq(filePath);
@@ -201,7 +263,7 @@ export async function transcribeAudio(filePath) {
             logger.warn({ err }, 'Groq Whisper failed, trying local whisper-cpp');
         }
     }
-    // Fallback: local whisper-cpp
+    // Priority 3: local whisper-cpp
     return await transcribeAudioLocal(filePath);
 }
 // ── TTS: ElevenLabs (primary) ────────────────────────────────────────────────
@@ -394,6 +456,7 @@ export async function synthesizeSpeech(text) {
  */
 export function voiceCapabilities() {
     const env = readEnvFile([
+        'GOOGLE_API_KEY',
         'GROQ_API_KEY',
         'WHISPER_MODEL_PATH',
         'ELEVENLABS_API_KEY', 'ELEVENLABS_VOICE_ID',
@@ -401,7 +464,7 @@ export function voiceCapabilities() {
         'KOKORO_URL',
     ]);
     return {
-        stt: !!env.GROQ_API_KEY || !!env.WHISPER_MODEL_PATH,
+        stt: !!env.GOOGLE_API_KEY || !!env.GROQ_API_KEY || !!env.WHISPER_MODEL_PATH,
         tts: !!(env.ELEVENLABS_API_KEY && env.ELEVENLABS_VOICE_ID)
             || !!(env.GRADIUM_API_KEY && env.GRADIUM_VOICE_ID)
             || !!env.KOKORO_URL

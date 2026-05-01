@@ -14,6 +14,16 @@
             "date": 1777445680056,
             "name": "/app/silver-oak-os/logs/2026-04-29.log",
             "hash": "65fc321968c481fd2b5f194e58a51666e89108e8c3705d1fee8724656db618ae"
+        },
+        {
+            "date": 1777564207884,
+            "name": "/app/silver-oak-os/logs/2026-04-30.log",
+            "hash": "f263f1d5d6b3570cd8ce55e576526bc3199a9aa9e89433c1be27535b0fb8b3ea"
+        },
+        {
+            "date": 1777618946182,
+            "name": "/app/silver-oak-os/logs/2026-05-01.log",
+            "hash": "f30ac768fb409ee6446c2a00a05b8def34739fa5a743717fad89d7b23632d415"
         }
     ],
     "hashType": "sha256"

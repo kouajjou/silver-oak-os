@@ -7,11 +7,15 @@ import { AGENTS } from '@/lib/agents';
 // PhD fix 2026-04-30: Email + FaceTime not implemented yet.
 // Voix → /agent/{id} (chat with TTS) | Message → /agent/{id} (text chat)
 // Email + FaceTime now flagged as 'soon' to set user expectation correctly.
+// PhD fix 2026-05-01: Voix → /agent/{id}/call (vrai appel telephonique)
+// FaceTime → /agent/{id}/call (alias pour le mode voix)
+// Message → /agent/{id} (chat texte)
+// Email reste 'soon' (pas implemente cote backend frontend)
 const CHANNEL_BUTTONS = [
   { icon: '📞', label: 'Voix', channel: 'voice', soon: false },
   { icon: '💬', label: 'Message', channel: 'chat', soon: false },
   { icon: '📧', label: 'Email', channel: 'email', soon: true },
-  { icon: '📹', label: 'FaceTime', channel: 'facetime', soon: true },
+  { icon: '📹', label: 'FaceTime', channel: 'facetime', soon: false },
 ];
 
 export default function HomePage() {
@@ -28,7 +32,19 @@ export default function HomePage() {
               Virtual Staff
             </p>
           </div>
-          <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse" title="Tous les agents actifs" />
+          <div className="flex items-center gap-3">
+            {/* PhD fix 2026-05-01: War Room link (Mark's killer feature) */}
+            <a
+              href={`https://broadway-fonts-ambassador-medicine.trycloudflare.com/warroom?token=e8e6c27f94d32b60875c58715331bb93fa173d88af7d9bd2`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-[10px] uppercase tracking-widest text-so-gold border border-so-gold/40 rounded-full px-3 py-1.5 hover:bg-so-gold/10 transition-colors"
+              title="War Room cinematique"
+            >
+              War Room
+            </a>
+            <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse" title="Tous les agents actifs" />
+          </div>
         </div>
       </header>
 
@@ -96,10 +112,14 @@ function ChannelButton({
   channel: string;
   soon?: boolean;
 }) {
-  // Voice and chat → go to agent page; others → 'Bientôt' (PhD fix 2026-04-30)
+  // PhD fix 2026-05-01: voice + facetime → /agent/{id}/call (real voice call)
+  // chat → /agent/{id} (text chat)
+  // others → 'soon' badge
   const href =
-    channel === 'voice' || channel === 'chat'
-      ? `/agent/${agentId}?channel=${channel}`
+    channel === 'voice' || channel === 'facetime'
+      ? `/agent/${agentId}/call`
+      : channel === 'chat'
+      ? `/agent/${agentId}`
       : undefined;
 
   const baseCls =

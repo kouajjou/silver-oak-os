@@ -35,6 +35,42 @@ interface OpenAIErrorResponse {
   error?: { message: string };
 }
 
+/**
+ * PhD fix 2026-05-01: Gemini TTS returns RAW PCM (16-bit, 24kHz, mono),
+ * not MP3 as the URL suggests. Wrap with WAV header so browsers can play it.
+ *
+ * WAV format: 44-byte header + raw PCM data.
+ */
+function pcmToWav(pcmData: Buffer): Buffer {
+  const sampleRate = 24000;
+  const numChannels = 1;
+  const bitsPerSample = 16;
+  const byteRate = sampleRate * numChannels * bitsPerSample / 8;
+  const blockAlign = numChannels * bitsPerSample / 8;
+  const dataSize = pcmData.length;
+  const fileSize = 36 + dataSize;
+
+  const header = Buffer.alloc(44);
+  // "RIFF"
+  header.write('RIFF', 0, 'ascii');
+  header.writeUInt32LE(fileSize, 4);
+  header.write('WAVE', 8, 'ascii');
+  // "fmt " subchunk
+  header.write('fmt ', 12, 'ascii');
+  header.writeUInt32LE(16, 16);  // subchunk size
+  header.writeUInt16LE(1, 20);   // PCM format
+  header.writeUInt16LE(numChannels, 22);
+  header.writeUInt32LE(sampleRate, 24);
+  header.writeUInt32LE(byteRate, 28);
+  header.writeUInt16LE(blockAlign, 32);
+  header.writeUInt16LE(bitsPerSample, 34);
+  // "data" subchunk
+  header.write('data', 36, 'ascii');
+  header.writeUInt32LE(dataSize, 40);
+
+  return Buffer.concat([header, pcmData]);
+}
+
 async function ttsGemini(text: string, voiceName: string): Promise<Buffer | null> {
   const apiKey = process.env.GOOGLE_API_KEY;
   if (!apiKey) return null;
@@ -73,7 +109,9 @@ async function ttsGemini(text: string, voiceName: string): Promise<Buffer | null
       return null;
     }
 
-    return Buffer.from(inlineData.data, 'base64');
+    // PhD fix 2026-05-01: Gemini returns raw PCM, wrap in WAV so browsers can play it
+    const pcmBuffer = Buffer.from(inlineData.data, 'base64');
+    return pcmToWav(pcmBuffer);
   } catch (err) {
     console.error('[tts] Gemini fetch failed:', err);
     return null;
@@ -155,7 +193,7 @@ export async function POST(req: NextRequest) {
       return new NextResponse(new Uint8Array(geminiAudio), {
         status: 200,
         headers: {
-          'Content-Type': 'audio/mpeg',
+          'Content-Type': 'audio/wav',
           'X-TTS-Provider': 'gemini',
           'X-TTS-Voice': voices.gemini,
           'Cache-Control': 'public, max-age=86400',

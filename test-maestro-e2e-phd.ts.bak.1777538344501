@@ -1,0 +1,67 @@
+/**
+ * test-maestro-e2e-phd.ts
+ *
+ * Test E2E PhD-grade du vrai dispatchToMaestro() :
+ *  1. Mode 2 court (provider=deepseek, mais DeepSeek balance épuisé → fallback Gemini)
+ *  2. Mode 1 forcé (forceMode='mode_1_tmux' → claude-backend Pro Max)
+ *  3. Auto-routing sans forceMode (verif classifier)
+ */
+
+// load env via custom env loader; export to process.env
+import { readEnvFile } from './src/env.js';
+const _env = readEnvFile(['GOOGLE_API_KEY','OPENAI_API_KEY','DEEPSEEK_API_KEY','XAI_API_KEY','MISTRAL_API_KEY','MCP_BRIDGE_URL','USE_MAESTRO_PRO_MAX']);
+for (const [k,v] of Object.entries(_env)) process.env[k] = v;
+import { dispatchToMaestro, type MaestroTask } from './src/agents/maestro_dispatcher.js';
+import { getAvailableProviders, getProvidersStatus } from './src/adapters/llm/index.js';
+
+async function main() {
+  console.log('═══ TEST E2E PhD — dispatchToMaestro() ═══\n');
+
+  // 0. Status providers
+  console.log('═ Providers status:');
+  const status = getProvidersStatus();
+  for (const s of status) {
+    console.log(`  ${s.available ? '✅' : '❌'} ${s.provider}`);
+  }
+  console.log(`  → Available: ${getAvailableProviders().join(', ')}\n`);
+
+  // ═══ TEST 1 — Mode 2 avec Google/Gemini (court, no forceMode) ═══
+  console.log('═ TEST 1 — Mode 2 short task (auto → mode_2_api default)');
+  const task1: MaestroTask = {
+    task_description: 'Que fait la commande "ls -la" en bash ? Réponds en 1 phrase.',
+    user_id: 'test-phd-1',
+    preferred_provider: 'google',
+    max_tokens: 100,
+  };
+  const t1 = Date.now();
+  const r1 = await dispatchToMaestro(task1);
+  console.log(`  Mode: ${r1.mode_used} | Provider: ${r1.provider_used} | Cost: $${r1.cost_usd?.toFixed(6) ?? 0}`);
+  console.log(`  Latency: ${r1.latency_ms}ms (wall: ${Date.now() - t1}ms)`);
+  console.log(`  Success: ${r1.success}`);
+  console.log(`  Result: ${(r1.result || r1.error || '').slice(0, 150)}\n`);
+
+  // ═══ TEST 2 — Mode 1 forcé (Pro Max claude-backend) ═══
+  console.log('═ TEST 2 — Mode 1 forced (force tmux Pro Max)');
+  const task2: MaestroTask = {
+    task_description: 'Test PhD Mode 1 réel via dispatchToMaestro. Réponds "PONG mode 1 réel" et termine par TASK_DONE_phd_test_2.',
+    user_id: 'test-phd-2',
+    mode: 'mode_1_tmux',
+  };
+  const t2 = Date.now();
+  const r2 = await dispatchToMaestro(task2);
+  console.log(`  Mode: ${r2.mode_used} | Provider: ${r2.provider_used} | Cost: $${r2.cost_usd}`);
+  console.log(`  Latency: ${r2.latency_ms}ms (wall: ${Date.now() - t2}ms)`);
+  console.log(`  Success: ${r2.success}`);
+  console.log(`  Result: ${(r2.result || r2.error || '').slice(0, 200)}\n`);
+
+  // ═══ Verdict ═══
+  console.log('═══ VERDICT ═══');
+  const ok = r1.success && r2.success;
+  console.log(ok ? '✅ TOUT OK — dispatchToMaestro() OPÉRATIONNEL Mode 1 + Mode 2' : '❌ ÉCHEC — voir errors ci-dessus');
+  process.exit(ok ? 0 : 1);
+}
+
+main().catch((e) => {
+  console.error('FATAL:', e);
+  process.exit(1);
+});

@@ -122,7 +122,7 @@ async function callGemini(systemPrompt, messages, apiKey) {
 // ── Voice API server ──────────────────────────────────────────────────────────
 const VOICE_API_PORT = parseInt(process.env.VOICE_API_PORT ?? '3000', 10);
 export function startVoiceApiServer() {
-    const env = readEnvFile(['GOOGLE_API_KEY', 'VOICE_API_PORT', 'USE_VOICE_PRO_MAX']);
+    const env = readEnvFile(['GOOGLE_API_KEY', 'VOICE_API_PORT', 'USE_VOICE_PRO_MAX', 'VOICE_API_TOKEN', 'VOICE_API_CORS_ORIGINS']);
     // archived: was ANTHROPIC_API_KEY — zero-anthropic Phase F
     // const anthropicKey = env.ANTHROPIC_API_KEY ?? process.env.ANTHROPIC_API_KEY ?? '';
     const geminiKey = env.GOOGLE_API_KEY ?? process.env['GOOGLE_API_KEY'] ?? '';
@@ -133,13 +133,44 @@ export function startVoiceApiServer() {
         logger.warn('GOOGLE_API_KEY not set — voice chat Mode 2 will return 503');
     }
     const app = new Hono();
-    // CORS
+    // ── SECURITY (added 2026-04-30) ─────────────────────────────────────────
+    // Auth Bearer token (required) — set VOICE_API_TOKEN in .env
+    // CORS — strict allowlist via VOICE_API_CORS_ORIGINS (comma-separated)
+    const voiceApiToken = env['VOICE_API_TOKEN'] ?? process.env['VOICE_API_TOKEN'] ?? '';
+    const allowedOriginsRaw = env['VOICE_API_CORS_ORIGINS'] ?? process.env['VOICE_API_CORS_ORIGINS'] ?? '';
+    const allowedOrigins = allowedOriginsRaw.split(',').map((s) => s.trim()).filter(Boolean);
+    if (!voiceApiToken) {
+        logger.error('VOICE_API_TOKEN not set — voiceRouter REFUSES to start (security P0)');
+        return;
+    }
+    // CORS strict
     app.use('*', async (c, next) => {
-        c.header('Access-Control-Allow-Origin', '*');
-        c.header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-        c.header('Access-Control-Allow-Headers', 'Content-Type, x-test-mode');
+        const origin = c.req.header('origin') ?? '';
+        const allowAll = allowedOrigins.length === 0;
+        const matched = allowAll || allowedOrigins.includes(origin);
+        if (matched) {
+            c.header('Access-Control-Allow-Origin', allowAll ? '*' : origin);
+            c.header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+            c.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, x-test-mode');
+            c.header('Access-Control-Max-Age', '600');
+        }
         if (c.req.method === 'OPTIONS')
             return c.body(null, 204);
+        await next();
+    });
+    // Auth middleware — Bearer token required (except /health)
+    app.use('*', async (c, next) => {
+        const url = c.req.url;
+        if (url.endsWith('/api/voice/health')) {
+            await next();
+            return;
+        }
+        const authHeader = c.req.header('authorization') ?? c.req.header('Authorization') ?? '';
+        const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : '';
+        if (!token || token !== voiceApiToken) {
+            logger.warn({ url, ip: c.req.header('x-forwarded-for') ?? 'unknown' }, 'voice.auth.denied');
+            return c.json({ error: 'Unauthorized' }, 401);
+        }
         await next();
     });
     app.onError((err, c) => {
@@ -177,9 +208,54 @@ export function startVoiceApiServer() {
         }
         try {
             let reply;
+            // ── Helper: parser PhD 6-step + echo-only detection ─────────────────
+            const parseTmuxReply = (rawContent) => {
+                let raw = rawContent;
+                // Step 1: Strip ANSI escape codes (cursor moves, colors, etc.)
+                raw = raw.replace(/\x1b\[[0-9;]*[a-zA-Z]/g, '')
+                    .replace(/\[[0-9;]*[mGKHF]/g, '');
+                // Step 2: Strip injected prompt header (everything BEFORE first
+                // assistant bullet ●). Prompt contains "FIN DE TÂCHE OBLIGATOIRE".
+                const firstAssistantIdx = raw.search(/(^|\n)\s*\u25CF\s+/);
+                if (firstAssistantIdx > 0) {
+                    raw = raw.slice(firstAssistantIdx);
+                }
+                // Step 3: Strip tmux UI footer
+                const footerMarkers = [
+                    /\n\s*\u25CF\s*Bash\s*\(/,
+                    /\n\s*\u23BE/,
+                    /\n\s*\u273B\s*(Crunched|Cogitated|Thinking)/,
+                    /\n\s*\u276F/,
+                    /\n\s*\?\s*for shortcuts/,
+                    /\n\s*\u2500{40,}/,
+                ];
+                let earliestFooter = raw.length;
+                for (const marker of footerMarkers) {
+                    const mfoot = raw.match(marker);
+                    if (mfoot && mfoot.index !== undefined && mfoot.index < earliestFooter) {
+                        earliestFooter = mfoot.index;
+                    }
+                }
+                raw = raw.slice(0, earliestFooter);
+                // Step 4: Strip bullets, TASK_DONE, tmux prompts, collapse blanks
+                let cleaned = raw
+                    .replace(/TASK_DONE(_[a-z0-9-]+)?/gi, '')
+                    .replace(/^\s*\u25CF\s+/gm, '')
+                    .replace(/^\s*>\s*/gm, '')
+                    .replace(/\n{3,}/g, '\n\n');
+                // Step 5 (PhD 2026-04-30 NEW): Strip tmux indentation artifacts.
+                // Tmux buffer prefixes wrapped lines with "  " (2 spaces) for visual
+                // indentation. Strip leading 2+ spaces on continuation lines (NOT first
+                // line which may legitimately start with text).
+                cleaned = cleaned.replace(/\n  +/g, '\n').trim();
+                // Step 6: Echo-only detection (session didn't actually respond)
+                const isEchoOnly = /FIN DE T[ÂA]CHE OBLIGATOIRE/i.test(cleaned) ||
+                    /Cette commande exacte est OBLIGATOIRE/i.test(cleaned) ||
+                    cleaned.length < 3;
+                return { reply: cleaned, isEchoOnly };
+            };
             if (useVoiceProMax) {
                 // ── Mode 1: CLI tmux Pro Max forfait ($0) ───────────────────────────
-                // Build a self-contained prompt including system context + last message
                 const lastUserMsg = [...messages].reverse().find((m) => m.role === 'user');
                 const userText = lastUserMsg?.content ?? messages[messages.length - 1]?.content ?? '';
                 const prompt = [
@@ -189,30 +265,43 @@ export function startVoiceApiServer() {
                     '',
                     'Please respond concisely. When done, output exactly: TASK_DONE',
                 ].join('\n');
-                logger.info({ agentId, session: 'claude-frontend' }, 'voice.chat.mode1_tmux');
-                const tmuxResult = await dispatchToTmuxSession('claude-frontend', prompt, {
-                    timeoutMs: 120_000, // 2 min max for voice
-                    pollIntervalMs: 5_000, // poll every 5s (voice needs lower latency than Maestro)
-                });
-                // Extract reply: everything before TASK_DONE, strip tmux noise
-                reply = tmuxResult.content
-                    .replace(/TASK_DONE(_[a-z0-9-]+)?/gi, '')
-                    .replace(/\[[0-9;]*[mGKHF]/g, '') // strip ANSI escape codes
-                    .replace(/^\s*>\s*/gm, '') // strip tmux prompt artifacts
-                    .trim();
-                if (!reply) {
-                    throw new Error('Mode 1 tmux dispatch returned empty reply');
+                // PhD 2026-04-30: retry up to 2x on echo-only, then fallback Gemini.
+                const MAX_RETRIES = 2;
+                let parsed = null;
+                let lastLatency = 0;
+                for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+                    logger.info({ agentId, session: 'claude-frontend', attempt }, 'voice.chat.mode1_tmux');
+                    const tmuxResult = await dispatchToTmuxSession('claude-frontend', prompt, {
+                        timeoutMs: 180_000,
+                        pollIntervalMs: 5_000,
+                    });
+                    lastLatency = tmuxResult.latency_ms;
+                    parsed = parseTmuxReply(tmuxResult.content);
+                    if (!parsed.isEchoOnly) {
+                        break; // success
+                    }
+                    logger.warn({ agentId, attempt, replyPreview: parsed.reply.slice(0, 100) }, 'voice.parser.echo_only_retry');
                 }
-                logger.info({ agentId, latency: tmuxResult.latency_ms, cost: 0 }, 'voice.chat.mode1_done');
+                if (parsed && !parsed.isEchoOnly) {
+                    reply = parsed.reply;
+                    logger.info({ agentId, latency: lastLatency, cost: 0 }, 'voice.chat.mode1_done');
+                }
+                else {
+                    // PhD 2026-04-30: tmux failed 2x → fallback to Gemini API.
+                    logger.warn({ agentId }, 'voice.chat.mode1_failed_fallback_gemini');
+                    if (!geminiKey) {
+                        throw new Error('Mode 1 tmux failed and GOOGLE_API_KEY not configured for fallback');
+                    }
+                    reply = await callGemini(agent.systemPrompt, messages, geminiKey);
+                }
             }
             else {
-                // ── Mode 2: Gemini Flash API (archived: was Anthropic API — zero-anthropic Phase F) ──
+                // ── Mode 2: Gemini Flash API ─────────────────────────────────────────
                 if (!geminiKey) {
                     return c.json({ error: 'GOOGLE_API_KEY not configured' }, 503);
                 }
                 logger.info({ agentId }, 'voice.chat.mode2_gemini');
-                // archived: callGemini(agent.systemPrompt, messages, geminiKey) -- PAYANT
-                reply = await callClaudeCodeSDK(agent.systemPrompt, messages, 'claude-sonnet-4-5');
+                reply = await callGemini(agent.systemPrompt, messages, geminiKey);
             }
             return c.json({
                 agent: { id: agent.id, name: agent.name },

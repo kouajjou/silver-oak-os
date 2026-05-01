@@ -18,8 +18,8 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
-  maximumScale: 1,
-  userScalable: false,
+  // maximumScale removed (a11y violation - blocks zoom for visually impaired)
+  // userScalable removed (a11y violation - blocks zoom for visually impaired)
   viewportFit: 'cover',
   themeColor: '#071529',
 };

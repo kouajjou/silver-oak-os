@@ -58,37 +58,69 @@ export default function AgentPage() {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  const playTTS = useCallback(async (msgId: string, text: string) => {
+  // PhD fix 2026-05-01: Safari iOS-compliant TTS
+  // Safari iOS blocks audio.play() if not called in same synchronous task as user gesture.
+  // Solution: create audio element + start play() IMMEDIATELY (synchronously), then set src
+  // when blob arrives. This works because Safari counts the empty play() as the gesture.
+  const playTTS = useCallback((msgId: string, text: string) => {
     if (!agent) return;
     setIsTTSPlaying(msgId);
-    try {
-      const res = await fetch('/api/tts', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text, agent_id: agent.id }),
-      });
 
-      if (!res.ok) throw new Error('TTS failed');
-
-      const blob = await res.blob();
-      const url = URL.createObjectURL(blob);
-
-      if (audioRef.current) {
-        audioRef.current.pause();
-        URL.revokeObjectURL(audioRef.current.src);
-      }
-
-      const audio = new Audio(url);
-      audioRef.current = audio;
-      audio.onended = () => {
-        setIsTTSPlaying(null);
-        URL.revokeObjectURL(url);
-      };
-      audio.onerror = () => setIsTTSPlaying(null);
-      await audio.play();
-    } catch {
-      setIsTTSPlaying(null);
+    // STEP 1: Create audio element NOW (synchronously, in user gesture context)
+    if (audioRef.current) {
+      audioRef.current.pause();
+      try { URL.revokeObjectURL(audioRef.current.src); } catch {}
     }
+    const audio = new Audio();
+    audioRef.current = audio;
+
+    // STEP 2: Trigger play() with silent placeholder (Safari iOS unlock trick)
+    // 1-frame silent MP3 (base64), allows Safari to consider audio "unlocked"
+    audio.src = 'data:audio/mp3;base64,SUQzBAAAAAABEVRYWFgAAAAtAAADY29tbWVudABCaWdTb3VuZEJhbmsuY29tIC8gTGFTb25vdGhlcXVlLm9yZwBURU5DAAAAHQAAA1N3aXRjaCBQbHVzIMKpIE5DSCBTb2Z0d2FyZQBUSVQyAAAABgAAAzIyMzUAVFNTRQAAAA8AAANMYXZmNTcuODMuMTAwAAAAAAAAAAAAAAD/80DEAAAAA0gAAAAATEFNRTMuMTAwVVVVVVVVVVVVVUxBTUUzLjEwMFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV/zQsRbAAADSAAAAABVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV//MUxAMNgAJ/+UEQAJgAAA0gAAABMQU1FMy4xMDBVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV';
+
+    audio.onended = () => {
+      setIsTTSPlaying(null);
+      try { URL.revokeObjectURL(audio.src); } catch {}
+    };
+    audio.onerror = (e) => {
+      console.error('[TTS] audio.onerror', e);
+      setIsTTSPlaying(null);
+    };
+
+    // Lock audio context for Safari iOS — play silent placeholder synchronously
+    const playPromise = audio.play();
+    if (playPromise) {
+      playPromise.catch((err) => {
+        console.warn('[TTS] silent play() rejected — Safari iOS may block', err);
+      });
+    }
+
+    // STEP 3: Now fetch the real audio (async, no longer needs user gesture)
+    fetch('/api/tts', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text, agent_id: agent.id }),
+    })
+      .then((res) => {
+        if (!res.ok) throw new Error(`TTS HTTP ${res.status}`);
+        return res.blob();
+      })
+      .then((blob) => {
+        const url = URL.createObjectURL(blob);
+        // Replace silent src with real audio — Safari iOS keeps audio unlocked
+        audio.src = url;
+        const playReal = audio.play();
+        if (playReal) {
+          playReal.catch((err) => {
+            console.error('[TTS] real audio.play() failed:', err);
+            setIsTTSPlaying(null);
+          });
+        }
+      })
+      .catch((err) => {
+        console.error('[TTS] fetch failed:', err);
+        setIsTTSPlaying(null);
+      });
   }, [agent]);
 
   const sendMessage = useCallback(
@@ -148,7 +180,7 @@ export default function AgentPage() {
         // Note: we keep ttsEnabled state for future preference, but no longer auto-play
         if (ttsEnabled && typeof window !== 'undefined' && window.matchMedia?.('(hover: hover)').matches) {
           // Desktop only — auto-play OK
-          await playTTS(agentMsg.id, reply);
+          playTTS(agentMsg.id, reply);
         }
       } catch {
         const errMsg: Message = {
