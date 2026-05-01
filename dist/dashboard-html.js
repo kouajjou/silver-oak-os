@@ -57,6 +57,7 @@ export function getDashboardHtml(token, chatId, warroomEnabled = false) {
   .summary-stat { background: #1a1a1a; border: 1px solid #2a2a2a; border-radius: 10px; padding: 10px 14px; display: flex; flex-direction: column; gap: 2px; }
   .summary-stat-val { font-size: 20px; font-weight: 700; color: #fff; line-height: 1.2; }
   .summary-stat-label { font-size: 11px; color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px; }
+  .summary-stat-sub { font-size: 10px; color: #4ade80; margin-top: 2px; font-weight: 500; }
   @media (max-width: 640px) { .summary-bar { grid-template-columns: repeat(2, 1fr); } }
   /* Memory item expand on click */
   .mem-expand { cursor: pointer; transition: background 0.15s; padding: 4px 6px; margin: 0 -6px; border-radius: 6px; }
@@ -187,18 +188,22 @@ export function getDashboardHtml(token, chatId, warroomEnabled = false) {
   <div class="summary-stat clickable-card" onclick="document.getElementById('hive-section').scrollIntoView({behavior:'smooth'})" style="cursor:pointer">
     <span class="summary-stat-val" id="sum-messages">-</span>
     <span class="summary-stat-label">Messages</span>
+    <span class="summary-stat-sub" id="sum-messages-sub"></span>
   </div>
   <div class="summary-stat clickable-card" onclick="document.getElementById('agents-section').scrollIntoView({behavior:'smooth'})" style="cursor:pointer">
     <span class="summary-stat-val" id="sum-agents">-</span>
     <span class="summary-stat-label">Agents</span>
+    <span class="summary-stat-sub" id="sum-agents-sub"></span>
   </div>
   <div class="summary-stat clickable-card" onclick="document.getElementById('tokens-section').scrollIntoView({behavior:'smooth'})" style="cursor:pointer">
     <span class="summary-stat-val" id="sum-cost">-</span>
-    <span class="summary-stat-label">Tokens Today</span>
+    <span class="summary-stat-label">Tokens</span>
+    <span class="summary-stat-sub" id="sum-cost-sub"></span>
   </div>
   <div class="summary-stat clickable-card" onclick="openMemoryDrawer()" style="cursor:pointer">
     <span class="summary-stat-val" id="sum-memories">-</span>
     <span class="summary-stat-label">Memories</span>
+    <span class="summary-stat-sub" id="sum-memories-sub"></span>
   </div>
 </div>
 
@@ -1837,8 +1842,9 @@ async function toggleAgentDetail(agentId) {
       } else if (hasToken) {
         html += '<button data-agent="' + agentId + '" data-act="start" onclick="agentModalAction(this.dataset.agent,this.dataset.act)" style="flex:1;background:#064e3b;color:#6ee7b7;border:1px solid #065f46;border-radius:8px;padding:8px;font-size:12px;font-weight:600;cursor:pointer">Start as standalone bot</button>';
       } else {
-        // No standalone bot token — show info + allow Add Token wizard
-        html += '<div style="flex:1;background:#1a1a1a;color:#9ca3af;border:1px dashed #2a2a2a;border-radius:8px;padding:8px;font-size:11px;text-align:center;line-height:1.4">Embedded agent — replies via Alex (@sok_ops_bot).<br/><span style="color:#60a5fa">No standalone bot needed.</span></div>';
+        // PhD fix 2026-05-01 - Phase 3.4: message plus parlant avec aide explicite
+        // si le user veut activer l agent comme bot standalone (lien @BotFather)
+        html += '<div style="flex:1;background:#1a1a1a;color:#9ca3af;border:1px dashed #2a2a2a;border-radius:8px;padding:8px;font-size:11px;text-align:center;line-height:1.4">Embedded — replies via Alex (@sok_ops_bot).<br/><span style="color:#6b7280">Want a standalone bot? <a href="https://t.me/BotFather" target="_blank" style="color:#60a5fa;text-decoration:underline">@BotFather</a> → token → add to .env</span></div>';
       }
       html += '<button data-agent="' + agentId + '" data-act="delete" onclick="agentModalAction(this.dataset.agent,this.dataset.act)" style="background:#1a1a1a;color:#6b7280;border:1px solid #2a2a2a;border-radius:8px;padding:8px 14px;font-size:12px;cursor:pointer">Delete</button>';
       html += '</div>';
@@ -2353,12 +2359,34 @@ async function loadSummary() {
     ]);
     const bar = document.getElementById('summary-bar');
     bar.style.display = '';
-    document.getElementById('sum-messages').textContent = tokens.stats.todayTurns || '0';
+
+    // PhD fix 2026-05-01 - Phase 3.1: afficher all-time en gros + today en sub
+    // Avant : 0 Messages quand stat etait reset chaque jour -> trompeur
+    // Maintenant : total cumule en gros, "+ N today" en sub-label
+    function fmt(n) { return n > 1000 ? Math.round(n / 1000) + 'k' : String(n || 0); }
+
+    // Messages (turns) : all-time + today
+    var allTurns = tokens.stats.allTimeTurns || 0;
+    var todayTurns = tokens.stats.todayTurns || 0;
+    document.getElementById('sum-messages').textContent = fmt(allTurns);
+    document.getElementById('sum-messages-sub').textContent = todayTurns > 0 ? '+' + todayTurns + ' today' : 'today: 0';
+
+    // Agents : actifs / total
     const activeCount = agents.agents ? agents.agents.filter(a => a.running).length : 0;
-    document.getElementById('sum-agents').textContent = activeCount + '/' + (agents.agents ? agents.agents.length : 0);
-    var totalTokens = (tokens.stats.todayInput || 0) + (tokens.stats.todayOutput || 0);
-    document.getElementById('sum-cost').textContent = totalTokens > 1000 ? Math.round(totalTokens / 1000) + 'k' : totalTokens.toString();
-    document.getElementById('sum-memories').textContent = mems.stats.total || '0';
+    const totalCount = agents.agents ? agents.agents.length : 0;
+    document.getElementById('sum-agents').textContent = activeCount + '/' + totalCount;
+    document.getElementById('sum-agents-sub').textContent = activeCount === totalCount ? 'all running' : (totalCount - activeCount) + ' offline';
+
+    // Tokens : all-time + today
+    var allTokens = (tokens.stats.allTimeInput || 0) + (tokens.stats.allTimeOutput || 0);
+    var todayTokens = (tokens.stats.todayInput || 0) + (tokens.stats.todayOutput || 0);
+    document.getElementById('sum-cost').textContent = fmt(allTokens);
+    document.getElementById('sum-cost-sub').textContent = todayTokens > 0 ? '+' + fmt(todayTokens) + ' today' : 'today: 0';
+
+    // Memories : total
+    var memTotal = mems.stats.total || 0;
+    document.getElementById('sum-memories').textContent = fmt(memTotal);
+    document.getElementById('sum-memories-sub').textContent = memTotal > 0 ? 'stored' : 'empty';
   } catch {}
 }
 

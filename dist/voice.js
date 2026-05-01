@@ -114,7 +114,17 @@ async function transcribeAudioGemini(filePath) {
     const payload = JSON.stringify({
         contents: [{
                 parts: [
-                    { text: 'Transcribe this audio recording. Output only the transcript, no explanations or formatting. Detect language automatically.' },
+                    { text: `Transcribe this audio recording verbatim. Output only the transcript, no explanations or formatting. Detect language automatically (likely French or English).
+
+CONTEXT — Speaker is Karim Kouajjou, founder of Silver Oak (B2B/B2C SaaS factory in Marbella, Spain). He may mention these proper nouns (use these EXACT spellings, never homophones):
+
+People: Karim (NEVER "Karine"), Kouajjou
+Project/Product: Silver Oak, Claudette, Claude, Anthropic, Mistral, Gemini, Qwen, DeepSeek, Grok, OpenAI, ChatGPT, Perplexity
+Agents: Alex, Sara, Léo, Marco, Nina, Maestro, Jackson, Morgan, Harper, Muse, Oracle, Helix, Grace
+Tech: tmux, PM2, Hetzner, Supabase, Redis, BullMQ, MCP, RGPD, GDPR, TypeScript, Node, Telegram, WhatsApp, OAuth, Stripe, Pennylane, Qonto, Brevo, Notion, Slack, Linear, Figma, Canva
+Methods: Mode 1, Mode 2, Mode 3, SOP V26, Phase 1/2/3/4, Tier 1/Tier 2, PhD, Maker-Checker
+
+Output the raw transcript only. If you hear something that sounds like a homophone of one of these names, prefer the listed exact spelling.` },
                     { inline_data: { mime_type: mimeType, data: base64Audio } }
                 ]
             }],

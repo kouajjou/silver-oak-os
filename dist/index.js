@@ -15,6 +15,14 @@ import { cleanupOldUploads } from './media.js';
 import { runConsolidation } from './memory-consolidate.js';
 import { runDecaySweep } from './memory.js';
 import { initOAuthHealthCheck } from './oauth-health.js';
+// PhD fix 2026-05-01 - Phase 2: Watchdog crash loop pour agents systemd
+import { startAgentWatchdog } from './services/agent-watchdog.js';
+// PhD fix 2026-05-01 - Phase 4.2: Cleanup automatique des dev artefacts dans budget tracker
+import { startBudgetCleanupCron } from './services/budget-tracker.js';
+// PhD fix 2026-05-01 - Phase 4.3: Maestro dispatch logs cleanup
+import { cleanupOldDispatches } from './services/maestro-dispatch-log.js';
+// PhD fix 2026-05-01 - Phase 4.4: Validation tokens externes au startup
+import { validateAllTokens } from './services/token-validator.js';
 import { initOrchestrator } from './orchestrator.js';
 import { initScheduler } from './scheduler.js';
 import { setTelegramConnected, setBotInfo } from './state.js';
@@ -206,6 +214,28 @@ async function main() {
     // feature instead of crashing.
     if (AGENT_ID === 'main') {
         startDashboard(bot?.api);
+        // PhD fix 2026-05-01 - Phase 2: Surveille crashs agents systemd
+        // Detecte si un agent restart >3x en 5 min -> stop + alerte Telegram
+        if (AGENT_ID === 'main') {
+            startAgentWatchdog();
+            // Phase 4.2: cleanup budget artefacts (cron 24h, premier passage @ +30s)
+            startBudgetCleanupCron();
+            // Phase 4.3: cleanup vieux logs maestro (>30j) au boot, non-bloquant
+            try {
+                const purged = cleanupOldDispatches();
+                if (purged > 0) {
+                    logger.info({ purged }, '[maestro-log] cleaned up old dispatch rows at boot');
+                }
+            }
+            catch { /* non-blocking */ }
+            // Phase 4.4: validation tokens externes (non-bloquant, async fire-and-forget)
+            // Lancement +5s pour eviter de bloquer le boot
+            setTimeout(() => {
+                validateAllTokens().catch((err) => {
+                    logger.warn({ err }, '[token-validator] Boot validation failed');
+                });
+            }, 5_000);
+        }
         // voiceRouter — SECURED 2026-04-30 (Bearer auth + strict CORS)
         startVoiceApiServer();
         // War Room voice server (auto-start if enabled, with auto-respawn)

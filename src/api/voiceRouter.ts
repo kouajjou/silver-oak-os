@@ -301,8 +301,18 @@ export function startVoiceApiServer(): void {
         raw = raw.slice(0, earliestFooter);
 
         // Step 4: Strip bullets, TASK_DONE, tmux prompts, collapse blanks
+        // PhD fix 2026-05-01 - Phase 3.2: strip aussi le marker FIN DE TACHE OBLIGATOIRE
+        // qui etait parfois inclus dans la reply finale (mauvaise UX voice).
+        // Le marker reste detecte pour isEchoOnly via le raw d origine ci-dessous.
+        const rawContainsMarker =
+          /FIN DE T[ÂA]CHE OBLIGATOIRE/i.test(raw) ||
+          /Cette commande exacte est OBLIGATOIRE/i.test(raw);
         let cleaned = raw
           .replace(/TASK_DONE(_[a-z0-9-]+)?/gi, '')
+          // Strip marker block multi-line (prompt injecte par dispatcher)
+          .replace(/[⚠️\s]*FIN DE T[ÂA]CHE OBLIGATOIRE[\s\S]*?(?=\n\n|\n[A-Z]|$)/gi, '')
+          .replace(/Cette commande exacte est OBLIGATOIRE.*$/gim, '')
+          .replace(/Quand tu as TERMIN[ÉE].*$/gim, '')
           .replace(/^\s*\u25CF\s+/gm, '')
           .replace(/^\s*>\s*/gm, '')
           .replace(/\n{3,}/g, '\n\n');
@@ -314,9 +324,12 @@ export function startVoiceApiServer(): void {
         cleaned = cleaned.replace(/\n  +/g, '\n').trim();
 
         // Step 6: Echo-only detection (session didn't actually respond)
+        // PhD fix 2026-05-01 : on utilise rawContainsMarker (avant strip) car
+        // le strip a justement enleve le marker du cleaned. Si le marker etait
+        // PRESENT dans le raw ET cleaned est tres court (<10 chars apres strip),
+        // c est un echo seul -> retry.
         const isEchoOnly =
-          /FIN DE T[ÂA]CHE OBLIGATOIRE/i.test(cleaned) ||
-          /Cette commande exacte est OBLIGATOIRE/i.test(cleaned) ||
+          (rawContainsMarker && cleaned.length < 10) ||
           cleaned.length < 3;
 
         return { reply: cleaned, isEchoOnly };

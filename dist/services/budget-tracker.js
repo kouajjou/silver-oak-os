@@ -163,5 +163,83 @@ export function getAllAgentsCosts() {
     GROUP BY agent_id
   `).all(oneDayAgo, oneMonthAgo);
 }
+/**
+ * PhD fix 2026-05-01 - Phase 4.2: Cleanup automatique des artefacts dev.
+ *
+ * Supprime de la table agent_costs les rows dont l'agent_id matche les
+ * BLOCKED_AGENT_PATTERNS (ex: task_breaker_test-*, maestro_factory-*, etc.)
+ * Ces rows polluent les stats budget car elles sont generees par les tests
+ * dev mais comptees comme depenses reelles.
+ *
+ * Doit etre appelee periodiquement (cron quotidien) depuis index.ts.
+ * Retourne le nombre de rows supprimees.
+ */
+export function cleanupBudgetArtefacts() {
+    // Preview: lister les agent_id qui vont etre purges (pour log)
+    const allAgents = db
+        .prepare(`SELECT DISTINCT agent_id FROM agent_costs LIMIT 200`)
+        .all();
+    const samples = allAgents
+        .filter((r) => !isValidAgentId(r.agent_id).valid)
+        .map((r) => r.agent_id);
+    if (samples.length === 0) {
+        return { deleted: 0, samples: [] };
+    }
+    // Suppression en transaction (atomique)
+    const stmtDelete = db.prepare(`DELETE FROM agent_costs WHERE agent_id = ?`);
+    const tx = db.transaction(() => {
+        let total = 0;
+        for (const agentId of samples) {
+            const info = stmtDelete.run(agentId);
+            total += info.changes;
+        }
+        return total;
+    });
+    const deleted = tx();
+    return { deleted, samples };
+}
+/**
+ * PhD fix 2026-05-01 - Phase 4.2: Cron loop, appelee au boot par index.ts
+ * Lance un cleanup a +30s puis chaque 24h.
+ */
+let cleanupCronInterval = null;
+export function startBudgetCleanupCron() {
+    if (cleanupCronInterval)
+        return;
+    // Premier passage 30s apres le boot (pas immediat pour eviter spike)
+    setTimeout(() => {
+        try {
+            const result = cleanupBudgetArtefacts();
+            if (result.deleted > 0) {
+                // eslint-disable-next-line no-console
+                console.log(`[budget-cleanup] Initial sweep: deleted ${result.deleted} dev artefact rows from agent_costs`);
+            }
+        }
+        catch (err) {
+            // eslint-disable-next-line no-console
+            console.error('[budget-cleanup] Initial sweep failed', err);
+        }
+    }, 30_000);
+    // Puis cron 24h
+    cleanupCronInterval = setInterval(() => {
+        try {
+            const result = cleanupBudgetArtefacts();
+            if (result.deleted > 0) {
+                // eslint-disable-next-line no-console
+                console.log(`[budget-cleanup] Daily sweep: deleted ${result.deleted} dev artefact rows`);
+            }
+        }
+        catch (err) {
+            // eslint-disable-next-line no-console
+            console.error('[budget-cleanup] Daily sweep failed', err);
+        }
+    }, 24 * 60 * 60 * 1000);
+}
+export function stopBudgetCleanupCron() {
+    if (cleanupCronInterval) {
+        clearInterval(cleanupCronInterval);
+        cleanupCronInterval = null;
+    }
+}
 // db instance not exported — use the named functions above
 //# sourceMappingURL=budget-tracker.js.map

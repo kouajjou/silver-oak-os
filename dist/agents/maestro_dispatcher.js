@@ -11,6 +11,8 @@
 import { callLLM, getAvailableProviders } from '../adapters/llm/index.js';
 import { dispatchToTmuxSession } from '../services/cli_tmux_dispatcher.js';
 import { logger } from '../logger.js';
+// PhD fix 2026-05-01 - Phase 4.3: SQLite persistant log de chaque dispatch
+import { logMaestroDispatch } from '../services/maestro-dispatch-log.js';
 const SYSTEM_PROMPT_MAESTRO = `You are Maestro, CTO of Silver Oak OS (SOP V26, 78 rules).
 You receive technical tasks from Alex (Chief of Staff) and produce an execution plan.
 
@@ -38,6 +40,17 @@ async function dispatchMode1(task, start) {
             pollIntervalMs: 60_000,
         });
         logger.info({ cost: 0, latency: tmuxResult.latency_ms, model: tmuxResult.model }, 'maestro.dispatch.mode1.success');
+        // Phase 4.3: log dispatch SQLite (non-bloquant)
+        logMaestroDispatch({
+            user_id: task.user_id,
+            mode: 'mode_1_tmux',
+            task: task.task_description,
+            provider: null,
+            model: tmuxResult.model ?? null,
+            success: true,
+            cost_usd: 0,
+            latency_ms: tmuxResult.latency_ms,
+        });
         return {
             success: true,
             result: tmuxResult.content,
@@ -50,6 +63,16 @@ async function dispatchMode1(task, start) {
     catch (err) {
         const msg = err instanceof Error ? err.message : String(err);
         logger.error({ error: msg, mode: 'mode_1_tmux' }, 'maestro.dispatch.mode1.fail');
+        logMaestroDispatch({
+            user_id: task.user_id,
+            mode: 'mode_1_tmux',
+            task: task.task_description,
+            provider: null,
+            success: false,
+            cost_usd: 0,
+            latency_ms: Date.now() - start,
+            error: msg,
+        });
         return {
             success: false,
             result: '',
@@ -72,6 +95,16 @@ async function dispatchMode2(task, start) {
         if (!available.includes(provider)) {
             const err = `Provider ${provider} unavailable. Available: ${available.join(', ')}`;
             logger.warn({ provider, available }, 'maestro.dispatch.provider_unavailable');
+            logMaestroDispatch({
+                user_id: task.user_id,
+                mode: 'mode_2_api',
+                task: task.task_description,
+                provider,
+                success: false,
+                cost_usd: 0,
+                latency_ms: Date.now() - start,
+                error: err,
+            });
             return {
                 success: false, result: '', provider_used: null,
                 cost_usd: 0, latency_ms: Date.now() - start, error: err,
@@ -94,6 +127,16 @@ async function dispatchMode2(task, start) {
             agent_id: `maestro_${task.user_id}`,
         });
         logger.info({ provider, cost: response.cost_usd, latency: response.latency_ms }, 'maestro.dispatch.mode2.success');
+        logMaestroDispatch({
+            user_id: task.user_id,
+            mode: 'mode_2_api',
+            task: task.task_description,
+            provider,
+            model,
+            success: true,
+            cost_usd: response.cost_usd,
+            latency_ms: response.latency_ms,
+        });
         return {
             success: true,
             result: response.content,
@@ -106,6 +149,16 @@ async function dispatchMode2(task, start) {
     catch (err) {
         const msg = err instanceof Error ? err.message : String(err);
         logger.error({ provider, error: msg, mode: 'mode_2_api' }, 'maestro.dispatch.mode2.fail');
+        logMaestroDispatch({
+            user_id: task.user_id,
+            mode: 'mode_2_api',
+            task: task.task_description,
+            provider,
+            success: false,
+            cost_usd: 0,
+            latency_ms: Date.now() - start,
+            error: msg,
+        });
         return {
             success: false, result: '', provider_used: null,
             cost_usd: 0, latency_ms: Date.now() - start, error: msg,

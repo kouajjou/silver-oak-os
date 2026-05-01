@@ -6,6 +6,11 @@ import { serve } from '@hono/node-server';
 import fs from 'fs';
 import path from 'path';
 import { AGENT_ID, ALLOWED_CHAT_ID, DASHBOARD_PORT, DASHBOARD_TOKEN, MESSENGER_TYPE, PROJECT_ROOT, STORE_DIR, WHATSAPP_ENABLED, SLACK_USER_TOKEN, CONTEXT_LIMIT, agentDefaultModel } from './config.js';
+import { readEnvFile } from './env.js';
+// PhD fix 2026-05-01 - Phase 4.3: Maestro dispatch logs
+import { getDispatchStats, getRecentDispatches } from './services/maestro-dispatch-log.js';
+// PhD fix 2026-05-01 - Phase 4.4: Token validation status
+import { getTokenStatuses, validateAllTokens } from './services/token-validator.js';
 import crypto from 'crypto';
 import {
   getAllScheduledTasks,
@@ -1077,6 +1082,28 @@ export function startDashboard(botApi?: Api<RawApi>): void {
     return c.json({ ok: true, order: filtered });
   });
 
+  // PhD fix 2026-05-01 - Phase 4.3: Maestro dispatch logs (SQLite persistant)
+  app.get('/api/maestro/stats', (c) => {
+    const days = parseInt(c.req.query('days') ?? '7', 10);
+    return c.json(getDispatchStats(Math.min(Math.max(days, 1), 90)));
+  });
+
+  app.get('/api/maestro/dispatches', (c) => {
+    const limit = parseInt(c.req.query('limit') ?? '50', 10);
+    return c.json({ dispatches: getRecentDispatches(limit) });
+  });
+
+  // PhD fix 2026-05-01 - Phase 4.4: token validation status
+  app.get('/api/maestro/tokens', (c) => {
+    return c.json({ tokens: getTokenStatuses() });
+  });
+
+  // Force re-validation manuelle (utile si user change un token)
+  app.post('/api/maestro/tokens/validate', async (c) => {
+    const results = await validateAllTokens();
+    return c.json({ ok: true, results });
+  });
+
   // List all configured agents with status
   app.get('/api/agents', (c) => {
     const agentIds = applyAgentOrder(listAgentIds());
@@ -1103,11 +1130,17 @@ export function startDashboard(botApi?: Api<RawApi>): void {
         // PhD fix 2026-05-01: check if bot token is configured (non-empty in .env)
         // If token is missing or empty, the agent can't run as standalone bot
         // (it can still respond via main agent's delegateToAgent)
+        // PhD fix 2026-05-01 - Phase 3.4: lecture via readEnvFile car
+        // process.env est vide quand PM2 fork (env_file n est pas honore par tous les setups).
+        // On lit directement .env pour avoir la vraie valeur du token.
+        // Note : agent-config.ts mappe le champ YAML telegram_bot_token_env -> botTokenEnv
         let tokenConfigured = false;
         try {
-          const envKey = (config as { telegram_bot_token_env?: string }).telegram_bot_token_env;
+          const envKey = (config as { botTokenEnv?: string; telegram_bot_token_env?: string }).botTokenEnv
+            ?? (config as { telegram_bot_token_env?: string }).telegram_bot_token_env;
           if (envKey) {
-            const envVal = process.env[envKey];
+            const envFile = readEnvFile([envKey]);
+            const envVal = envFile[envKey] ?? process.env[envKey];
             tokenConfigured = !!(envVal && envVal.length > 20);
           }
         } catch { /* config might not have envKey */ }

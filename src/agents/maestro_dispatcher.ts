@@ -13,6 +13,8 @@ import { callLLM, getAvailableProviders } from '../adapters/llm/index.js';
 import type { LLMProvider } from '../adapters/llm/types.js';
 import { dispatchToTmuxSession } from '../services/cli_tmux_dispatcher.js';
 import { logger } from '../logger.js';
+// PhD fix 2026-05-01 - Phase 4.3: SQLite persistant log de chaque dispatch
+import { logMaestroDispatch } from '../services/maestro-dispatch-log.js';
 
 export type { LLMProvider };
 
@@ -74,6 +76,18 @@ async function dispatchMode1(task: MaestroTask, start: number): Promise<MaestroR
       'maestro.dispatch.mode1.success'
     );
 
+    // Phase 4.3: log dispatch SQLite (non-bloquant)
+    logMaestroDispatch({
+      user_id: task.user_id,
+      mode: 'mode_1_tmux',
+      task: task.task_description,
+      provider: null,
+      model: tmuxResult.model ?? null,
+      success: true,
+      cost_usd: 0,
+      latency_ms: tmuxResult.latency_ms,
+    });
+
     return {
       success: true,
       result: tmuxResult.content,
@@ -85,6 +99,16 @@ async function dispatchMode1(task: MaestroTask, start: number): Promise<MaestroR
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : String(err);
     logger.error({ error: msg, mode: 'mode_1_tmux' }, 'maestro.dispatch.mode1.fail');
+    logMaestroDispatch({
+      user_id: task.user_id,
+      mode: 'mode_1_tmux',
+      task: task.task_description,
+      provider: null,
+      success: false,
+      cost_usd: 0,
+      latency_ms: Date.now() - start,
+      error: msg,
+    });
     return {
       success: false,
       result: '',
@@ -114,6 +138,16 @@ async function dispatchMode2(task: MaestroTask, start: number): Promise<MaestroR
     if (!available.includes(provider)) {
       const err = `Provider ${provider} unavailable. Available: ${available.join(', ')}`;
       logger.warn({ provider, available }, 'maestro.dispatch.provider_unavailable');
+      logMaestroDispatch({
+        user_id: task.user_id,
+        mode: 'mode_2_api',
+        task: task.task_description,
+        provider,
+        success: false,
+        cost_usd: 0,
+        latency_ms: Date.now() - start,
+        error: err,
+      });
       return {
         success: false, result: '', provider_used: null,
         cost_usd: 0, latency_ms: Date.now() - start, error: err,
@@ -143,6 +177,16 @@ async function dispatchMode2(task: MaestroTask, start: number): Promise<MaestroR
       'maestro.dispatch.mode2.success'
     );
 
+    logMaestroDispatch({
+      user_id: task.user_id,
+      mode: 'mode_2_api',
+      task: task.task_description,
+      provider,
+      model,
+      success: true,
+      cost_usd: response.cost_usd,
+      latency_ms: response.latency_ms,
+    });
     return {
       success: true,
       result: response.content,
@@ -154,6 +198,16 @@ async function dispatchMode2(task: MaestroTask, start: number): Promise<MaestroR
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : String(err);
     logger.error({ provider, error: msg, mode: 'mode_2_api' }, 'maestro.dispatch.mode2.fail');
+    logMaestroDispatch({
+      user_id: task.user_id,
+      mode: 'mode_2_api',
+      task: task.task_description,
+      provider,
+      success: false,
+      cost_usd: 0,
+      latency_ms: Date.now() - start,
+      error: msg,
+    });
     return {
       success: false, result: '', provider_used: null,
       cost_usd: 0, latency_ms: Date.now() - start, error: msg,

@@ -13,3 +13,8 @@ data/
 .env.*.local
 *.env.bak*
 .env.*
+.git.bak*
+_archive/
+*.bak.before-*
+*.bak
+.git.bak*

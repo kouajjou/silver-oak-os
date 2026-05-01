@@ -48,4 +48,21 @@ export declare function getAllAgentsCosts(): Array<{
     daily: number;
     monthly: number;
 }>;
+/**
+ * PhD fix 2026-05-01 - Phase 4.2: Cleanup automatique des artefacts dev.
+ *
+ * Supprime de la table agent_costs les rows dont l'agent_id matche les
+ * BLOCKED_AGENT_PATTERNS (ex: task_breaker_test-*, maestro_factory-*, etc.)
+ * Ces rows polluent les stats budget car elles sont generees par les tests
+ * dev mais comptees comme depenses reelles.
+ *
+ * Doit etre appelee periodiquement (cron quotidien) depuis index.ts.
+ * Retourne le nombre de rows supprimees.
+ */
+export declare function cleanupBudgetArtefacts(): {
+    deleted: number;
+    samples: string[];
+};
+export declare function startBudgetCleanupCron(): void;
+export declare function stopBudgetCleanupCron(): void;
 //# sourceMappingURL=budget-tracker.d.ts.map
