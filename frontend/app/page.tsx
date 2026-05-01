@@ -4,11 +4,14 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { AGENTS } from '@/lib/agents';
 
+// PhD fix 2026-04-30: Email + FaceTime not implemented yet.
+// Voix → /agent/{id} (chat with TTS) | Message → /agent/{id} (text chat)
+// Email + FaceTime now flagged as 'soon' to set user expectation correctly.
 const CHANNEL_BUTTONS = [
-  { icon: '📞', label: 'Voix', channel: 'voice' },
-  { icon: '💬', label: 'Message', channel: 'chat' },
-  { icon: '📧', label: 'Email', channel: 'email' },
-  { icon: '📹', label: 'FaceTime', channel: 'facetime' },
+  { icon: '📞', label: 'Voix', channel: 'voice', soon: false },
+  { icon: '💬', label: 'Message', channel: 'chat', soon: false },
+  { icon: '📧', label: 'Email', channel: 'email', soon: true },
+  { icon: '📹', label: 'FaceTime', channel: 'facetime', soon: true },
 ];
 
 export default function HomePage() {
@@ -85,41 +88,50 @@ function ChannelButton({
   icon,
   label,
   channel,
+  soon = false,
 }: {
   agentId: string;
   icon: string;
   label: string;
   channel: string;
+  soon?: boolean;
 }) {
-  // Voice and chat → go to agent page; others → MVP placeholder
+  // Voice and chat → go to agent page; others → 'Bientôt' (PhD fix 2026-04-30)
   const href =
     channel === 'voice' || channel === 'chat'
       ? `/agent/${agentId}?channel=${channel}`
       : undefined;
 
-  const handleClick = () => {
-    if (!href) {
-      // MVP: show toast or just focus agent chat
-      window.location.href = `/agent/${agentId}`;
-    }
-  };
+  const baseCls =
+    'flex flex-col items-center justify-center py-2 gap-0.5 transition-colors select-none relative';
+  const activeCls = `${baseCls} text-so-muted hover:text-so-gold hover:bg-so-navy/50 cursor-pointer`;
+  const soonCls = `${baseCls} text-so-muted/40 cursor-not-allowed`;
 
-  const cls =
-    'flex flex-col items-center justify-center py-2 gap-0.5 text-so-muted hover:text-so-gold hover:bg-so-navy/50 transition-colors cursor-pointer select-none';
+  // PhD fix 2026-04-30: Soon channels (Email/FaceTime) show 'Bientôt' badge instead of dead-end redirect
+  if (soon) {
+    return (
+      <button
+        onClick={() => {}}
+        disabled
+        className={soonCls}
+        title={`${label} — Bientôt disponible`}
+        aria-label={`${label} — Bientôt disponible`}
+      >
+        <span className="text-base opacity-50">{icon}</span>
+        <span className="text-[9px] tracking-wide uppercase">{label}</span>
+        <span className="absolute top-0.5 right-0.5 text-[6px] tracking-wider text-so-gold/60 uppercase font-bold">Soon</span>
+      </button>
+    );
+  }
 
   if (href) {
     return (
-      <Link href={href} className={cls} title={label}>
+      <Link href={href} className={activeCls} title={label}>
         <span className="text-base">{icon}</span>
         <span className="text-[9px] tracking-wide uppercase">{label}</span>
       </Link>
     );
   }
 
-  return (
-    <button onClick={handleClick} className={cls} title={label}>
-      <span className="text-base">{icon}</span>
-      <span className="text-[9px] tracking-wide uppercase">{label}</span>
-    </button>
-  );
+  return null;
 }

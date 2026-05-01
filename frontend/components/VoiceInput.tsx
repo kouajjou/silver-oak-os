@@ -63,6 +63,8 @@ export default function VoiceInput({
   const [isRecording, setIsRecording] = useState(false);
   const [isSupported, setIsSupported] = useState(false);
   const [interimText, setInterimText] = useState('');
+  // PhD fix 2026-04-30: Surface errors to user (Safari iOS permission denied was silent)
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const recognitionRef = useRef<SpeechRecognition | null>(null);
 
   // Check browser support on mount
@@ -110,9 +112,22 @@ export default function VoiceInput({
       }
     };
 
-    recognition.onerror = () => {
+    // PhD fix 2026-04-30: Detailed error handling for Safari iOS / permission issues
+    recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
       setIsRecording(false);
       setInterimText('');
+      // Common errors: 'not-allowed' (mic blocked), 'no-speech', 'audio-capture' (no mic), 'network'
+      const errorMessages: Record<string, string> = {
+        'not-allowed': 'Permission micro refusée. Autorisez le micro dans Réglages Safari.',
+        'audio-capture': 'Aucun micro détecté.',
+        'no-speech': 'Aucune voix détectée. Réessayez.',
+        'network': 'Erreur réseau. Vérifiez votre connexion.',
+        'service-not-allowed': 'Service vocal non disponible sur ce navigateur.',
+      };
+      const msg = errorMessages[event.error] || `Erreur vocal: ${event.error}`;
+      setErrorMsg(msg);
+      // Auto-clear after 5 seconds
+      setTimeout(() => setErrorMsg(null), 5000);
     };
 
     recognition.onend = () => {
@@ -166,6 +181,13 @@ export default function VoiceInput({
       {interimText && (
         <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 bg-so-navy border border-so-border rounded-lg px-3 py-1.5 text-xs text-so-text whitespace-nowrap max-w-[200px] truncate shadow-lg">
           {interimText}
+        </div>
+      )}
+
+      {/* PhD fix 2026-04-30: Surface voice errors to user instead of silent fail */}
+      {errorMsg && (
+        <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 bg-red-900/90 border border-red-500/50 rounded-lg px-3 py-2 text-xs text-red-100 max-w-[260px] shadow-lg z-50">
+          {errorMsg}
         </div>
       )}
     </div>

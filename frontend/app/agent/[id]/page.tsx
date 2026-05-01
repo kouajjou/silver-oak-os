@@ -142,8 +142,12 @@ export default function AgentPage() {
         };
         setMessages((prev) => [...prev, agentMsg]);
 
-        // Auto-play TTS if enabled
-        if (ttsEnabled) {
+        // PhD fix 2026-04-30: Auto-play TTS only on user gesture (Safari iOS compliance)
+        // The reply is always visible; user can tap the speaker icon to hear it
+        // Auto-play removed — Safari iOS blocks audio without prior user interaction
+        // Note: we keep ttsEnabled state for future preference, but no longer auto-play
+        if (ttsEnabled && typeof window !== 'undefined' && window.matchMedia?.('(hover: hover)').matches) {
+          // Desktop only — auto-play OK
           await playTTS(agentMsg.id, reply);
         }
       } catch {
@@ -326,8 +330,9 @@ export default function AgentPage() {
               className="absolute right-2 bottom-2 w-8 h-8 rounded-full bg-so-gold text-so-bg flex items-center justify-center disabled:opacity-30 disabled:cursor-not-allowed hover:bg-so-gold/80 transition-colors"
               aria-label="Envoyer"
             >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                {/* PhD fix 2026-04-30: clear send arrow icon (was paper-plane misread as warning) */}
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M14 5l7 7m0 0l-7 7m7-7H3" />
               </svg>
             </button>
           </div>
@@ -397,14 +402,16 @@ function MessageBubble({
           <p className="text-so-text text-sm leading-relaxed whitespace-pre-wrap">{message.content}</p>
 
           {/* TTS play button */}
+          {/* PhD fix 2026-04-30: TTS button always visible (was opacity-0 group-hover, broken on mobile) */}
           <button
             onClick={onPlayTTS}
-            className={`absolute -bottom-2 -right-2 w-6 h-6 rounded-full border flex items-center justify-center text-[10px] transition-all ${
+            className={`absolute -bottom-2 -right-2 w-7 h-7 rounded-full border flex items-center justify-center text-xs transition-all touch-target-min ${
               isPlaying
-                ? 'bg-so-gold border-so-gold text-so-bg voice-pulse'
-                : 'bg-so-card border-so-border text-so-muted opacity-0 group-hover:opacity-100 hover:border-so-gold hover:text-so-gold'
+                ? 'bg-so-gold border-so-gold text-so-bg voice-pulse shadow-md'
+                : 'bg-so-navy border-so-gold/50 text-so-gold hover:bg-so-gold hover:text-so-bg'
             }`}
             title="Lire à voix haute"
+            aria-label={isPlaying ? 'Lecture en cours' : 'Lire à voix haute'}
           >
             {isPlaying ? '🔊' : '🔈'}
           </button>
