@@ -1,7 +1,9 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 vi.mock('./gemini.js', () => ({
-    generateContent: vi.fn(),
     parseJsonResponse: vi.fn(),
+}));
+vi.mock('./services/memory-llm.js', () => ({
+    callMemoryLLM: vi.fn(),
 }));
 vi.mock('./db.js', () => ({
     getUnconsolidatedMemories: vi.fn(),
@@ -15,10 +17,11 @@ vi.mock('./logger.js', () => ({
     logger: { warn: vi.fn(), error: vi.fn(), info: vi.fn(), debug: vi.fn() },
 }));
 import { runConsolidation } from './memory-consolidate.js';
-import { generateContent, parseJsonResponse } from './gemini.js';
+import { parseJsonResponse } from './gemini.js';
+import { callMemoryLLM } from './services/memory-llm.js';
 import { getUnconsolidatedMemories, saveConsolidationAtomic, } from './db.js';
 const mockGetUnconsolidated = vi.mocked(getUnconsolidatedMemories);
-const mockGenerateContent = vi.mocked(generateContent);
+const mockCallMemoryLLM = vi.mocked(callMemoryLLM);
 const mockParseJson = vi.mocked(parseJsonResponse);
 const mockSaveAtomic = vi.mocked(saveConsolidationAtomic);
 function makeMemory(id, summary) {
@@ -49,13 +52,13 @@ describe('runConsolidation', () => {
     it('skips when fewer than 2 unconsolidated memories', async () => {
         mockGetUnconsolidated.mockReturnValue([makeMemory(1, 'only one')]);
         await runConsolidation('chat1');
-        expect(mockGenerateContent).not.toHaveBeenCalled();
+        expect(mockCallMemoryLLM).not.toHaveBeenCalled();
         expect(mockSaveAtomic).not.toHaveBeenCalled();
     });
     it('skips when zero unconsolidated memories', async () => {
         mockGetUnconsolidated.mockReturnValue([]);
         await runConsolidation('chat1');
-        expect(mockGenerateContent).not.toHaveBeenCalled();
+        expect(mockCallMemoryLLM).not.toHaveBeenCalled();
     });
     // ── Successful consolidation ──────────────────────────────────────
     it('consolidates 2+ memories and saves the result atomically', async () => {
@@ -73,7 +76,7 @@ describe('runConsolidation', () => {
                 { from_id: 20, to_id: 30, relationship: 'part of morning routine' },
             ],
         };
-        mockGenerateContent.mockResolvedValue(JSON.stringify(consolidationResult));
+        mockCallMemoryLLM.mockResolvedValue(JSON.stringify(consolidationResult));
         mockParseJson.mockReturnValue(consolidationResult);
         await runConsolidation('chat1');
         // Should call atomic save with all data bundled
@@ -100,7 +103,7 @@ describe('runConsolidation', () => {
                 { from_id: 10, to_id: 20, relationship: 'valid connection' },
             ],
         };
-        mockGenerateContent.mockResolvedValue(JSON.stringify(result));
+        mockCallMemoryLLM.mockResolvedValue(JSON.stringify(result));
         mockParseJson.mockReturnValue(result);
         await runConsolidation('chat1');
         // Only the valid connection should be passed to atomic save
@@ -114,7 +117,7 @@ describe('runConsolidation', () => {
             insight: 'No clear pattern between these memories',
             connections: [],
         };
-        mockGenerateContent.mockResolvedValue(JSON.stringify(result));
+        mockCallMemoryLLM.mockResolvedValue(JSON.stringify(result));
         mockParseJson.mockReturnValue(result);
         await runConsolidation('chat1');
         expect(mockSaveAtomic).toHaveBeenCalledWith('chat1', [10, 20], result.summary, result.insight, [], []);
@@ -123,14 +126,14 @@ describe('runConsolidation', () => {
     it('handles Gemini API failure gracefully', async () => {
         const memories = [makeMemory(10, 'mem1'), makeMemory(20, 'mem2')];
         mockGetUnconsolidated.mockReturnValue(memories);
-        mockGenerateContent.mockRejectedValue(new Error('API timeout'));
+        mockCallMemoryLLM.mockRejectedValue(new Error('API timeout'));
         await expect(runConsolidation('chat1')).resolves.not.toThrow();
         expect(mockSaveAtomic).not.toHaveBeenCalled();
     });
     it('handles invalid Gemini response (null parse)', async () => {
         const memories = [makeMemory(10, 'mem1'), makeMemory(20, 'mem2')];
         mockGetUnconsolidated.mockReturnValue(memories);
-        mockGenerateContent.mockResolvedValue('garbage');
+        mockCallMemoryLLM.mockResolvedValue('garbage');
         mockParseJson.mockReturnValue(null);
         await runConsolidation('chat1');
         expect(mockSaveAtomic).not.toHaveBeenCalled();
@@ -139,7 +142,7 @@ describe('runConsolidation', () => {
         const memories = [makeMemory(10, 'mem1'), makeMemory(20, 'mem2')];
         mockGetUnconsolidated.mockReturnValue(memories);
         const result = { summary: '', insight: 'insight', connections: [] };
-        mockGenerateContent.mockResolvedValue(JSON.stringify(result));
+        mockCallMemoryLLM.mockResolvedValue(JSON.stringify(result));
         mockParseJson.mockReturnValue(result);
         await runConsolidation('chat1');
         expect(mockSaveAtomic).not.toHaveBeenCalled();
@@ -148,7 +151,7 @@ describe('runConsolidation', () => {
         const memories = [makeMemory(10, 'mem1'), makeMemory(20, 'mem2')];
         mockGetUnconsolidated.mockReturnValue(memories);
         const result = { summary: 'summary', insight: '', connections: [] };
-        mockGenerateContent.mockResolvedValue(JSON.stringify(result));
+        mockCallMemoryLLM.mockResolvedValue(JSON.stringify(result));
         mockParseJson.mockReturnValue(result);
         await runConsolidation('chat1');
         expect(mockSaveAtomic).not.toHaveBeenCalled();
@@ -159,7 +162,7 @@ describe('runConsolidation', () => {
         mockGetUnconsolidated.mockReturnValue(memories);
         let resolveFirst;
         const firstPromise = new Promise((resolve) => { resolveFirst = resolve; });
-        mockGenerateContent.mockReturnValueOnce(firstPromise);
+        mockCallMemoryLLM.mockReturnValueOnce(firstPromise);
         const result = {
             summary: 'summary',
             insight: 'insight',
@@ -172,7 +175,7 @@ describe('runConsolidation', () => {
         mockParseJson.mockReturnValue(result);
         await run1;
         await run2;
-        expect(mockGenerateContent).toHaveBeenCalledTimes(1);
+        expect(mockCallMemoryLLM).toHaveBeenCalledTimes(1);
     });
 });
 //# sourceMappingURL=memory-consolidate.test.js.map

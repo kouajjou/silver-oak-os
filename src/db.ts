@@ -1000,6 +1000,17 @@ export function getUnconsolidatedMemories(chatId: string, limit = 20): Memory[] 
     .all(chatId, limit) as Memory[];
 }
 
+/**
+ * Count unconsolidated memories for a chat. Used by the event-driven
+ * consolidation trigger (replaces the fixed 30-min interval).
+ */
+export function countUnconsolidatedMemories(chatId: string): number {
+  const row = db
+    .prepare('SELECT COUNT(*) AS c FROM memories WHERE chat_id = ? AND consolidated = 0')
+    .get(chatId) as { c: number } | undefined;
+  return row?.c ?? 0;
+}
+
 export function saveConsolidation(
   chatId: string,
   sourceIds: number[],

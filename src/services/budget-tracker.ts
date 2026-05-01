@@ -90,6 +90,7 @@ const VALID_AGENT_PATTERNS = [
   /^research$/,                              // Nina
   /^intent_classifier$/,                     // service interne (router)
   /^llm_judge_gemini$/,                      // service interne (garde-fou #4)
+  /^memory$/,                                // service interne (memory consolidate + ingest)
   /^(alex|sara|leo|marco|nina|maestro)_[a-z][a-z0-9-]+$/,  // alias multi-tenant <agent>_<userId>
 ];
 

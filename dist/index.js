@@ -13,6 +13,7 @@ import { initSecurity, setAuditCallback } from './security.js';
 import { logger } from './logger.js';
 import { cleanupOldUploads } from './media.js';
 import { runConsolidation } from './memory-consolidate.js';
+import { countUnconsolidatedMemories } from './db.js';
 import { runDecaySweep } from './memory.js';
 import { initOAuthHealthCheck } from './oauth-health.js';
 // PhD fix 2026-05-01 - Phase 2: Watchdog crash loop pour agents systemd
@@ -168,16 +169,31 @@ async function main() {
         runDecaySweep();
         cleanupOldMissionTasks(7);
         setInterval(() => { runDecaySweep(); cleanupOldMissionTasks(7); }, 24 * 60 * 60 * 1000);
-        // Memory consolidation: find patterns across recent memories every 30 minutes
+        // Memory consolidation: event-driven trigger (cost optimization 2026-05-01)
+        // Old: setInterval 30 min -> 48 calls/day = ~150 EUR/month on gemini-2.5-flash
+        // New: check every 6h, only run when >= 10 unconsolidated memories pending
         if (ALLOWED_CHAT_ID && GOOGLE_API_KEY) {
-            // Delay first consolidation 2 minutes after startup to let things settle
-            setTimeout(() => {
-                void runConsolidation(ALLOWED_CHAT_ID).catch((err) => logger.error({ err }, 'Initial consolidation failed'));
-            }, 2 * 60 * 1000);
-            setInterval(() => {
-                void runConsolidation(ALLOWED_CHAT_ID).catch((err) => logger.error({ err }, 'Periodic consolidation failed'));
-            }, 30 * 60 * 1000);
-            logger.info('Memory consolidation enabled (every 30 min)');
+            const CONSOLIDATION_THRESHOLD = 10;
+            const CONSOLIDATION_CHECK_INTERVAL_MS = 6 * 60 * 60 * 1000;
+            const CONSOLIDATION_INITIAL_DELAY_MS = 10 * 60 * 1000;
+            const checkAndConsolidate = async () => {
+                try {
+                    const pending = countUnconsolidatedMemories(ALLOWED_CHAT_ID);
+                    if (pending >= CONSOLIDATION_THRESHOLD) {
+                        logger.info({ pending }, '[consolidation] threshold reached, running');
+                        await runConsolidation(ALLOWED_CHAT_ID);
+                    }
+                    else {
+                        logger.debug({ pending, threshold: CONSOLIDATION_THRESHOLD }, '[consolidation] below threshold, skipping');
+                    }
+                }
+                catch (err) {
+                    logger.error({ err }, '[consolidation] check failed');
+                }
+            };
+            setTimeout(() => { void checkAndConsolidate(); }, CONSOLIDATION_INITIAL_DELAY_MS);
+            setInterval(() => { void checkAndConsolidate(); }, CONSOLIDATION_CHECK_INTERVAL_MS);
+            logger.info('Memory consolidation enabled (event-driven: >=10 memories or 6h max)');
         }
     }
     else {

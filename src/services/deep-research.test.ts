@@ -52,8 +52,8 @@ describe('deepResearch', () => {
   it('returns 2 sources when both Grok and Gemini succeed', async () => {
     mockedCallLLM.mockImplementation(async (req) => {
       if (req.provider === 'xai') return fakeRes({ provider: 'xai', model: 'grok-4-fast-reasoning', content: 'Grok answer about X', cost: 0.005, latency: 1500 });
-      if (req.model === 'gemini-2.5-pro') return fakeRes({ provider: 'google', model: 'gemini-2.5-pro', content: 'Gemini answer about X', cost: 0.008, latency: 2200 });
-      return fakeRes({ provider: 'google', model: 'gemini-2.5-flash', content: 'Synthesis result', cost: 0.001, latency: 800 });
+      if (req.model === 'gemini-2.5-flash') return fakeRes({ provider: 'google', model: 'gemini-2.5-flash', content: 'Gemini answer about X', cost: 0.008, latency: 2200 });
+      return fakeRes({ provider: 'google', model: 'gemini-2.5-flash-lite', content: 'Synthesis result', cost: 0.001, latency: 800 });
     });
 
     const r = await deepResearch('What is X');
@@ -73,9 +73,9 @@ describe('deepResearch', () => {
     // Use mockImplementation so order doesn't matter (Promise.all parallelizes)
     mockedCallLLM.mockImplementation(async (req) => {
       if (req.provider === 'xai') throw new Error('grok down');
-      if (req.model === 'gemini-2.5-pro') return fakeRes({ provider: 'google', model: 'gemini-2.5-pro', content: 'Gemini solo', cost: 0.008 });
-      // synthesis (gemini-2.5-flash)
-      return fakeRes({ provider: 'google', model: 'gemini-2.5-flash', content: 'Synth from 1 source', cost: 0.001 });
+      if (req.model === 'gemini-2.5-flash') return fakeRes({ provider: 'google', model: 'gemini-2.5-flash', content: 'Gemini solo', cost: 0.008 });
+      // synthesis (gemini-2.5-flash-lite)
+      return fakeRes({ provider: 'google', model: 'gemini-2.5-flash-lite', content: 'Synth from 1 source', cost: 0.001 });
     });
 
     const r = await deepResearch('test query');
@@ -98,12 +98,12 @@ describe('deepResearch', () => {
         const isSynthesis = req.messages.some(m => m.role === 'system' && m.content.includes('synthèse'));
         if (isSynthesis) {
           synthCallSeen = true;
-          return fakeRes({ provider: 'google', model: 'gemini-2.5-flash', content: 'Synth from 1 source', cost: 0.001 });
+          return fakeRes({ provider: 'google', model: 'gemini-2.5-flash-lite', content: 'Synth from 1 source', cost: 0.001 });
         }
         throw new Error('gemini down');
       }
       if (req.provider === 'google') {
-        return fakeRes({ provider: 'google', model: 'gemini-2.5-flash', content: 'Synth from 1 source', cost: 0.001 });
+        return fakeRes({ provider: 'google', model: 'gemini-2.5-flash-lite', content: 'Synth from 1 source', cost: 0.001 });
       }
       throw new Error('unexpected call');
     });
@@ -119,9 +119,9 @@ describe('deepResearch', () => {
     mockedCallLLM.mockImplementation(async (req) => {
       if (req.provider === 'xai' && req.model === 'grok-4-fast-reasoning') throw new Error('primary fail');
       if (req.provider === 'xai' && req.model === 'grok-3-fast') return fakeRes({ provider: 'xai', model: 'grok-3-fast', content: 'Grok via fallback' });
-      if (req.provider === 'google' && req.model === 'gemini-2.5-pro') return fakeRes({ provider: 'google', model: 'gemini-2.5-pro', content: 'Gemini ok' });
-      // Synthesis (gemini-2.5-flash)
-      return fakeRes({ provider: 'google', model: 'gemini-2.5-flash', content: 'Synth' });
+      if (req.provider === 'google' && req.model === 'gemini-2.5-flash') return fakeRes({ provider: 'google', model: 'gemini-2.5-flash', content: 'Gemini ok' });
+      // Synthesis (gemini-2.5-flash-lite)
+      return fakeRes({ provider: 'google', model: 'gemini-2.5-flash-lite', content: 'Synth' });
     });
 
     const r = await deepResearch('test');
@@ -139,8 +139,8 @@ describe('deepResearch', () => {
   it('returns raw sources synthesis if consolidation step fails', async () => {
     mockedCallLLM.mockImplementation(async (req) => {
       if (req.provider === 'xai') return fakeRes({ provider: 'xai', model: 'grok-4-fast-reasoning', content: 'Grok content' });
-      if (req.provider === 'google' && req.model === 'gemini-2.5-pro') return fakeRes({ provider: 'google', model: 'gemini-2.5-pro', content: 'Gemini content' });
-      // synthesis (gemini-2.5-flash) fails
+      if (req.provider === 'google' && req.model === 'gemini-2.5-flash') return fakeRes({ provider: 'google', model: 'gemini-2.5-flash', content: 'Gemini content' });
+      // synthesis (gemini-2.5-flash-lite) fails
       throw new Error('synth down');
     });
 
@@ -155,8 +155,8 @@ describe('deepResearch', () => {
   it('total_cost_usd equals sum of source costs plus synthesis cost', async () => {
     mockedCallLLM.mockImplementation(async (req) => {
       if (req.provider === 'xai') return fakeRes({ provider: 'xai', model: 'grok-4-fast-reasoning', content: 'a', cost: 0.010 });
-      if (req.provider === 'google' && req.model === 'gemini-2.5-pro') return fakeRes({ provider: 'google', model: 'gemini-2.5-pro', content: 'b', cost: 0.020 });
-      return fakeRes({ provider: 'google', model: 'gemini-2.5-flash', content: 'synth', cost: 0.003 });
+      if (req.provider === 'google' && req.model === 'gemini-2.5-flash') return fakeRes({ provider: 'google', model: 'gemini-2.5-flash', content: 'b', cost: 0.020 });
+      return fakeRes({ provider: 'google', model: 'gemini-2.5-flash-lite', content: 'synth', cost: 0.003 });
     });
 
     const r = await deepResearch('test');
@@ -167,8 +167,8 @@ describe('deepResearch', () => {
   it('uses agent_id "research" for all callLLM invocations', async () => {
     mockedCallLLM.mockImplementation(async (req) => {
       if (req.provider === 'xai') return fakeRes({ provider: 'xai', model: 'grok-4-fast-reasoning', content: 'a' });
-      if (req.model === 'gemini-2.5-pro') return fakeRes({ provider: 'google', model: 'gemini-2.5-pro', content: 'b' });
-      return fakeRes({ provider: 'google', model: 'gemini-2.5-flash', content: 'synth' });
+      if (req.model === 'gemini-2.5-flash') return fakeRes({ provider: 'google', model: 'gemini-2.5-flash', content: 'b' });
+      return fakeRes({ provider: 'google', model: 'gemini-2.5-flash-lite', content: 'synth' });
     });
 
     await deepResearch('test');

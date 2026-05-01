@@ -1,4 +1,5 @@
-import { generateContent, parseJsonResponse } from './gemini.js';
+import { parseJsonResponse } from './gemini.js';
+import { callMemoryLLM } from './services/memory-llm.js';
 import {
   getUnconsolidatedMemories,
   saveConsolidationAtomic,
@@ -64,7 +65,7 @@ export async function runConsolidation(chatId: string): Promise<void> {
 
   consolidatingChats.add(chatId);
   try {
-    const memories = getUnconsolidatedMemories(chatId, 20);
+    const memories = getUnconsolidatedMemories(chatId, 5);
 
     if (memories.length < 2) {
       logger.debug({ count: memories.length }, 'Not enough memories to consolidate');
@@ -86,7 +87,7 @@ export async function runConsolidation(chatId: string): Promise<void> {
       JSON.stringify(memoriesJson, null, 2),
     );
 
-    const raw = await generateContent(prompt);
+    const raw = await callMemoryLLM(prompt);
     const result = parseJsonResponse<ConsolidationResult>(raw);
 
     if (!result || !result.summary || !result.insight) {

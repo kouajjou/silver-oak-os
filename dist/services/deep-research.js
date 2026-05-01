@@ -26,9 +26,13 @@ export class DeepResearchError extends Error {
 }
 const GROK_PRIMARY = 'grok-4-fast-reasoning';
 const GROK_FALLBACK = 'grok-3-fast';
-const GEMINI_PRIMARY = 'gemini-2.5-pro';
-const GEMINI_FALLBACK = 'gemini-2.5-flash';
-const SYNTHESIS_MODEL = 'gemini-2.5-flash';
+// PhD fix 2026-05-01: gemini-2.5-pro = $1.25/M input vs flash $0.075/M = 16x plus cher
+// Flash suffit largement pour la deep research
+const GEMINI_PRIMARY = 'gemini-2.5-flash';
+// gemini-2.0-flash deprecated June 1 2026 -> use 2.5-flash-lite (same price, future-proof)
+const GEMINI_FALLBACK = 'gemini-2.5-flash-lite';
+// Synthesis: cheaper Flash-Lite is sufficient for consolidation, and distinguishes from primary
+const SYNTHESIS_MODEL = 'gemini-2.5-flash-lite';
 const AGENT_ID = 'research';
 const SYNTHESIS_PROMPT = `Tu es un assistant de synthèse pour un système de recherche multi-sources.
 

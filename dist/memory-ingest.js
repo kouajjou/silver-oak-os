@@ -1,4 +1,5 @@
-import { generateContent, parseJsonResponse } from './gemini.js';
+import { parseJsonResponse } from './gemini.js';
+import { callMemoryLLM } from './services/memory-llm.js';
 import { cosineSimilarity, embedText } from './embeddings.js';
 import { getMemoriesWithEmbeddings, saveStructuredMemoryAtomic } from './db.js';
 import { logger } from './logger.js';
@@ -58,14 +59,16 @@ Assistant response: {ASSISTANT_RESPONSE}`;
  * Returns true if a memory was saved, false if skipped.
  */
 export async function ingestConversationTurn(chatId, userMessage, assistantResponse, agentId = 'main') {
-    // Hard filter: skip very short messages and commands
-    if (userMessage.length <= 15 || userMessage.startsWith('/'))
+    // Hard filter: skip very short messages and commands (cost guard 2026-05-01: <50 chars)
+    if (!userMessage || userMessage.trim().length < 50 || userMessage.startsWith('/')) {
+        logger.debug({ len: userMessage?.length ?? 0 }, '[memory-ingest] skipped — message too short or command');
         return false;
+    }
     try {
         const prompt = EXTRACTION_PROMPT
             .replace('{USER_MESSAGE}', userMessage.slice(0, 2000))
             .replace('{ASSISTANT_RESPONSE}', assistantResponse.slice(0, 2000));
-        const raw = await generateContent(prompt);
+        const raw = await callMemoryLLM(prompt);
         const result = parseJsonResponse(raw);
         if (!result || result.skip)
             return false;

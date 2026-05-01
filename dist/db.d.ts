@@ -83,6 +83,11 @@ export declare function decayMemories(): void;
 export declare function pinMemory(memoryId: number): void;
 export declare function unpinMemory(memoryId: number): void;
 export declare function getUnconsolidatedMemories(chatId: string, limit?: number): Memory[];
+/**
+ * Count unconsolidated memories for a chat. Used by the event-driven
+ * consolidation trigger (replaces the fixed 30-min interval).
+ */
+export declare function countUnconsolidatedMemories(chatId: string): number;
 export declare function saveConsolidation(chatId: string, sourceIds: number[], summary: string, insight: string): number;
 export declare function saveConsolidationEmbedding(consolidationId: number, embedding: number[]): void;
 export declare function getConsolidationsWithEmbeddings(chatId: string): Array<{

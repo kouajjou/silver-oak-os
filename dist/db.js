@@ -837,6 +837,16 @@ export function getUnconsolidatedMemories(chatId, limit = 20) {
        ORDER BY created_at DESC LIMIT ?`)
         .all(chatId, limit);
 }
+/**
+ * Count unconsolidated memories for a chat. Used by the event-driven
+ * consolidation trigger (replaces the fixed 30-min interval).
+ */
+export function countUnconsolidatedMemories(chatId) {
+    const row = db
+        .prepare('SELECT COUNT(*) AS c FROM memories WHERE chat_id = ? AND consolidated = 0')
+        .get(chatId);
+    return row?.c ?? 0;
+}
 export function saveConsolidation(chatId, sourceIds, summary, insight) {
     const now = Math.floor(Date.now() / 1000);
     const result = db.prepare(`INSERT INTO consolidations (chat_id, source_ids, summary, insight, created_at)
