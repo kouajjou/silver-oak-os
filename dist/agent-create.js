@@ -548,9 +548,22 @@ export function restartAgent(agentId) {
                 XDG_RUNTIME_DIR: process.env.XDG_RUNTIME_DIR || `/run/user/${uid}`,
                 DBUS_SESSION_BUS_ADDRESS: process.env.DBUS_SESSION_BUS_ADDRESS || `unix:path=/run/user/${uid}/bus`,
             };
-            execSync(`systemctl --user restart "${serviceName}"`, { stdio: 'ignore', env: sysEnv });
-            logger.info({ agentId }, 'Agent restarted (systemd)');
-            return { ok: true };
+            // PhD fix 2026-05-01: if service is not loaded (agent not activated), do activate instead
+            const unitPath = path.join(os.homedir(), '.config', 'systemd', 'user', `${serviceName}.service`);
+            if (!fs.existsSync(unitPath)) {
+                // Service not installed -> equivalent to activate
+                return activateSystemd(agentId);
+            }
+            try {
+                execSync(`systemctl --user restart "${serviceName}"`, { stdio: 'pipe', env: sysEnv });
+                logger.info({ agentId }, 'Agent restarted (systemd)');
+                return { ok: true };
+            }
+            catch (err) {
+                const msg = err instanceof Error ? err.message : String(err);
+                const stderr = err.stderr?.toString() ?? '';
+                return { ok: false, error: stderr ? `${msg} | ${stderr.slice(0, 200)}` : msg };
+            }
         }
         return { ok: false, error: `Unsupported platform: ${os.platform()}` };
     }
