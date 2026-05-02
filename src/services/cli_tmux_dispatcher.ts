@@ -30,7 +30,8 @@ export type TmuxSession =
   | 'opus'
   | 'claude-code'
   | 'claude-backend'
-  | 'claude-frontend';
+  | 'claude-frontend'
+  | 'claude-browser';
 
 export interface TmuxDispatchResult {
   content: string;
@@ -200,7 +201,7 @@ Cette commande exacte est OBLIGATOIRE comme DERNIÈRE ligne.
 
     if (output.includes(taskDoneMarker)) {
       const model =
-        session === 'opus' ? 'claude-opus-4.7-tmux' : 'claude-sonnet-4.6-tmux';
+        session === 'opus' ? 'claude-opus-4.7-tmux' : (session === 'claude-browser' ? 'claude-sonnet-4.6-browser' : 'claude-sonnet-4.6-tmux');
       logger.info(
         { session, model, latency: Date.now() - start, dispatchId },
         'cli_tmux_dispatcher.task_done'

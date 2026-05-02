@@ -30,7 +30,7 @@ export interface MaestroOrchestratorContext {
   parentTaskId?: string;
   userId?: string;
   budgetUSD?: number;
-  forceMode?: 'mode_1_tmux' | 'mode_2_api';
+  forceMode?: 'mode_1_tmux' | 'mode_2_api' | 'mode_3_browser';
   preferredProvider?: 'deepseek' | 'gemini' | 'openai' | 'grok' | 'mistral';
 }
 
@@ -49,12 +49,34 @@ export interface MaestroOrchestratorResult {
 // ── Complexity classifier ─────────────────────────────────────────────────────
 
 interface ClassifyResult {
-  mode: 'mode_1_tmux' | 'mode_2_api';
+  mode: 'mode_1_tmux' | 'mode_2_api' | 'mode_3_browser';
   confidence: number;
   reasoning: string;
 }
 
 function classifyTaskComplexity(task: string): ClassifyResult {
+  // SOP V26 Mode 3 : frontend testing detection — claude-browser specialise
+  // Keywords spec maestro/agent.yaml mode_3_routing
+  const lowerTask = task.toLowerCase();
+  const mode3Keywords = [
+    /\b(test|tester)\s+(l[ae]\s+)?(ui|ux|page|frontend|front-end|interface|composant|bouton|formulaire|flow|navigation)\b/,
+    /\b(verifie|verifier|check)\s+(l[ae]\s+)?(ui|ux|page|frontend|interface|bouton)\b/,
+    /\b(screenshot|capture\s+d.?ecran|capture\s+ecran)\b/,
+    /\b(audit\s+(a11y|accessibilit[eé]|performance|lighthouse))\b/,
+    /\b(playwright|browser|navigateur)\s+(test|tester)\b/,
+    /\b(browse|navigate)\s+(to|vers|sur)\b/,
+    /\b(la\s+page|le\s+frontend|le\s+bouton|la\s+homepage)\s+(marche|fonctionne|charge|s[\\.]?affiche)\b/,
+  ];
+  for (const re of mode3Keywords) {
+    if (re.test(lowerTask)) {
+      return {
+        mode: 'mode_3_browser',
+        confidence: 0.9,
+        reasoning: 'mode_3 keyword detected: ' + re.source.slice(0, 40),
+      };
+    }
+  }
+
   if (task.length < 150) {
     return { mode: 'mode_2_api', confidence: 0.9, reasoning: 'short task -> mode_2' };
   }
@@ -165,7 +187,11 @@ export async function maestroHandle(
       : undefined;
 
     // 6. Log to DB
-    const dbMode = (classification.mode === 'mode_1_tmux' ? 'mode_1' : 'mode_2') as 'mode_1' | 'mode_2';
+    const dbMode = (
+      classification.mode === 'mode_1_tmux' ? 'mode_1' :
+      classification.mode === 'mode_3_browser' ? 'mode_3' :
+      'mode_2'
+    ) as 'mode_1' | 'mode_2' | 'mode_3';
     await logAgentRun({
       agent: 'maestro',
       taskId,

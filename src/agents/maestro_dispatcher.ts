@@ -11,6 +11,11 @@
  *   → DeepSeek → Gemini → Grok → OpenAI → Mistral (CASCADE FALLBACK AUTO)
  *   → Si TOUS échouent crédit/quota : fallback ULTIME Mode 1 tmux gratuit
  *
+ * Mode 3 : Frontend Testing — claude-browser (Playwright + axe + Lighthouse)
+ *   → Session tmux 'claude-browser' dédiée tests UI comme un humain
+ *   → Cible : pages Next.js, dashboards, War Room, agents UI
+ *   → Détection auto via keywords (test UI, screenshot, audit a11y, browse, etc.)
+ *
  * SOP V26 Rules respected:
  *   R1 : Opus banni hardcodé — chooseSession() ne route à opus QUE si tâche critique
  *        ET USINE_OPUS_ALLOWED=true
@@ -28,7 +33,7 @@ import { logMaestroDispatch } from '../services/maestro-dispatch-log.js';
 
 export type { LLMProvider };
 
-export type MaestroMode = 'mode_1_tmux' | 'mode_2_api';
+export type MaestroMode = 'mode_1_tmux' | 'mode_2_api' | 'mode_3_browser';
 
 export interface MaestroTask {
   task_description: string;
@@ -258,6 +263,86 @@ async function dispatchMode1(task: MaestroTask, start: number): Promise<MaestroR
   }
 }
 
+// ── Mode 3 : Frontend Testing via claude-browser tmux session ($0) ────────────
+
+/**
+ * Mode 3 dispatch : envoie la tâche à la session tmux 'claude-browser'
+ * spécialisée frontend testing (Playwright + axe + Lighthouse).
+ *
+ * Cible : tests UI, audits a11y/performance, screenshots, vérifications visuelles.
+ * Cost : $0 (forfait Claude Pro Max)
+ */
+async function dispatchMode3(task: MaestroTask, start: number): Promise<MaestroResult> {
+  logger.info(
+    {
+      task: task.task_description.slice(0, 80),
+      user: task.user_id,
+      mode: 'mode_3_browser',
+      session: 'claude-browser',
+    },
+    'maestro.dispatch.start'
+  );
+
+  try {
+    const tmuxResult = await dispatchToTmuxSession('claude-browser', task.task_description, {
+      timeoutMs: 600_000,
+      pollIntervalMs: 60_000,
+    });
+
+    logger.info(
+      { cost: 0, latency: tmuxResult.latency_ms, model: tmuxResult.model, session: 'claude-browser' },
+      'maestro.dispatch.mode3.success'
+    );
+
+    logMaestroDispatch({
+      user_id: task.user_id,
+      mode: 'mode_3_browser',
+      task: task.task_description,
+      provider: null,
+      model: tmuxResult.model ?? null,
+      success: true,
+      cost_usd: 0,
+      latency_ms: tmuxResult.latency_ms,
+    });
+
+    return {
+      success: true,
+      result: tmuxResult.content,
+      provider_used: null,
+      session_used: 'claude-browser',
+      cost_usd: 0,
+      latency_ms: tmuxResult.latency_ms,
+      mode_used: 'mode_3_browser',
+    };
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : String(err);
+    logger.error(
+      { error: msg, mode: 'mode_3_browser', session: 'claude-browser' },
+      'maestro.dispatch.mode3.fail'
+    );
+    logMaestroDispatch({
+      user_id: task.user_id,
+      mode: 'mode_3_browser',
+      task: task.task_description,
+      provider: null,
+      success: false,
+      cost_usd: 0,
+      latency_ms: Date.now() - start,
+      error: msg,
+    });
+    return {
+      success: false,
+      result: '',
+      provider_used: null,
+      session_used: 'claude-browser',
+      cost_usd: 0,
+      latency_ms: Date.now() - start,
+      error: msg,
+      mode_used: 'mode_3_browser',
+    };
+  }
+}
+
 // ── Mode 2 : API LLM directe avec CASCADE FALLBACK auto ───────────────────────
 
 /**
@@ -454,6 +539,11 @@ async function dispatchMode2(task: MaestroTask, start: number): Promise<MaestroR
 
 export async function dispatchToMaestro(task: MaestroTask): Promise<MaestroResult> {
   const start = Date.now();
+
+  // Mode 3 (frontend testing) : explicit only via task.mode
+  if (task.mode === 'mode_3_browser') {
+    return dispatchMode3(task, start);
+  }
 
   const useProMax =
     task.mode === 'mode_1_tmux' ||
