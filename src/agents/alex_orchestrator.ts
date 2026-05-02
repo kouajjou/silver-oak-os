@@ -65,6 +65,7 @@ import { createRun, updateRun, endRun, createTask, updateTask } from '../service
 import { readEnvFile } from '../env.js';
 import { dispatchToTmuxSession } from '../services/cli_tmux_dispatcher.js';
 import { delegateToAgent, getAvailableAgents } from '../orchestrator.js';
+import { isFactoryRequest, runFactoryWorkflow } from './factory_workflow.js';
 
 // ── Constants ─────────────────────────────────────────────────────────────
 
@@ -173,7 +174,7 @@ async function dispatchToEmployee(employee: string, task: BrokenDownTask, userId
 // Extends binary classifier (simple_question/technical_task) with 4 domain intents.
 // Keyword-based fast-path, zero LLM cost.
 
-type DomainIntent = 'comms_task' | 'content_task' | 'ops_task' | 'research_task';
+type DomainIntent = 'comms_task' | 'content_task' | 'ops_task' | 'research_task' | 'maestro_task' | 'sophie_task' | 'elena_task' | 'jules_task';
 
 const DOMAIN_ROUTES: Array<{ intent: DomainIntent; agentId: string; patterns: RegExp[] }> = [
   {
@@ -201,7 +202,36 @@ const DOMAIN_ROUTES: Array<{ intent: DomainIntent; agentId: string; patterns: Re
     intent: 'research_task',
     agentId: 'research',
     patterns: [
-      /\b(recherche|cherch[ae]|trouve|research|analys[ae]|veille|concurren|brief|intel|rapport|AI Act|RGPD|benchmark|compare|comparatif|news)\b/i,
+      /\b(recherche|cherch[ae]|trouve|research|analys[ae]|veille|concurren|brief|intel|rapport|benchmark|compare|comparatif|news)\b/i,
+    ],
+  },
+  // SOP V26 PROPER ORCHESTRATION : Maestro = directeur tech parmi les autres
+  {
+    intent: 'maestro_task',
+    agentId: 'maestro',
+    patterns: [
+      /\b(code|coding|debug|bug|fix|deploy|d[eé]ploi|tsc|typescript|migration|refactor|architecture|backend|frontend|api|endpoint|database|supabase|postgres|tests?|test\s+e2e|workflow|orchestrat|router|dispatcher|service|module)\b/i,
+    ],
+  },
+  {
+    intent: 'sophie_task',
+    agentId: 'sophie',
+    patterns: [
+      /\b(prd|product|jtbd|jobs.to.be.done|rice|lean.canvas|idea\s+validation|user\s+story|ux|specs?)\b/i,
+    ],
+  },
+  {
+    intent: 'elena_task',
+    agentId: 'elena',
+    patterns: [
+      /\b(launch|product\s+hunt|ph\s+launch|cold\s+outreach|sales|gtm|go.to.market|stripe\s+setup|stripe\s+config|email\s+sequence|cold\s+email)\b/i,
+    ],
+  },
+  {
+    intent: 'jules_task',
+    agentId: 'jules',
+    patterns: [
+      /\b(legal|cgv|cgu|dpa|privacy|policy|gdpr|rgpd|conformit[eé]|ai\s+act|compliance|audit\s+rgpd|data\s+processing)\b/i,
     ],
   },
 ];
@@ -235,6 +265,10 @@ const KNOWN_DOMAIN_INTENTS: Record<string, DomainIntent> = {
   content: 'content_task',
   ops: 'ops_task',
   research: 'research_task',
+  maestro: 'maestro_task',
+  sophie: 'sophie_task',
+  elena: 'elena_task',
+  jules: 'jules_task',
 };
 
 async function classifyDomainRouteDynamic(message: string): Promise<{ intent: DomainIntent; agentId: string } | null> {
@@ -246,8 +280,8 @@ async function classifyDomainRouteDynamic(message: string): Promise<{ intent: Do
     return null;
   }
 
-  // Filter out main (Alex itself, no self-delegation) and maestro (handled by classifyIntent earlier)
-  const candidates = agents.filter((a) => a.id !== 'main' && a.id !== 'maestro');
+  // SOP V26 PROPER ORCHESTRATION : Filter only main (Alex never delegates to itself).
+  const candidates = agents.filter((a) => a.id !== 'main');
   if (candidates.length === 0) {
     logger.debug('[ALEX] No candidate agents in registry — falling back to regex');
     return null;
@@ -317,6 +351,44 @@ export async function alexHandle(request: AlexRequest): Promise<AlexResponse> {
   logger.info({ user: request.user_id, len: request.message.length }, 'alex.request');
 
   try {
+    // 0. Factory fast-path — detect "lance un SaaS" intent before standard routing
+    if (isFactoryRequest(request.message)) {
+      logger.info({ msg: request.message.slice(0, 80) }, '[ALEX] Factory SaaS request detected');
+      const testMode = /\btest\b/i.test(request.message);
+      try {
+        const factoryResult = await runFactoryWorkflow({
+          idea: request.message,
+          userId: request.user_id,
+          testMode,
+        });
+        const summary = factoryResult.blocked
+          ? `⏸️ Factory en pause — HITL requis à l'étape ${factoryResult.blocked}`
+          : factoryResult.success
+          ? `✅ Factory terminée — SaaS \`${factoryResult.saasName}\` (${factoryResult.stepsCompleted}/${factoryResult.totalSteps} étapes)`
+          : `❌ Factory échouée: ${factoryResult.error ?? 'unknown error'}`;
+        return {
+          success: factoryResult.success,
+          response: summary,
+          intent: 'factory_task',
+          delegated_to_maestro: false,
+          cost_usd: 0,
+          latency_ms: Date.now() - start,
+          metadata: { saasId: factoryResult.saasId, stepsCompleted: factoryResult.stepsCompleted },
+        };
+      } catch (factoryErr: unknown) {
+        const errMsg = factoryErr instanceof Error ? factoryErr.message : String(factoryErr);
+        logger.error({ error: errMsg }, '[ALEX] Factory workflow failed');
+        return {
+          success: false,
+          response: `❌ Factory error: ${errMsg}`,
+          intent: 'factory_task',
+          delegated_to_maestro: false,
+          cost_usd: 0,
+          latency_ms: Date.now() - start,
+        };
+      }
+    }
+
     // 1. Classify intent
     const intent = await classifyIntent(request.message);
     logger.info({ intent: intent.intent, confidence: intent.confidence }, 'alex.intent');
