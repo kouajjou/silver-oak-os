@@ -1,20 +1,22 @@
 /**
  * Maestro Dispatcher — Sprint 2 Pipeline V1
  *
- * SOP V26 PROPER DISPATCH — 2 mai 2026 (v1.1)
+ * SOP V26 PROPER DISPATCH — 2 mai 2026 (v1.2 + cascade fallback)
  *
  * Mode 1 : CLI tmux via MCP Bridge (forfait Pro Max, $0 marginal)
  *   → 4 sessions Sonnet : claude-code, claude-backend, claude-frontend, opus (urgences only)
  *   → Routage automatique selon type de tâche
  *
  * Mode 2 : API LLM directe (5 providers concurrents, Anthropic banni R1)
- *   → DeepSeek, Gemini, OpenAI, Grok, Mistral
+ *   → DeepSeek → Gemini → Grok → OpenAI → Mistral (CASCADE FALLBACK AUTO)
+ *   → Si TOUS échouent crédit/quota : fallback ULTIME Mode 1 tmux gratuit
  *
  * SOP V26 Rules respected:
  *   R1 : Opus banni hardcodé — chooseSession() ne route à opus QUE si tâche critique
  *        ET USINE_OPUS_ALLOWED=true
  *   R47: Tier routing — Sonnet 4.6 (Mode 1) pour code, DeepSeek/Gemini (Mode 2) pour bash/audit
  *   R78: Cuisinier 1700€/h n'épluche pas — Maestro orchestre, workers exécutent
+ *   R-cascade (NEW 2 mai 2026) : Plus jamais d'arrêt pour cause de crédit/quota
  */
 
 import { callLLM, getAvailableProviders } from '../adapters/llm/index.js';
@@ -67,6 +69,50 @@ Respond with:
 3. EXPECTED_OUTPUT: what success looks like
 
 Be concise. Max 300 tokens.`;
+
+// ── SOP V26 CASCADE FALLBACK — Règle Karim 2 mai 2026 ──────────────────────────
+//
+// Quand un provider échoue pour cause de crédit/quota/rate-limit,
+// le système essaie automatiquement le suivant. Plus jamais d'arrêt
+// pour cause externe (compte vide, quota dépassé, rate limit temporaire).
+//
+// Ordre cascade : DeepSeek (cheap default) → Gemini (Google) → Grok (xAI)
+//                 → OpenAI → Mistral → Mode 1 tmux Pro Max (ULTIME, $0).
+
+const FALLBACK_ORDER: LLMProvider[] = [
+  'deepseek',
+  'google',
+  'xai' as LLMProvider,
+  'openai',
+  'mistral' as LLMProvider,
+];
+
+/**
+ * Détecte si une erreur LLM justifie un fallback automatique vers le provider suivant.
+ * Couvre : Insufficient Balance, quota, rate limit, billing, payment, 401/402/429.
+ *
+ * Si l'erreur N'EST PAS dans cette liste (ex : bug code, network), on STOPPE la cascade —
+ * c'est un vrai bug à investiguer, pas un problème de crédit.
+ */
+function shouldFallback(errorMsg: string): boolean {
+  const triggers = [
+    'insufficient balance',
+    'quota exceeded',
+    'rate limit',
+    'rate_limit',
+    'credit',
+    'billing',
+    'payment',
+    'unauthorized',
+    '401',
+    '402',
+    '429',
+    'no api key',
+    'invalid api key',
+  ];
+  const lower = errorMsg.toLowerCase();
+  return triggers.some((t) => lower.includes(t));
+}
 
 // ── Session selector — SOP V26 PROPER DISPATCH ────────────────────────────────
 
@@ -212,11 +258,18 @@ async function dispatchMode1(task: MaestroTask, start: number): Promise<MaestroR
   }
 }
 
-// ── Mode 2 : API LLM directe (5 providers concurrents, Anthropic banni R1) ────
+// ── Mode 2 : API LLM directe avec CASCADE FALLBACK auto ───────────────────────
 
-async function dispatchMode2(task: MaestroTask, start: number): Promise<MaestroResult> {
-  const provider: LLMProvider = task.preferred_provider ?? 'deepseek';
-
+/**
+ * Essaie un seul provider Mode 2.
+ * Retourne success=false avec error si le provider échoue.
+ * Le caller (dispatchMode2) décide de fallback ou non selon shouldFallback().
+ */
+async function tryDispatchMode2(
+  task: MaestroTask,
+  start: number,
+  provider: LLMProvider
+): Promise<MaestroResult> {
   logger.info(
     { task: task.task_description.slice(0, 80), provider, user: task.user_id, mode: 'mode_2_api' },
     'maestro.dispatch.start'
@@ -238,8 +291,12 @@ async function dispatchMode2(task: MaestroTask, start: number): Promise<MaestroR
         error: err,
       });
       return {
-        success: false, result: '', provider_used: null,
-        cost_usd: 0, latency_ms: Date.now() - start, error: err,
+        success: false,
+        result: '',
+        provider_used: null,
+        cost_usd: 0,
+        latency_ms: Date.now() - start,
+        error: err,
         mode_used: 'mode_2_api',
       };
     }
@@ -312,11 +369,85 @@ async function dispatchMode2(task: MaestroTask, start: number): Promise<MaestroR
       error: msg,
     });
     return {
-      success: false, result: '', provider_used: null,
-      cost_usd: 0, latency_ms: Date.now() - start, error: msg,
+      success: false,
+      result: '',
+      provider_used: null,
+      cost_usd: 0,
+      latency_ms: Date.now() - start,
+      error: msg,
       mode_used: 'mode_2_api',
     };
   }
+}
+
+/**
+ * Mode 2 avec CASCADE FALLBACK automatique.
+ *
+ * Workflow :
+ * 1. Essaie le preferred_provider (default DeepSeek)
+ * 2. Si erreur de crédit/quota → essaie le suivant dans FALLBACK_ORDER
+ * 3. Si erreur NON liée crédit (vrai bug) → STOP cascade, retourne l'erreur
+ * 4. Si TOUS les providers Mode 2 échouent → fallback ULTIME Mode 1 tmux ($0)
+ */
+async function dispatchMode2(task: MaestroTask, start: number): Promise<MaestroResult> {
+  const preferred: LLMProvider = task.preferred_provider ?? 'deepseek';
+  // Ordre : preferred d'abord, puis le reste de FALLBACK_ORDER (sans doublon)
+  const order: LLMProvider[] = [
+    preferred,
+    ...FALLBACK_ORDER.filter((p) => p !== preferred),
+  ];
+
+  let lastResult: MaestroResult | null = null;
+  let lastError = '';
+
+  for (const candidateProvider of order) {
+    const result = await tryDispatchMode2(task, start, candidateProvider);
+
+    // Succès → on sort tout de suite
+    if (result.success) {
+      logger.info(
+        {
+          provider: candidateProvider,
+          latency: result.latency_ms,
+          cascade_position: order.indexOf(candidateProvider),
+        },
+        'maestro.cascade.success'
+      );
+      return result;
+    }
+
+    // Échec → on regarde la raison
+    lastResult = result;
+    lastError = result.error || 'unknown error';
+
+    // Si erreur N'EST PAS liée au crédit/quota → vrai bug, STOP cascade
+    if (!shouldFallback(lastError)) {
+      logger.warn(
+        { provider: candidateProvider, error: lastError },
+        'maestro.cascade.stop_non_credit_error'
+      );
+      return result;
+    }
+
+    // Sinon (credit/quota/rate-limit) → continue au suivant
+    logger.warn(
+      {
+        provider: candidateProvider,
+        error: lastError,
+        next: order[order.indexOf(candidateProvider) + 1] ?? 'mode_1_tmux_fallback',
+      },
+      'maestro.cascade.fallback_next'
+    );
+  }
+
+  // Tous les providers Mode 2 ont échoué pour cause de crédit/quota
+  // → Fallback ULTIME : Mode 1 tmux Pro Max ($0, ne peut pas être à court de crédit)
+  logger.warn(
+    { allErrors: lastError, providersAttempted: order },
+    'maestro.cascade.all_mode2_failed_fallback_mode1'
+  );
+
+  return dispatchMode1(task, start);
 }
 
 // ── Router ────────────────────────────────────────────────────────────────────
