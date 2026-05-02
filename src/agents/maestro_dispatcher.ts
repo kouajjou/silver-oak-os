@@ -1,19 +1,27 @@
 /**
  * Maestro Dispatcher — Sprint 2 Pipeline V1
- * Mode 1 : CLI tmux via MCP Bridge (forfait Pro Max, $0 marginal)
- * Mode 2 : API DeepSeek/Gemini directe (fallback ou override — archived: était Anthropic)
  *
- * Sélection du mode :
- *   - task.mode === 'mode_1_tmux'      → toujours Mode 1
- *   - USE_MAESTRO_PRO_MAX=true (env)   → Mode 1 par défaut
- *   - sinon                            → Mode 2 (API DeepSeek — archived: était Anthropic)
+ * SOP V26 PROPER DISPATCH — 2 mai 2026 (v1.1)
+ *
+ * Mode 1 : CLI tmux via MCP Bridge (forfait Pro Max, $0 marginal)
+ *   → 4 sessions Sonnet : claude-code, claude-backend, claude-frontend, opus (urgences only)
+ *   → Routage automatique selon type de tâche
+ *
+ * Mode 2 : API LLM directe (5 providers concurrents, Anthropic banni R1)
+ *   → DeepSeek, Gemini, OpenAI, Grok, Mistral
+ *
+ * SOP V26 Rules respected:
+ *   R1 : Opus banni hardcodé — chooseSession() ne route à opus QUE si tâche critique
+ *        ET USINE_OPUS_ALLOWED=true
+ *   R47: Tier routing — Sonnet 4.6 (Mode 1) pour code, DeepSeek/Gemini (Mode 2) pour bash/audit
+ *   R78: Cuisinier 1700€/h n'épluche pas — Maestro orchestre, workers exécutent
  */
 
 import { callLLM, getAvailableProviders } from '../adapters/llm/index.js';
 import type { LLMProvider } from '../adapters/llm/types.js';
 import { dispatchToTmuxSession } from '../services/cli_tmux_dispatcher.js';
+import type { TmuxSession } from '../services/cli_tmux_dispatcher.js';
 import { logger } from '../logger.js';
-// PhD fix 2026-05-01 - Phase 4.3: SQLite persistant log de chaque dispatch
 import { logMaestroDispatch } from '../services/maestro-dispatch-log.js';
 
 export type { LLMProvider };
@@ -24,14 +32,17 @@ export interface MaestroTask {
   task_description: string;
   user_id: string;
   preferred_provider?: LLMProvider;
+  preferred_session?: TmuxSession;
   max_tokens?: number;
   mode?: MaestroMode;
+  is_critical?: boolean;
 }
 
 export interface MaestroResult {
   success: boolean;
   result: string;
   provider_used: LLMProvider | null;
+  session_used?: TmuxSession;
   cost_usd: number;
   latency_ms: number;
   error?: string;
@@ -57,26 +68,104 @@ Respond with:
 
 Be concise. Max 300 tokens.`;
 
+// ── Session selector — SOP V26 PROPER DISPATCH ────────────────────────────────
+
+/**
+ * Choisit la session tmux Mode 1 selon le contenu de la tâche.
+ * Précédence (haut → bas) :
+ *   1. preferred_session si fourni explicitement
+ *   2. opus si is_critical=true ET USINE_OPUS_ALLOWED=true (R1)
+ *   3. Architecture / review → claude-code
+ *   4. Frontend (UI/React/Next) → claude-frontend
+ *   5. Backend (API/migration/workflow) → claude-backend
+ *   6. Fallback → claude-code (orchestration générique)
+ */
+export function chooseSession(
+  task: string,
+  hints: { preferred_session?: TmuxSession; is_critical?: boolean } = {}
+): TmuxSession {
+  // 1. Hint explicite
+  if (hints.preferred_session) {
+    return hints.preferred_session;
+  }
+
+  // 2. R1 : opus uniquement pour critique + override env
+  const opusAllowed = process.env['USINE_OPUS_ALLOWED'] === 'true';
+  if (hints.is_critical && opusAllowed) {
+    return 'opus';
+  }
+
+  const lower = task.toLowerCase();
+
+  // 3. Architecture / review / orchestration générale → claude-code (PRIORITÉ HAUTE)
+  const architecturePatterns = [
+    /\b(architecture|architectural|architect)\b/,
+    /\b(review|audit|analyse|analysis)\b/,
+    /\b(plan|planning|design pattern)\b/,
+    /\b(orchestrat)\b/,
+  ];
+  if (architecturePatterns.some((p) => p.test(lower))) {
+    return 'claude-code';
+  }
+
+  // 4. Frontend : UI, React, Next, CSS, composants, pages
+  const frontendPatterns = [
+    /\b(frontend|front-end|ui|ux)\b/,
+    /\b(react|next\.?js|tailwind|tsx|jsx)\b/,
+    /\b(component|composant|page)\b/,
+    /\b(css|styling|style sheet)\b/,
+    /\b(dashboard|war ?room|landing)\b/,
+  ];
+  if (frontendPatterns.some((p) => p.test(lower))) {
+    return 'claude-frontend';
+  }
+
+  // 5. Backend : API, services, DB, migrations, workflows
+  const backendPatterns = [
+    /\b(backend|back-end|api|endpoint|route handler)\b/,
+    /\b(migration|database|supabase|sqlite|postgres)\b/,
+    /\b(service|workflow|dispatch|router)\b/,
+    /\b(typescript|ts file|\.ts\b)/,
+    /\b(express|fastify|node\.?js)\b/,
+    /\b(refactor|integration|multi-file)\b/,
+  ];
+  if (backendPatterns.some((p) => p.test(lower))) {
+    return 'claude-backend';
+  }
+
+  // 6. Fallback : claude-code (orchestration générique)
+  return 'claude-code';
+}
+
 // ── Mode 1 : CLI tmux Pro Max ($0) ────────────────────────────────────────────
 
 async function dispatchMode1(task: MaestroTask, start: number): Promise<MaestroResult> {
+  const session = chooseSession(task.task_description, {
+    preferred_session: task.preferred_session,
+    is_critical: task.is_critical,
+  });
+
   logger.info(
-    { task: task.task_description.slice(0, 80), user: task.user_id, mode: 'mode_1_tmux' },
+    {
+      task: task.task_description.slice(0, 80),
+      user: task.user_id,
+      mode: 'mode_1_tmux',
+      session,
+    },
     'maestro.dispatch.start'
   );
 
   try {
-    const tmuxResult = await dispatchToTmuxSession('opus', task.task_description, {
+    const tmuxResult = await dispatchToTmuxSession(session, task.task_description, {
       timeoutMs: 600_000,
       pollIntervalMs: 60_000,
     });
 
     logger.info(
-      { cost: 0, latency: tmuxResult.latency_ms, model: tmuxResult.model },
+      { cost: 0, latency: tmuxResult.latency_ms, model: tmuxResult.model, session },
       'maestro.dispatch.mode1.success'
     );
 
-    // Phase 4.3: log dispatch SQLite (non-bloquant)
     logMaestroDispatch({
       user_id: task.user_id,
       mode: 'mode_1_tmux',
@@ -91,14 +180,15 @@ async function dispatchMode1(task: MaestroTask, start: number): Promise<MaestroR
     return {
       success: true,
       result: tmuxResult.content,
-      provider_used: null, // archived: was 'anthropic' label — tmux mode has no direct API cost
-      cost_usd: 0,                // Pro Max forfait = $0 marginal
+      provider_used: null,
+      session_used: session,
+      cost_usd: 0,
       latency_ms: tmuxResult.latency_ms,
       mode_used: 'mode_1_tmux',
     };
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : String(err);
-    logger.error({ error: msg, mode: 'mode_1_tmux' }, 'maestro.dispatch.mode1.fail');
+    logger.error({ error: msg, mode: 'mode_1_tmux', session }, 'maestro.dispatch.mode1.fail');
     logMaestroDispatch({
       user_id: task.user_id,
       mode: 'mode_1_tmux',
@@ -113,6 +203,7 @@ async function dispatchMode1(task: MaestroTask, start: number): Promise<MaestroR
       success: false,
       result: '',
       provider_used: null,
+      session_used: session,
       cost_usd: 0,
       latency_ms: Date.now() - start,
       error: msg,
@@ -121,11 +212,9 @@ async function dispatchMode1(task: MaestroTask, start: number): Promise<MaestroR
   }
 }
 
-// ── Mode 2 : API DeepSeek directe (archived: était Anthropic — zero-anthropic Phase F) ──────────
+// ── Mode 2 : API LLM directe (5 providers concurrents, Anthropic banni R1) ────
 
 async function dispatchMode2(task: MaestroTask, start: number): Promise<MaestroResult> {
-  // archived: default was 'anthropic' — zero-anthropic Phase F
-  // const provider: LLMProvider = task.preferred_provider ?? 'anthropic';
   const provider: LLMProvider = task.preferred_provider ?? 'deepseek';
 
   logger.info(
@@ -155,11 +244,25 @@ async function dispatchMode2(task: MaestroTask, start: number): Promise<MaestroR
       };
     }
 
-    // archived: was anthropic→claude-sonnet-4-6, else→gpt-4o-mini — zero-anthropic Phase F
-    // const model = provider === 'anthropic' ? 'claude-sonnet-4-6' : 'gpt-4o-mini';
-    const model = provider === 'deepseek' ? 'deepseek-chat'
-      : provider === 'google' ? 'gemini-2.5-flash'
-      : 'gpt-4o-mini'; // openai/xai fallback
+    let model: string;
+    switch (provider) {
+      case 'deepseek':
+        model = 'deepseek-chat';
+        break;
+      case 'google':
+        model = 'gemini-2.5-flash';
+        break;
+      case 'mistral' as LLMProvider:
+        model = 'mistral-small-latest';
+        break;
+      case 'xai' as LLMProvider:
+        model = 'grok-3-mini';
+        break;
+      case 'openai':
+      default:
+        model = 'gpt-4o-mini';
+        break;
+    }
 
     const response = await callLLM({
       provider,
