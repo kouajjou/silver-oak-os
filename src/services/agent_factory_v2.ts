@@ -1,13 +1,19 @@
 /**
- * Agent Factory v2 — Sprint 3
+ * Agent Factory v2 — Sprint 3 + Sprint 4 (Maestro Auto-Wiring)
  *
  * ONE function call to create a complete, wired agent:
  *   - agents/<id>/ directory with agent.yaml + CLAUDE.md + skills/
  *   - SQLite agents registry entry
  *   - Dynamic DOMAIN_ROUTES refresh signal
  *   - Delegation notifications to concerned agents
+ *   - Auto-Maestro delegation block injected in CLAUDE.md (Option C)
  *   - Self-test ping
  *   - Telegram notification for BotFather step (manual) if requested
+ *
+ * SOP V26 — Maestro is SACRED:
+ *   - createAgent({id: 'maestro'}) is BLOCKED
+ *   - Maestro CLAUDE.md / skills / agent.yaml are NEVER touched by the factory
+ *   - Every new agent (except Alex orchestrator) auto-knows Maestro can handle tech tasks
  */
 
 import Database from 'better-sqlite3';
@@ -33,6 +39,15 @@ export interface CreateAgentSpec {
   delegation_rules?: Record<string, string>;
   domain_keywords: string[];
   model?: string;
+  /**
+   * Sprint 4 (Maestro Auto-Wiring, Option C):
+   * If true (default), the factory automatically injects a delegation rule:
+   *   "Pour les tâches tech (code, deploy, audit, fix), tu peux déléguer directement à Maestro."
+   * Set to false to opt-out (rare cases like another orchestrator agent).
+   * Maestro himself ('id'='maestro') is automatically excluded.
+   * Alex ('id'='main', role='orchestrator') is automatically excluded too.
+   */
+  auto_delegate_to_maestro?: boolean;
 }
 
 export interface CreateAgentResult {
@@ -44,6 +59,8 @@ export interface CreateAgentResult {
   selfTestPassed: boolean;
   domainRoutesUpdated: boolean;
   delegationsNotified: string[];
+  /** True if the Maestro auto-delegation block was injected. */
+  maestroAutoDelegationInjected: boolean;
 }
 
 const PROJECT_ROOT = process.cwd();
@@ -51,6 +68,47 @@ const AGENTS_DIR = path.join(PROJECT_ROOT, 'agents');
 const SKILLS_LIBRARY_DIR = path.join(PROJECT_ROOT, 'skills-library');
 const KARIM_CHAT_ID = '5566541774';
 const MAX_AGENTS = 20;
+
+/**
+ * SOP V26 — Maestro is SACRED.
+ * The factory cannot create, overwrite, or modify Maestro.
+ * Maestro's CLAUDE.md (371 lines) + skills + agent.yaml are managed by hand only.
+ */
+const PROTECTED_AGENT_IDS = new Set(['maestro']);
+
+/**
+ * Sprint 4 — Auto-Maestro delegation block.
+ * Injected into every new agent's CLAUDE.md (except orchestrators and Maestro himself).
+ * Trilingual to match SoulPrompts standard.
+ */
+const MAESTRO_AUTO_DELEGATION_BLOCK = `
+---
+
+## 🛠️ Délégation à Maestro (auto-wired par Agent Factory v2)
+
+### FR
+Pour toutes les tâches techniques (code, deploy, debug, audit, infra, refactor, tests, security review),
+tu peux déléguer DIRECTEMENT à Maestro sans passer par Alex.
+Maestro est le CTO de Silver Oak OS et orchestre lui-même les workers techniques.
+
+Comment déléguer : utilise \`@maestro: <ta demande>\` ou appelle \`delegateToAgent('maestro', <prompt>)\`.
+
+### EN
+For any technical task (code, deploy, debug, audit, infra, refactor, tests, security review),
+you can delegate DIRECTLY to Maestro without going through Alex.
+Maestro is the CTO of Silver Oak OS and orchestrates the technical workers himself.
+
+How to delegate: use \`@maestro: <your request>\` or call \`delegateToAgent('maestro', <prompt>)\`.
+
+### ES
+Para cualquier tarea técnica (código, despliegue, debug, auditoría, infra, refactor, tests, revisión de seguridad),
+puedes delegar DIRECTAMENTE a Maestro sin pasar por Alex.
+Maestro es el CTO de Silver Oak OS y orquesta él mismo los workers técnicos.
+
+Cómo delegar: usa \`@maestro: <tu solicitud>\` o llama a \`delegateToAgent('maestro', <prompt>)\`.
+
+---
+`;
 
 // ── SQLite helpers ────────────────────────────────────────────────────────
 
@@ -140,6 +198,7 @@ languages: ${JSON.stringify(spec.languages)}
 skills: ${JSON.stringify(spec.skills_needed)}
 domain_keywords: ${JSON.stringify(spec.domain_keywords)}
 ${spec.telegram_bot_required ? 'telegram_bot_token_env: ' + spec.id.toUpperCase() + '_BOT_TOKEN' : '# telegram_bot: not required'}
+auto_delegate_to_maestro: ${spec.auto_delegate_to_maestro !== false}
 created_at: ${new Date().toISOString()}
 `;
   fs.writeFileSync(path.join(agentDir, 'agent.yaml'), yaml, 'utf-8');
@@ -179,6 +238,22 @@ function copySkillsFromLibrary(agentDir: string, skillsNeeded: string[]): string
   }
 
   return imported;
+}
+
+/**
+ * Sprint 4 — Decide whether to inject the Maestro auto-delegation block.
+ * Logic:
+ *   - Maestro himself: NEVER (he doesn't delegate to himself).
+ *   - Orchestrators (Alex/main): NO (Alex orchestrates Maestro already at higher level).
+ *   - Explicit opt-out (auto_delegate_to_maestro: false): NO.
+ *   - Otherwise: YES (every specialist/workhorse can delegate to Maestro).
+ */
+function shouldInjectMaestroBlock(spec: CreateAgentSpec): boolean {
+  if (spec.id === 'maestro') return false;
+  if (spec.id === 'main') return false;
+  if (spec.role === 'orchestrator') return false;
+  if (spec.auto_delegate_to_maestro === false) return false;
+  return true;
 }
 
 // ── Self-test ─────────────────────────────────────────────────────────────
@@ -253,6 +328,14 @@ export function loadDomainRoutes(): Array<{ agentId: string; keywords: string[];
 // ── Main createAgent function ─────────────────────────────────────────────
 
 export async function createAgent(spec: CreateAgentSpec): Promise<CreateAgentResult> {
+  // ── 0. SOP V26 — Maestro is SACRED ───────────────────────────────────
+  if (PROTECTED_AGENT_IDS.has(spec.id)) {
+    throw new Error(
+      `Agent "${spec.id}" is PROTECTED (SOP V26 — sacred agents). ` +
+      `Maestro and other protected agents must be edited by hand only, never via the factory.`
+    );
+  }
+
   // ── 1. Validate ──────────────────────────────────────────────────────
   if (!/^[a-z][a-z0-9_]{0,29}$/.test(spec.id)) {
     throw new Error(`Invalid agent id "${spec.id}": must match /^[a-z][a-z0-9_]{0,29}$/`);
@@ -274,7 +357,7 @@ export async function createAgent(spec: CreateAgentSpec): Promise<CreateAgentRes
   const createdAgentDir = createAgentDirectory(spec.id);
   writeAgentYaml(createdAgentDir, spec);
 
-  // ── 3. Build CLAUDE.md via SoulPrompts ───────────────────────────────
+  // ── 3. Build CLAUDE.md via SoulPrompts + Maestro auto-block ──────────
   const soulSpec: SoulPromptSpec = {
     agentId: spec.id,
     agentName: spec.name,
@@ -290,7 +373,15 @@ export async function createAgent(spec: CreateAgentSpec): Promise<CreateAgentRes
       : undefined,
   };
 
-  const claudeMdContent = buildSoulPrompt(soulSpec);
+  let claudeMdContent = buildSoulPrompt(soulSpec);
+
+  // Sprint 4 — Inject Maestro auto-delegation block (Option C)
+  const maestroAutoDelegationInjected = shouldInjectMaestroBlock(spec);
+  if (maestroAutoDelegationInjected) {
+    claudeMdContent += MAESTRO_AUTO_DELEGATION_BLOCK;
+    logger.info(`agent_factory_v2.maestro_auto_delegation_injected agentId=${spec.id}`);
+  }
+
   const claudeMdPath = path.join(createdAgentDir, 'CLAUDE.md');
   fs.writeFileSync(claudeMdPath, claudeMdContent, 'utf-8');
 
@@ -298,7 +389,7 @@ export async function createAgent(spec: CreateAgentSpec): Promise<CreateAgentRes
   const skillsImported = copySkillsFromLibrary(createdAgentDir, spec.skills_needed);
 
   // ── 5. Telegram bot — manual workflow ────────────────────────────────
-  let telegramBotUsername: string | undefined;
+  const telegramBotUsername: string | undefined = undefined;
   if (spec.telegram_bot_required) {
     await sendTelegram(
       `🤖 *Nouvel agent créé: ${spec.name}*\n\n` +
@@ -340,6 +431,26 @@ export async function createAgent(spec: CreateAgentSpec): Promise<CreateAgentRes
     }
   }
 
+  // Sprint 4 — Notify Maestro hive_mind that a new agent now knows it can delegate to him
+  if (maestroAutoDelegationInjected) {
+    try {
+      const db = getDb();
+      try {
+        db.prepare(`
+          INSERT INTO hive_mind (agent_id, chat_id, action, summary, created_at)
+          VALUES ('factory', '${KARIM_CHAT_ID}', 'maestro_auto_wired',
+                  'Maestro auto-delegation wired into ${spec.id} (${spec.name}). New agent can delegate tech tasks directly to Maestro.',
+                  strftime('%s','now'))
+        `).run();
+      } finally {
+        db.close();
+      }
+      delegationsNotified.push('maestro');
+    } catch {
+      // Non-blocking
+    }
+  }
+
   // ── 9. Self-test ──────────────────────────────────────────────────────
   const selfTestPassed = await runSelfTest(spec.id, spec.name);
 
@@ -350,11 +461,12 @@ export async function createAgent(spec: CreateAgentSpec): Promise<CreateAgentRes
     `*Nom*: ${spec.name}\n` +
     `*Role*: ${spec.role}\n` +
     `*Skills importés*: ${skillsImported.length > 0 ? skillsImported.join(', ') : 'aucun'}\n` +
+    `*Maestro auto-wired*: ${maestroAutoDelegationInjected ? '✅ oui' : '⏭️ non (orchestrator)'}\n` +
     `*Self-test*: ${selfTestPassed ? '✅ PASS' : '⚠️ FAIL (agent créé mais ne répond pas encore)'}\n` +
     `${spec.telegram_bot_required ? '⚠️ Bot Telegram: en attente de /registerbot' : ''}`
   );
 
-  logger.info(`agent_factory_v2.create_done agentId=${spec.id} skills=${skillsImported.length} selfTest=${selfTestPassed}`);
+  logger.info(`agent_factory_v2.create_done agentId=${spec.id} skills=${skillsImported.length} selfTest=${selfTestPassed} maestroAutoWired=${maestroAutoDelegationInjected}`);
 
   return {
     agentId: spec.id,
@@ -365,14 +477,23 @@ export async function createAgent(spec: CreateAgentSpec): Promise<CreateAgentRes
     selfTestPassed,
     domainRoutesUpdated,
     delegationsNotified,
+    maestroAutoDelegationInjected,
   };
 }
 
 /**
  * Delete an agent created by the factory.
  * Moves the directory to agents/_archive/, removes from registry.
+ * SOP V26 — Maestro is SACRED, cannot be archived via factory.
  */
 export function archiveAgent(agentId: string): void {
+  if (PROTECTED_AGENT_IDS.has(agentId)) {
+    throw new Error(
+      `Agent "${agentId}" is PROTECTED (SOP V26 — sacred agents). ` +
+      `Cannot be archived via the factory.`
+    );
+  }
+
   const agentDir = path.join(AGENTS_DIR, agentId);
   if (!fs.existsSync(agentDir)) {
     throw new Error(`Agent directory not found: ${agentDir}`);

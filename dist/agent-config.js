@@ -44,13 +44,19 @@ export function loadAgentConfig(agentId) {
     const description = raw['description'] ?? '';
     const botTokenEnv = raw['telegram_bot_token_env'];
     const model = raw['model'];
-    if (!name || !botTokenEnv) {
-        throw new Error(`Agent config ${configPath} must have 'name' and 'telegram_bot_token_env'`);
+    if (!name) {
+        throw new Error(`Agent config ${configPath} must have 'name'`);
     }
-    const env = readEnvFile([botTokenEnv]);
-    const botToken = process.env[botTokenEnv] || env[botTokenEnv] || '';
-    if (!botToken) {
-        throw new Error(`Bot token not found: set ${botTokenEnv} in .env`);
+    // SOP V26 PROPER ORCHESTRATION : telegram_bot_token_env est OPTIONNEL.
+    // Directeurs logiques (Sophie/Elena/Jules) appelés via delegateToAgent
+    // n'ont pas besoin de bot Telegram dédié.
+    let botToken = '';
+    if (botTokenEnv) {
+        const env = readEnvFile([botTokenEnv]);
+        botToken = process.env[botTokenEnv] || env[botTokenEnv] || '';
+        if (!botToken) {
+            throw new Error(`Bot token not found: set ${botTokenEnv} in .env`);
+        }
     }
     let obsidian;
     const obsRaw = raw['obsidian'];

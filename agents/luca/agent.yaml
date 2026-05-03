@@ -1,0 +1,8 @@
+name: Luca
+description: Airbnb Property Manager — manages Karim's short-term rental apartment, guest communications, pricing strategy, and occupancy optimization.
+
+# Telegram bot token env var — set in .env as LUCA_BOT_TOKEN
+telegram_bot_token_env: LUCA_BOT_TOKEN
+
+# Model
+model: claude-sonnet-4-6

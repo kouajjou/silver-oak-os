@@ -18,6 +18,27 @@ catch (e) {
     logger.warn('[MAESTRO_ORCH] SOP V26 file not found, using empty SOP');
 }
 function classifyTaskComplexity(task) {
+    // SOP V26 Mode 3 : frontend testing detection — claude-browser specialise
+    // Keywords spec maestro/agent.yaml mode_3_routing
+    const lowerTask = task.toLowerCase();
+    const mode3Keywords = [
+        /\b(test|tester)\s+(l[ae]\s+)?(ui|ux|page|frontend|front-end|interface|composant|bouton|formulaire|flow|navigation)\b/,
+        /\b(verifie|verifier|check)\s+(l[ae]\s+)?(ui|ux|page|frontend|interface|bouton)\b/,
+        /\b(screenshot|capture\s+d.?ecran|capture\s+ecran)\b/,
+        /\b(audit\s+(a11y|accessibilit[eé]|performance|lighthouse))\b/,
+        /\b(playwright|browser|navigateur)\s+(test|tester)\b/,
+        /\b(browse|navigate)\s+(to|vers|sur)\b/,
+        /\b(la\s+page|le\s+frontend|le\s+bouton|la\s+homepage)\s+(marche|fonctionne|charge|s[\\.]?affiche)\b/,
+    ];
+    for (const re of mode3Keywords) {
+        if (re.test(lowerTask)) {
+            return {
+                mode: 'mode_3_browser',
+                confidence: 0.9,
+                reasoning: 'mode_3 keyword detected: ' + re.source.slice(0, 40),
+            };
+        }
+    }
     if (task.length < 150) {
         return { mode: 'mode_2_api', confidence: 0.9, reasoning: 'short task -> mode_2' };
     }
@@ -104,7 +125,9 @@ export async function maestroHandle(task, context = {}) {
             ? await judgeResultSafe(task, dispatchResult.result || '')
             : undefined;
         // 6. Log to DB
-        const dbMode = (classification.mode === 'mode_1_tmux' ? 'mode_1' : 'mode_2');
+        const dbMode = (classification.mode === 'mode_1_tmux' ? 'mode_1' :
+            classification.mode === 'mode_3_browser' ? 'mode_3' :
+                'mode_2');
         await logAgentRun({
             agent: 'maestro',
             taskId,

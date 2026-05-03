@@ -8,7 +8,7 @@ export interface MaestroOrchestratorContext {
     parentTaskId?: string;
     userId?: string;
     budgetUSD?: number;
-    forceMode?: 'mode_1_tmux' | 'mode_2_api';
+    forceMode?: 'mode_1_tmux' | 'mode_2_api' | 'mode_3_browser';
     preferredProvider?: 'deepseek' | 'gemini' | 'openai' | 'grok' | 'mistral';
 }
 export interface MaestroOrchestratorResult {

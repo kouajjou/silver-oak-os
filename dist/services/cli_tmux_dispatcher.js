@@ -141,7 +141,7 @@ Cette commande exacte est OBLIGATOIRE comme DERNIÈRE ligne.
         }
         logger.debug({ session, elapsed: Date.now() - start, hasTaskDone: output.includes('TASK_DONE') }, 'cli_tmux_dispatcher.poll');
         if (output.includes(taskDoneMarker)) {
-            const model = session === 'opus' ? 'claude-opus-4.7-tmux' : 'claude-sonnet-4.6-tmux';
+            const model = session === 'opus' ? 'claude-opus-4.7-tmux' : (session === 'claude-browser' ? 'claude-sonnet-4.6-browser' : 'claude-sonnet-4.6-tmux');
             logger.info({ session, model, latency: Date.now() - start, dispatchId }, 'cli_tmux_dispatcher.task_done');
             // Extract output AFTER our dispatch marker injection (skip stale buffer)
             // Strategy: cut output at the FIRST occurrence of our injected prompt marker
