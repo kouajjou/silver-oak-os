@@ -20,12 +20,18 @@
  * - Extends intent classifier to 6 classes: comms/content/ops/research/technical/main
  */
 
-// archived: import { callLLM } from '../adapters/llm/index.js'; -- PAYANT (DeepSeek/Gemini API)
+import { callLLM } from '../adapters/llm/index.js';
 import { query } from '@anthropic-ai/claude-agent-sdk';
 import { getModelForAgent } from '../config/agent_models.js';
 
 // Helper: call Claude Code SDK Pro Max ($0 forfait Karim)
+// Fix 2026-05-03: unset CLAUDECODE env var to prevent "nested session" error.
+// PM2 backend inherits CLAUDECODE=1 from parent shell; SDK subprocess detects it and exits code 1.
 async function callProMax(prompt: string, model: string): Promise<string> {
+  const cleanEnv: Record<string, string | undefined> = { ...process.env };
+  delete cleanEnv['CLAUDECODE'];
+  delete cleanEnv['CLAUDE_CODE_ENTRYPOINT'];
+
   let resultText = '';
   let assistantText = '';
   for await (const event of query({
@@ -35,6 +41,7 @@ async function callProMax(prompt: string, model: string): Promise<string> {
       allowDangerouslySkipPermissions: true,
       maxTurns: 3,
       settingSources: ['user'],
+      env: cleanEnv,
     },
   })) {
     const ev = event as Record<string, unknown>;
@@ -609,14 +616,32 @@ export async function alexHandle(request: AlexRequest): Promise<AlexResponse> {
       };
     }
 
-    // Mode 2 — API Gemini Flash (archived: was Anthropic Haiku — zero-anthropic Phase F)
-    // archived: callLLM({ provider: 'google', model: 'gemini-2.5-flash' }) -- PAYANT
-    // archived: callLLM({ provider: 'anthropic', model: 'claude-haiku-4-5' }) -- zero-anthropic Phase F
+    // Mode 2 — Pro Max SDK (primary) → Gemini Flash cascade fallback (R-cascade SOP V26)
     const alexPrompt = SYSTEM_PROMPT_ALEX + '\n\nUser: ' + request.message;
-    const alexContent = await callProMax(alexPrompt, getModelForAgent('alex')); // Sonnet Pro Max
+    let alexContent: string;
+    let directMode = 'mode_2_claude_code_sdk';
+    let directCost = 0;
+    try {
+      alexContent = await callProMax(alexPrompt, getModelForAgent('alex'));
+    } catch (sdkErr) {
+      logger.warn(
+        { err: sdkErr instanceof Error ? sdkErr.message : String(sdkErr) },
+        '[ALEX] callProMax failed — cascading to Gemini Flash'
+      );
+      const cascadeResult = await callLLM({
+        provider: 'google',
+        model: 'gemini-2.0-flash',
+        messages: [{ role: 'user', content: alexPrompt }],
+        max_tokens: 1024,
+        agent_id: 'main',
+      });
+      alexContent = cascadeResult.content;
+      directMode = 'mode_2_gemini_cascade';
+      directCost = cascadeResult.cost_usd;
+    }
 
-    const totalCost = intent.cost_usd + 0; // Pro Max forfait = $0
-    logger.info({ cost: totalCost, intent: intent.intent, mode: 'mode_2_api' }, 'alex.direct_reply');
+    const totalCost = intent.cost_usd + directCost;
+    logger.info({ cost: totalCost, intent: intent.intent, mode: directMode }, 'alex.direct_reply');
 
     return {
       success: true,
@@ -625,7 +650,7 @@ export async function alexHandle(request: AlexRequest): Promise<AlexResponse> {
       delegated_to_maestro: false,
       cost_usd: totalCost,
       latency_ms: Date.now() - start,
-      metadata: { intent_confidence: intent.confidence, mode: 'mode_2_claude_code_sdk' },
+      metadata: { intent_confidence: intent.confidence, mode: directMode },
     };
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : String(err);
