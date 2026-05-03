@@ -59,6 +59,7 @@ import { dispatchToMaestro } from './maestro_dispatcher.js';
 import { maestroHandle } from './maestro_orchestrator.js';
 import { logger } from '../logger.js';
 import { breakDownTasks } from './task_breaker.js';
+import { detectMultiTaskPattern } from './task_breaker_regex.js';
 import type { BrokenDownTask } from './task_breaker.js';
 import { judge as llmJudge } from '../services/llm_judge.js';
 import { createRun, updateRun, endRun, createTask, updateTask } from '../services/session_state.js';
@@ -66,6 +67,7 @@ import { readEnvFile } from '../env.js';
 import { dispatchToTmuxSession } from '../services/cli_tmux_dispatcher.js';
 import { delegateToAgent, getAvailableAgents } from '../orchestrator.js';
 import { isFactoryRequest, runFactoryWorkflow } from './factory_workflow.js';
+import { loadDomainRoutes } from '../services/agent_factory_v2.js';
 
 // ── Constants ─────────────────────────────────────────────────────────────
 
@@ -242,6 +244,7 @@ export function classifyDomainRouteRegex(message: string): { intent: DomainInten
   // Score each route by total keyword matches, return highest score.
   let bestRoute: { intent: DomainIntent; agentId: string; score: number } | null = null;
 
+  // Check hardcoded routes first (known agents, fastest path)
   for (const entry of DOMAIN_ROUTES) {
     let score = 0;
     for (const pattern of entry.patterns) {
@@ -252,6 +255,28 @@ export function classifyDomainRouteRegex(message: string): { intent: DomainInten
     if (score > 0 && (!bestRoute || score > bestRoute.score)) {
       bestRoute = { intent: entry.intent, agentId: entry.agentId, score };
     }
+  }
+
+  // Also check dynamic registry routes (factory-created agents)
+  // loadDomainRoutes() falls back to [] if registry is empty or unavailable
+  try {
+    const dynamicRoutes = loadDomainRoutes();
+    for (const entry of dynamicRoutes) {
+      // Skip agents already covered by hardcoded DOMAIN_ROUTES
+      if (DOMAIN_ROUTES.some(r => r.agentId === entry.agentId)) continue;
+      let score = 0;
+      for (const pattern of entry.patterns) {
+        const globalPattern = new RegExp(pattern.source, pattern.flags.includes('g') ? pattern.flags : pattern.flags + 'g');
+        const matches = message.match(globalPattern);
+        if (matches) score += matches.length;
+      }
+      if (score > 0 && (!bestRoute || score > bestRoute.score)) {
+        // Dynamic agents get a generic 'ops_task' intent as closest match
+        bestRoute = { intent: 'ops_task' as DomainIntent, agentId: entry.agentId, score };
+      }
+    }
+  } catch {
+    // Non-blocking — if registry fails, just use hardcoded routes
   }
 
   return bestRoute ? { intent: bestRoute.intent, agentId: bestRoute.agentId } : null;
@@ -389,6 +414,41 @@ export async function alexHandle(request: AlexRequest): Promise<AlexResponse> {
       }
     }
 
+    // 0bis. Multi-task fast-path — SOP V26 2026-05-02 CTO PhD
+    // Detect multi-task patterns ("1) ... 2) ... 3) ...") and route to autonomous loop.
+    // Zero LLM cost — pure regex detection.
+    const regexBreakdown = detectMultiTaskPattern(request.message);
+    if (regexBreakdown && regexBreakdown.length >= 2) {
+      logger.info(
+        { count: regexBreakdown.length, agents: regexBreakdown.map((t: { agent_target: string }) => t.agent_target) },
+        '[ALEX] Multi-task pattern detected, routing to alexHandleAutonomous'
+      );
+      try {
+        const autoResult = await alexHandleAutonomous({
+          message: request.message,
+          user_id: request.user_id,
+        });
+        return {
+          success: autoResult.success,
+          response: autoResult.response,
+          intent: 'multi_task_autonomous',
+          delegated_to_maestro: autoResult.delegated_to_maestro,
+          cost_usd: autoResult.cost_usd,
+          latency_ms: autoResult.latency_ms,
+          metadata: {
+            ...autoResult.metadata,
+            run_id: autoResult.run_id,
+            multi_task_count: regexBreakdown.length,
+            multi_task_source: 'regex',
+          },
+        };
+      } catch (autoErr) {
+        const errMsg = autoErr instanceof Error ? autoErr.message : String(autoErr);
+        logger.warn({ error: errMsg }, '[ALEX] alexHandleAutonomous failed, fallback to mono-dispatch');
+        // Fall through to V1 mono-dispatch
+      }
+    }
+
     // 1. Classify intent
     const intent = await classifyIntent(request.message);
     logger.info({ intent: intent.intent, confidence: intent.confidence }, 'alex.intent');
@@ -459,8 +519,41 @@ export async function alexHandle(request: AlexRequest): Promise<AlexResponse> {
 
     // 3. Domain routing -- check if message targets a specific employee agent
     // Phase 5B.4: extends binary classifier with comms/content/ops/research
+    // SOP V26 PROPER ORCHESTRATION : si Maestro detecte, on passe par maestroHandle()
+    // pour qu'il utilise son dispatcher Mode 1/2/3 (et pas delegateToAgent direct).
     const domainRoute = await classifyDomainRoute(request.message);
     if (domainRoute) {
+      // Maestro special case : utilise son orchestrator (Mode 1/2/3 dispatch)
+      if (domainRoute.agentId === 'maestro') {
+        logger.info(
+          { msg: request.message.slice(0, 60) },
+          '[ALEX] Routing to Maestro via maestroHandle (Mode 1/2/3 dispatcher)',
+        );
+        try {
+          const maestroResult = await maestroHandle(request.message, { userId: request.user_id });
+          return {
+            success: maestroResult.success,
+            response: maestroResult.success
+              ? "🤖 **Maestro** :\n\n" + maestroResult.result
+              : "❌ Maestro error: task failed",
+            intent: 'maestro_task',
+            delegated_to_maestro: true,
+            cost_usd: intent.cost_usd,
+            latency_ms: Date.now() - start,
+            metadata: {
+              intent_confidence: intent.confidence,
+              maestro_mode: maestroResult.mode,
+              maestro_task_id: maestroResult.taskId,
+              provider_used: maestroResult.provider,
+            },
+          };
+        } catch (maestroErr: unknown) {
+          const errMsg = maestroErr instanceof Error ? maestroErr.message : String(maestroErr);
+          logger.warn({ error: errMsg }, '[ALEX] maestroHandle failed via domain route, fallback');
+          // Fall through to delegateToAgent below as fallback
+        }
+      }
+
       logger.info(
         { agentId: domainRoute.agentId, intent: domainRoute.intent, msg: request.message.slice(0, 60) },
         '[ALEX] Domain routing to employee agent',
@@ -572,13 +665,21 @@ export async function alexHandleAutonomous(
   const runId = run?.id;
   let totalCost = 0;
 
-  // 2. Break down tasks (or single-task fallback)
+  // 2. Break down tasks — SOP V26 2026-05-02 CTO PhD multi-dispatch
+  // Strategy:
+  //   a) regex breaker (zero LLM cost, instant) — handles "1) ... 2) ... 3) ..."
+  //   b) LLM breaker (DeepSeek + cascade fallback) — handles file_content or complex
+  //   c) mono-task fallback — single task to maestro
   let tasks: BrokenDownTask[];
-  if (request.file_content) {
+  const regexTasks = detectMultiTaskPattern(request.message);
+  if (regexTasks && regexTasks.length >= 2) {
+    tasks = regexTasks;
+    logger.info({ count: tasks.length, source: 'regex', agents: tasks.map((t) => t.agent_target) }, 'alex.autonomous.tasks_broken');
+  } else if (request.file_content) {
     const broken = await breakDownTasks(request.file_content, request.user_id);
     tasks = broken.tasks;
     totalCost += broken.cost_usd;
-    logger.info({ count: tasks.length, cost: broken.cost_usd }, 'alex.autonomous.tasks_broken');
+    logger.info({ count: tasks.length, cost: broken.cost_usd, source: 'llm_breaker' }, 'alex.autonomous.tasks_broken');
   } else {
     tasks = [{
       id: 'task_001',
@@ -589,7 +690,7 @@ export async function alexHandleAutonomous(
       dependencies: [],
       estimated_effort_min: 30,
       priority: 'P1',
-      rationale: 'Single direct task — no file_content provided',
+      rationale: 'Single direct task — no multi-task pattern, no file_content',
     }];
   }
 
@@ -668,9 +769,24 @@ export async function alexHandleAutonomous(
           success: maestroOrcResult.success,
         };
       } else if (['sara', 'leo', 'marco', 'nina'].includes(task.agent_target)) {
-        dispatched = await dispatchToEmployee(task.agent_target, task, request.user_id);
+        dispatched = await dispatchToEmployee(task.agent_target as 'sara' | 'leo' | 'marco' | 'nina', task, request.user_id);
+      } else if (['sophie', 'elena', 'jules'].includes(task.agent_target)) {
+        // SOP V26 2026-05-02 CTO PhD : Sophie/Elena/Jules via delegateToAgent direct
+        // (pas dans dispatchToEmployee EMPLOYEE_TO_AGENT_ID hardcoded map)
+        try {
+          const delegResult = await delegateToAgent(task.agent_target, task.description, request.user_id, 'main');
+          dispatched = {
+            result: delegResult.text ?? '',
+            cost_usd: 0,
+            latency_ms: delegResult.durationMs,
+            success: !!delegResult.text,
+          };
+        } catch (delegErr) {
+          const msg = delegErr instanceof Error ? delegErr.message : String(delegErr);
+          dispatched = { result: `${task.agent_target} error: ${msg}`, cost_usd: 0, latency_ms: 0, success: false };
+        }
       } else {
-        dispatched = { result: 'Unknown agent target', cost_usd: 0, latency_ms: 0, success: false };
+        dispatched = { result: 'Unknown agent target: ' + task.agent_target, cost_usd: 0, latency_ms: 0, success: false };
       }
 
       totalCost += dispatched.cost_usd;
