@@ -7,3 +7,26 @@ model: claude-sonnet-4-6
 
 meet_voice_id: "EXAVITQu4vr4xnSDxMaL"
 meet_bot_name: "Sara"
+
+# Skills wired 2026-05-03 (Sprint 5b)
+skills:
+  - gmail_read
+  - gmail_compose
+  - gmail_label
+  - telegram_draft
+  - whatsapp_send
+
+# Domain keywords pour le routing dynamique d'Alex
+domain_keywords:
+  - email
+  - gmail
+  - mail
+  - inbox
+  - draft
+  - outreach
+  - communication
+  - newsletter
+  - reply
+  - répondre
+  - email triage
+  - cold email

@@ -6,3 +6,32 @@ telegram_bot_token_env: LUCA_BOT_TOKEN
 
 # Model
 model: claude-sonnet-4-6
+
+# Skills wired 2026-05-03 (Sprint 5b)
+skills:
+  - airbnb_browser
+  - logify_browser
+  - pricelab_browser
+  - playwright_navigate
+  - playwright_screenshot
+
+# Domain keywords pour le routing dynamique d'Alex
+domain_keywords:
+  - airbnb
+  - rental
+  - location
+  - guest
+  - voyageur
+  - réservation
+  - booking
+  - logify
+  - pricelab
+  - pricing
+  - tarif
+  - occupancy
+  - check-in
+  - cleaning
+  - ménage
+  - property
+  - appartement
+  - location courte durée
