@@ -182,6 +182,43 @@ export function initSkillRegistry() {
     // Scan project skills first (they take priority)
     scanDirectory(projectSkillsDir);
     scanDirectory(globalSkillsDir);
+    // Scan per-agent skills (agents/<id>/skills/)
+    const agentsDir = path.join(projectRoot, 'agents');
+    if (fs.existsSync(agentsDir)) {
+        let agentDirs;
+        try {
+            agentDirs = fs.readdirSync(agentsDir, { withFileTypes: true });
+        }
+        catch {
+            agentDirs = [];
+        }
+        for (const agent of agentDirs) {
+            if (!agent.isDirectory())
+                continue;
+            if (agent.name.startsWith('_') || agent.name.startsWith('.'))
+                continue;
+            const agentSkillsDir = path.join(agentsDir, agent.name, 'skills');
+            scanDirectory(agentSkillsDir);
+        }
+    }
+    // Scan shared skills-library/ (2-level: category/<skill>/)
+    const skillsLibraryDir = path.join(projectRoot, 'skills-library');
+    if (fs.existsSync(skillsLibraryDir)) {
+        let categoryDirs;
+        try {
+            categoryDirs = fs.readdirSync(skillsLibraryDir, { withFileTypes: true });
+        }
+        catch {
+            categoryDirs = [];
+        }
+        for (const category of categoryDirs) {
+            if (!category.isDirectory())
+                continue;
+            if (category.name.startsWith('.'))
+                continue;
+            scanDirectory(path.join(skillsLibraryDir, category.name));
+        }
+    }
     logger.info({ count: skills.size }, 'Skill registry initialized');
 }
 /**

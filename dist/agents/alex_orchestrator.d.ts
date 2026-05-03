@@ -39,7 +39,7 @@ export interface AlexAutonomousRequest extends AlexRequest {
 export interface AlexAutonomousResponse extends AlexResponse {
     run_id?: string;
 }
-type DomainIntent = 'comms_task' | 'content_task' | 'ops_task' | 'research_task';
+type DomainIntent = 'comms_task' | 'content_task' | 'ops_task' | 'research_task' | 'maestro_task' | 'sophie_task' | 'elena_task' | 'jules_task';
 export declare function classifyDomainRouteRegex(message: string): {
     intent: DomainIntent;
     agentId: string;

@@ -11,7 +11,7 @@
  * Économie estimée : $50-200/mois vs API Anthropic classique
  * SOP V26 R79 : pas de merge auto — branche feature/ uniquement
  */
-export type TmuxSession = 'opus' | 'claude-code' | 'claude-backend' | 'claude-frontend';
+export type TmuxSession = 'opus' | 'claude-code' | 'claude-backend' | 'claude-frontend' | 'claude-browser';
 export interface TmuxDispatchResult {
     content: string;
     cost_usd: 0;

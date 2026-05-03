@@ -14,8 +14,8 @@ function mainConfigPath(): string {
 export interface AgentConfig {
   name: string;
   description: string;
-  botTokenEnv: string;
-  botToken: string;
+  botTokenEnv?: string;
+  botToken?: string;
   model?: string;
   mcpServers?: string[];
   obsidian?: {
@@ -79,14 +79,20 @@ export function loadAgentConfig(agentId: string): AgentConfig {
   const botTokenEnv = raw['telegram_bot_token_env'] as string;
   const model = raw['model'] as string | undefined;
 
-  if (!name || !botTokenEnv) {
-    throw new Error(`Agent config ${configPath} must have 'name' and 'telegram_bot_token_env'`);
+  if (!name) {
+    throw new Error(`Agent config ${configPath} must have 'name'`);
   }
 
-  const env = readEnvFile([botTokenEnv]);
-  const botToken = process.env[botTokenEnv] || env[botTokenEnv] || '';
-  if (!botToken) {
-    throw new Error(`Bot token not found: set ${botTokenEnv} in .env`);
+  // SOP V26 PROPER ORCHESTRATION : telegram_bot_token_env est OPTIONNEL.
+  // Directeurs logiques (Sophie/Elena/Jules) appelés via delegateToAgent
+  // n'ont pas besoin de bot Telegram dédié.
+  let botToken = '';
+  if (botTokenEnv) {
+    const env = readEnvFile([botTokenEnv]);
+    botToken = process.env[botTokenEnv] || env[botTokenEnv] || '';
+    if (!botToken) {
+      throw new Error(`Bot token not found: set ${botTokenEnv} in .env`);
+    }
   }
 
   let obsidian: AgentConfig['obsidian'];

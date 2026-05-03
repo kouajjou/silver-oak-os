@@ -2,8 +2,8 @@ export declare const DEFAULT_MAIN_DESCRIPTION = "Primary ClaudeClaw bot";
 export interface AgentConfig {
     name: string;
     description: string;
-    botTokenEnv: string;
-    botToken: string;
+    botTokenEnv?: string;
+    botToken?: string;
     model?: string;
     mcpServers?: string[];
     obsidian?: {

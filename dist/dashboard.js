@@ -24,6 +24,7 @@ import { alexHandle } from './agents/alex_orchestrator.js';
 import { runAgent } from './services/claude_sdk_runner.js';
 import { getBudgetStatusData } from './dashboard/budget-status.js';
 import { getTelegramConnected, getBotInfo, chatEvents, getIsProcessing, abortActiveQuery, readAgentConnState } from './state.js';
+import { initSkillRegistry, getAllSkills } from './skill-registry.js';
 async function classifyTaskAgent(prompt) {
     try {
         const agentIds = listAgentIds();
@@ -63,6 +64,9 @@ export function startDashboard(botApi) {
         logger.info('DASHBOARD_TOKEN not set, dashboard disabled');
         return;
     }
+    // Initialize skill registry at startup (scans skills/, agents/<id>/skills/, skills-library/)
+    initSkillRegistry();
+    logger.info({ skills: getAllSkills().length }, 'Skill registry initialized');
     const app = new Hono();
     // CORS headers for cross-origin access (Cloudflare tunnel, mobile browsers)
     app.use('*', async (c, next) => {
@@ -1003,6 +1007,19 @@ export function startDashboard(botApi) {
         return c.json({ ok: true, results });
     });
     // List all configured agents with status
+    // Agent Factory v2 — create a new agent programmatically
+    app.post('/api/create-agent', async (c) => {
+        const { createAgent } = await import('./services/agent_factory_v2.js');
+        const spec = await c.req.json();
+        try {
+            const result = await createAgent(spec);
+            return c.json(result);
+        }
+        catch (err) {
+            const msg = err instanceof Error ? err.message : String(err);
+            return c.json({ error: msg }, 400);
+        }
+    });
     app.get('/api/agents', (c) => {
         const agentIds = applyAgentOrder(listAgentIds());
         const agents = agentIds.map((id) => {

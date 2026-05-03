@@ -6,7 +6,7 @@ export interface AgentRunLog {
     agent: 'alex' | 'maestro' | 'sara' | 'leo' | 'marco' | 'nina';
     taskId: string;
     task: string;
-    mode: 'mode_1' | 'mode_2' | 'failed';
+    mode: 'mode_1' | 'mode_2' | 'mode_3' | 'failed';
     provider?: string;
     success: boolean;
     judgeScore?: number;

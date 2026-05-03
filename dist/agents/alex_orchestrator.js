@@ -57,11 +57,14 @@ import { dispatchToMaestro } from './maestro_dispatcher.js';
 import { maestroHandle } from './maestro_orchestrator.js';
 import { logger } from '../logger.js';
 import { breakDownTasks } from './task_breaker.js';
+import { detectMultiTaskPattern } from './task_breaker_regex.js';
 import { judge as llmJudge } from '../services/llm_judge.js';
 import { createRun, updateRun, endRun, createTask, updateTask } from '../services/session_state.js';
 import { readEnvFile } from '../env.js';
 import { dispatchToTmuxSession } from '../services/cli_tmux_dispatcher.js';
 import { delegateToAgent, getAvailableAgents } from '../orchestrator.js';
+import { isFactoryRequest, runFactoryWorkflow } from './factory_workflow.js';
+import { loadDomainRoutes } from '../services/agent_factory_v2.js';
 // ── Constants ─────────────────────────────────────────────────────────────
 const MAX_RETRIES_PER_TASK = 3;
 const MAX_ITERATIONS = 20;
@@ -149,7 +152,36 @@ const DOMAIN_ROUTES = [
         intent: 'research_task',
         agentId: 'research',
         patterns: [
-            /\b(recherche|cherch[ae]|trouve|research|analys[ae]|veille|concurren|brief|intel|rapport|AI Act|RGPD|benchmark|compare|comparatif|news)\b/i,
+            /\b(recherche|cherch[ae]|trouve|research|analys[ae]|veille|concurren|brief|intel|rapport|benchmark|compare|comparatif|news)\b/i,
+        ],
+    },
+    // SOP V26 PROPER ORCHESTRATION : Maestro = directeur tech parmi les autres
+    {
+        intent: 'maestro_task',
+        agentId: 'maestro',
+        patterns: [
+            /\b(code|coding|debug|bug|fix|deploy|d[eé]ploi|tsc|typescript|migration|refactor|architecture|backend|frontend|api|endpoint|database|supabase|postgres|tests?|test\s+e2e|workflow|orchestrat|router|dispatcher|service|module)\b/i,
+        ],
+    },
+    {
+        intent: 'sophie_task',
+        agentId: 'sophie',
+        patterns: [
+            /\b(prd|product|jtbd|jobs.to.be.done|rice|lean.canvas|idea\s+validation|user\s+story|ux|specs?)\b/i,
+        ],
+    },
+    {
+        intent: 'elena_task',
+        agentId: 'elena',
+        patterns: [
+            /\b(launch|product\s+hunt|ph\s+launch|cold\s+outreach|sales|gtm|go.to.market|stripe\s+setup|stripe\s+config|email\s+sequence|cold\s+email)\b/i,
+        ],
+    },
+    {
+        intent: 'jules_task',
+        agentId: 'jules',
+        patterns: [
+            /\b(legal|cgv|cgu|dpa|privacy|policy|gdpr|rgpd|conformit[eé]|ai\s+act|compliance|audit\s+rgpd|data\s+processing)\b/i,
         ],
     },
 ];
@@ -158,6 +190,7 @@ export function classifyDomainRouteRegex(message) {
     // PhD fix 2026-04-30: replaces first-match-wins with score-based selection.
     // Score each route by total keyword matches, return highest score.
     let bestRoute = null;
+    // Check hardcoded routes first (known agents, fastest path)
     for (const entry of DOMAIN_ROUTES) {
         let score = 0;
         for (const pattern of entry.patterns) {
@@ -170,6 +203,30 @@ export function classifyDomainRouteRegex(message) {
             bestRoute = { intent: entry.intent, agentId: entry.agentId, score };
         }
     }
+    // Also check dynamic registry routes (factory-created agents)
+    // loadDomainRoutes() falls back to [] if registry is empty or unavailable
+    try {
+        const dynamicRoutes = loadDomainRoutes();
+        for (const entry of dynamicRoutes) {
+            // Skip agents already covered by hardcoded DOMAIN_ROUTES
+            if (DOMAIN_ROUTES.some(r => r.agentId === entry.agentId))
+                continue;
+            let score = 0;
+            for (const pattern of entry.patterns) {
+                const globalPattern = new RegExp(pattern.source, pattern.flags.includes('g') ? pattern.flags : pattern.flags + 'g');
+                const matches = message.match(globalPattern);
+                if (matches)
+                    score += matches.length;
+            }
+            if (score > 0 && (!bestRoute || score > bestRoute.score)) {
+                // Dynamic agents get a generic 'ops_task' intent as closest match
+                bestRoute = { intent: 'ops_task', agentId: entry.agentId, score };
+            }
+        }
+    }
+    catch {
+        // Non-blocking — if registry fails, just use hardcoded routes
+    }
     return bestRoute ? { intent: bestRoute.intent, agentId: bestRoute.agentId } : null;
 }
 // Dynamic LLM-based routing — reads agentRegistry, picks the most relevant agent.
@@ -180,6 +237,10 @@ const KNOWN_DOMAIN_INTENTS = {
     content: 'content_task',
     ops: 'ops_task',
     research: 'research_task',
+    maestro: 'maestro_task',
+    sophie: 'sophie_task',
+    elena: 'elena_task',
+    jules: 'jules_task',
 };
 async function classifyDomainRouteDynamic(message) {
     let agents;
@@ -190,8 +251,8 @@ async function classifyDomainRouteDynamic(message) {
         logger.warn({ err }, '[ALEX] getAvailableAgents threw — falling back to regex');
         return null;
     }
-    // Filter out main (Alex itself, no self-delegation) and maestro (handled by classifyIntent earlier)
-    const candidates = agents.filter((a) => a.id !== 'main' && a.id !== 'maestro');
+    // SOP V26 PROPER ORCHESTRATION : Filter only main (Alex never delegates to itself).
+    const candidates = agents.filter((a) => a.id !== 'main');
     if (candidates.length === 0) {
         logger.debug('[ALEX] No candidate agents in registry — falling back to regex');
         return null;
@@ -251,6 +312,76 @@ export async function alexHandle(request) {
     const start = Date.now();
     logger.info({ user: request.user_id, len: request.message.length }, 'alex.request');
     try {
+        // 0. Factory fast-path — detect "lance un SaaS" intent before standard routing
+        if (isFactoryRequest(request.message)) {
+            logger.info({ msg: request.message.slice(0, 80) }, '[ALEX] Factory SaaS request detected');
+            const testMode = /\btest\b/i.test(request.message);
+            try {
+                const factoryResult = await runFactoryWorkflow({
+                    idea: request.message,
+                    userId: request.user_id,
+                    testMode,
+                });
+                const summary = factoryResult.blocked
+                    ? `⏸️ Factory en pause — HITL requis à l'étape ${factoryResult.blocked}`
+                    : factoryResult.success
+                        ? `✅ Factory terminée — SaaS \`${factoryResult.saasName}\` (${factoryResult.stepsCompleted}/${factoryResult.totalSteps} étapes)`
+                        : `❌ Factory échouée: ${factoryResult.error ?? 'unknown error'}`;
+                return {
+                    success: factoryResult.success,
+                    response: summary,
+                    intent: 'factory_task',
+                    delegated_to_maestro: false,
+                    cost_usd: 0,
+                    latency_ms: Date.now() - start,
+                    metadata: { saasId: factoryResult.saasId, stepsCompleted: factoryResult.stepsCompleted },
+                };
+            }
+            catch (factoryErr) {
+                const errMsg = factoryErr instanceof Error ? factoryErr.message : String(factoryErr);
+                logger.error({ error: errMsg }, '[ALEX] Factory workflow failed');
+                return {
+                    success: false,
+                    response: `❌ Factory error: ${errMsg}`,
+                    intent: 'factory_task',
+                    delegated_to_maestro: false,
+                    cost_usd: 0,
+                    latency_ms: Date.now() - start,
+                };
+            }
+        }
+        // 0bis. Multi-task fast-path — SOP V26 2026-05-02 CTO PhD
+        // Detect multi-task patterns ("1) ... 2) ... 3) ...") and route to autonomous loop.
+        // Zero LLM cost — pure regex detection.
+        const regexBreakdown = detectMultiTaskPattern(request.message);
+        if (regexBreakdown && regexBreakdown.length >= 2) {
+            logger.info({ count: regexBreakdown.length, agents: regexBreakdown.map((t) => t.agent_target) }, '[ALEX] Multi-task pattern detected, routing to alexHandleAutonomous');
+            try {
+                const autoResult = await alexHandleAutonomous({
+                    message: request.message,
+                    user_id: request.user_id,
+                });
+                return {
+                    success: autoResult.success,
+                    response: autoResult.response,
+                    intent: 'multi_task_autonomous',
+                    delegated_to_maestro: autoResult.delegated_to_maestro,
+                    cost_usd: autoResult.cost_usd,
+                    latency_ms: autoResult.latency_ms,
+                    metadata: {
+                        ...autoResult.metadata,
+                        run_id: autoResult.run_id,
+                        multi_task_count: regexBreakdown.length,
+                        multi_task_source: 'regex',
+                    },
+                };
+            }
+            catch (autoErr) {
+                const errMsg = autoErr instanceof Error ? autoErr.message : String(autoErr);
+                logger.warn({ error: errMsg }, '[ALEX] alexHandleAutonomous failed, fallback to mono-dispatch');
+                // Fall through to V1 mono-dispatch
+            }
+        }
         // 1. Classify intent
         const intent = await classifyIntent(request.message);
         logger.info({ intent: intent.intent, confidence: intent.confidence }, 'alex.intent');
@@ -309,8 +440,38 @@ export async function alexHandle(request) {
         }
         // 3. Domain routing -- check if message targets a specific employee agent
         // Phase 5B.4: extends binary classifier with comms/content/ops/research
+        // SOP V26 PROPER ORCHESTRATION : si Maestro detecte, on passe par maestroHandle()
+        // pour qu'il utilise son dispatcher Mode 1/2/3 (et pas delegateToAgent direct).
         const domainRoute = await classifyDomainRoute(request.message);
         if (domainRoute) {
+            // Maestro special case : utilise son orchestrator (Mode 1/2/3 dispatch)
+            if (domainRoute.agentId === 'maestro') {
+                logger.info({ msg: request.message.slice(0, 60) }, '[ALEX] Routing to Maestro via maestroHandle (Mode 1/2/3 dispatcher)');
+                try {
+                    const maestroResult = await maestroHandle(request.message, { userId: request.user_id });
+                    return {
+                        success: maestroResult.success,
+                        response: maestroResult.success
+                            ? "🤖 **Maestro** :\n\n" + maestroResult.result
+                            : "❌ Maestro error: task failed",
+                        intent: 'maestro_task',
+                        delegated_to_maestro: true,
+                        cost_usd: intent.cost_usd,
+                        latency_ms: Date.now() - start,
+                        metadata: {
+                            intent_confidence: intent.confidence,
+                            maestro_mode: maestroResult.mode,
+                            maestro_task_id: maestroResult.taskId,
+                            provider_used: maestroResult.provider,
+                        },
+                    };
+                }
+                catch (maestroErr) {
+                    const errMsg = maestroErr instanceof Error ? maestroErr.message : String(maestroErr);
+                    logger.warn({ error: errMsg }, '[ALEX] maestroHandle failed via domain route, fallback');
+                    // Fall through to delegateToAgent below as fallback
+                }
+            }
             logger.info({ agentId: domainRoute.agentId, intent: domainRoute.intent, msg: request.message.slice(0, 60) }, '[ALEX] Domain routing to employee agent');
             try {
                 const delegResult = await delegateToAgent(domainRoute.agentId, request.message, request.user_id, 'main');
@@ -403,13 +564,22 @@ export async function alexHandleAutonomous(request) {
     });
     const runId = run?.id;
     let totalCost = 0;
-    // 2. Break down tasks (or single-task fallback)
+    // 2. Break down tasks — SOP V26 2026-05-02 CTO PhD multi-dispatch
+    // Strategy:
+    //   a) regex breaker (zero LLM cost, instant) — handles "1) ... 2) ... 3) ..."
+    //   b) LLM breaker (DeepSeek + cascade fallback) — handles file_content or complex
+    //   c) mono-task fallback — single task to maestro
     let tasks;
-    if (request.file_content) {
+    const regexTasks = detectMultiTaskPattern(request.message);
+    if (regexTasks && regexTasks.length >= 2) {
+        tasks = regexTasks;
+        logger.info({ count: tasks.length, source: 'regex', agents: tasks.map((t) => t.agent_target) }, 'alex.autonomous.tasks_broken');
+    }
+    else if (request.file_content) {
         const broken = await breakDownTasks(request.file_content, request.user_id);
         tasks = broken.tasks;
         totalCost += broken.cost_usd;
-        logger.info({ count: tasks.length, cost: broken.cost_usd }, 'alex.autonomous.tasks_broken');
+        logger.info({ count: tasks.length, cost: broken.cost_usd, source: 'llm_breaker' }, 'alex.autonomous.tasks_broken');
     }
     else {
         tasks = [{
@@ -421,7 +591,7 @@ export async function alexHandleAutonomous(request) {
                 dependencies: [],
                 estimated_effort_min: 30,
                 priority: 'P1',
-                rationale: 'Single direct task — no file_content provided',
+                rationale: 'Single direct task — no multi-task pattern, no file_content',
             }];
     }
     if (runId) {
@@ -480,8 +650,25 @@ export async function alexHandleAutonomous(request) {
             else if (['sara', 'leo', 'marco', 'nina'].includes(task.agent_target)) {
                 dispatched = await dispatchToEmployee(task.agent_target, task, request.user_id);
             }
+            else if (['sophie', 'elena', 'jules'].includes(task.agent_target)) {
+                // SOP V26 2026-05-02 CTO PhD : Sophie/Elena/Jules via delegateToAgent direct
+                // (pas dans dispatchToEmployee EMPLOYEE_TO_AGENT_ID hardcoded map)
+                try {
+                    const delegResult = await delegateToAgent(task.agent_target, task.description, request.user_id, 'main');
+                    dispatched = {
+                        result: delegResult.text ?? '',
+                        cost_usd: 0,
+                        latency_ms: delegResult.durationMs,
+                        success: !!delegResult.text,
+                    };
+                }
+                catch (delegErr) {
+                    const msg = delegErr instanceof Error ? delegErr.message : String(delegErr);
+                    dispatched = { result: `${task.agent_target} error: ${msg}`, cost_usd: 0, latency_ms: 0, success: false };
+                }
+            }
             else {
-                dispatched = { result: 'Unknown agent target', cost_usd: 0, latency_ms: 0, success: false };
+                dispatched = { result: 'Unknown agent target: ' + task.agent_target, cost_usd: 0, latency_ms: 0, success: false };
             }
             totalCost += dispatched.cost_usd;
             taskCost += dispatched.cost_usd;
